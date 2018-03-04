@@ -73,11 +73,18 @@ public final class AppGridActivity extends Activity {
         mGridAdapter = new AppGridAdapter(this, getAllApps(), mColumnNumber);
 
         PagedListView gridView = findViewById(R.id.apps_grid);
+
         gridView.setDayNightStyle(DayNightStyle.AUTO);
+
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mColumnNumber);
         gridView.getRecyclerView().setLayoutManager(gridLayoutManager);
 
         gridView.setAdapter(mGridAdapter);
+
+        gridView.setDividerVisibilityManager(position -> {
+            // only show divider under the first row (most recently used apps)
+            return position >= mColumnNumber;
+        });
     }
 
     @Override

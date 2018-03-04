@@ -32,5 +32,7 @@
         android:id="@+id/apps_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:showPagedListViewDivider="false" />
+        app:itemSpacing="@dimen/car_padding_5"
+        app:listContentTopOffset="@dimen/car_padding_4"
+        app:showPagedListViewDivider="true" />
 </LinearLayout>
