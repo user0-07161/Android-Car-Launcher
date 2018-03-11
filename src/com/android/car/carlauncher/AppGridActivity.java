@@ -117,8 +117,9 @@ public final class AppGridActivity extends Activity {
 
         int currentIndex = 0;
         int itemsAdded = 0;
-        int itemCount = Math.min(mColumnNumber, stats.size());
-        while (itemsAdded < itemCount) {
+        int statsSize = stats.size();
+        int itemCount = Math.min(mColumnNumber, statsSize);
+        while (itemsAdded < itemCount && currentIndex < statsSize) {
             String packageName = stats.get(currentIndex).getPackageName();
             currentIndex++;
 
