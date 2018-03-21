@@ -33,9 +33,9 @@ import java.util.List;
 
 final class AppGridAdapter extends RecyclerView.Adapter<AppGridAdapter.ViewHolder> {
     private final Activity mContext;
-    private final List<AppMetaData> mApps;
     private final int mColumnNumber;
 
+    private List<AppMetaData> mApps;
     private List<AppMetaData> mMostRecentApps;
 
     AppGridAdapter(
@@ -49,6 +49,11 @@ final class AppGridAdapter extends RecyclerView.Adapter<AppGridAdapter.ViewHolde
 
     void updateMostRecentApps(List<AppMetaData> mostRecentApps) {
         mMostRecentApps = mostRecentApps;
+        notifyDataSetChanged();
+    }
+
+    void updateAllApps(List<AppMetaData> apps) {
+        mApps = apps;
         notifyDataSetChanged();
     }
 
