@@ -103,7 +103,7 @@ public final class AppGridActivity extends Activity {
     protected void onStart() {
         super.onStart();
         // register broadcast receiver for package installation and uninstallation
-        AppInstallUninstallReceiver mReceiver = new AppInstallUninstallReceiver();
+        mReceiver = new AppInstallUninstallReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_PACKAGE_ADDED);
         filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
