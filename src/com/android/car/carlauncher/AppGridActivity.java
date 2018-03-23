@@ -20,8 +20,10 @@ import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -48,6 +50,8 @@ import androidx.car.widget.PagedListView;
 public final class AppGridActivity extends Activity {
 
     private static final String TAG = "AppGridActivity";
+
+    private static AppInstallUninstallReceiver mReceiver;
 
     private int mColumnNumber;
     private AppGridAdapter mGridAdapter;
@@ -93,6 +97,24 @@ public final class AppGridActivity extends Activity {
         // using onResume() to refresh most recently used apps because we want to refresh even if
         // the app being launched crashes/doesn't cover the entire screen.
         mGridAdapter.updateMostRecentApps(getMostRecentApps());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // register broadcast receiver for package installation and uninstallation
+        mReceiver = new AppInstallUninstallReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter.addDataScheme("package");
+        getApplicationContext().registerReceiver(mReceiver, filter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onPause();
+        getApplicationContext().unregisterReceiver(mReceiver);
     }
 
     private List<AppMetaData> getMostRecentApps() {
@@ -190,5 +212,19 @@ public final class AppGridActivity extends Activity {
         }
         Collections.sort(apps);
         return apps;
+    }
+
+    public class AppInstallUninstallReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String packageName = intent.getData().getSchemeSpecificPart();
+
+            if (packageName == null || packageName.length() == 0) {
+                // they sent us a bad intent
+                return;
+            }
+
+            mGridAdapter.updateAllApps(getAllApps());
+        }
     }
 }
