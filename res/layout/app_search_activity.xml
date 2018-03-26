@@ -41,14 +41,13 @@
                 android:layout_width="@dimen/car_primary_icon_size"
                 android:layout_height="@dimen/car_primary_icon_size"
                 android:layout_gravity="center"
-                android:background="@drawable/car_button_background"
+                android:background="@null"
                 android:gravity="center"
                 android:src="@drawable/ic_arrow_back_black"
                 android:tint="@color/car_tint"
                 android:adjustViewBounds="true"
                 android:clickable="false"
-                android:focusable="false"
-                style="@style/Widget.Car.DrawerArrowToggle" />
+                android:focusable="false" />
         </FrameLayout>
 
         <EditText
@@ -59,6 +58,7 @@
             android:layout_centerInParent="true"
             android:drawableStart="@drawable/ic_search_black"
             android:drawablePadding="@dimen/search_bar_drawable_text_padding"
+            android:drawableTint="@color/car_tint"
             android:background="@drawable/car_card_rounded_background"
             android:inputType="text|textNoSuggestions"
             android:maxLines="1"
@@ -77,3 +77,4 @@
         app:gutter="none" />
 
 </LinearLayout>
+
