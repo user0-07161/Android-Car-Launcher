@@ -20,6 +20,10 @@
     android:id="@+id/header"
     android:layout_width="match_parent"
     android:layout_height="@dimen/car_app_bar_height"
+    android:background="@color/car_card"
+    android:elevation="@dimen/car_action_bar_elevation"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
@@ -36,13 +40,13 @@
             android:layout_width="@dimen/car_primary_icon_size"
             android:layout_height="@dimen/car_primary_icon_size"
             android:layout_gravity="center"
-            android:background="@drawable/car_button_background"
+            android:background="@null"
             android:src="@drawable/ic_clear_black"
             android:tint="@color/car_tint"
+            android:scaleType="fitXY"
             android:adjustViewBounds="true"
             android:clickable="false"
-            android:focusable="false"
-            style="@style/Widget.Car.DrawerArrowToggle"/>
+            android:focusable="false" />
     </FrameLayout>
 
     <TextView
@@ -66,14 +70,13 @@
             android:layout_width="@dimen/car_primary_icon_size"
             android:layout_height="@dimen/car_primary_icon_size"
             android:layout_gravity="center"
-            android:background="@drawable/car_button_background"
-            android:gravity="center"
+            android:background="@null"
             android:src="@drawable/ic_search_black"
             android:tint="@color/car_tint"
+            android:scaleType="fitXY"
             android:adjustViewBounds="true"
             android:clickable="false"
-            android:focusable="false"
-            style="@style/Widget.Car.DrawerArrowToggle" />
+            android:focusable="false" />
     </FrameLayout>
 </RelativeLayout>
 

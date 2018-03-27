@@ -84,11 +84,6 @@ public final class AppGridActivity extends Activity {
         gridView.getRecyclerView().setLayoutManager(gridLayoutManager);
 
         gridView.setAdapter(mGridAdapter);
-
-        gridView.setDividerVisibilityManager(position -> {
-            // only show divider under the first row (most recently used apps)
-            return position >= mColumnNumber;
-        });
     }
 
     @Override
@@ -114,7 +109,10 @@ public final class AppGridActivity extends Activity {
     @Override
     protected void onStop() {
         super.onPause();
-        getApplicationContext().unregisterReceiver(mReceiver);
+        if (mReceiver != null) {
+            getApplicationContext().unregisterReceiver(mReceiver);
+            mReceiver = null;
+        }
     }
 
     private List<AppMetaData> getMostRecentApps() {
