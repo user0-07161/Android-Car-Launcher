@@ -16,7 +16,6 @@
 package com.android.car.carlauncher;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -35,7 +34,6 @@ import java.util.regex.Pattern;
  * The search result adapter that binds the filtered result to a list view.
  */
 
-// TODO (b/72873786): Add unit test for this class
 final class SearchResultAdapter
         extends RecyclerView.Adapter<SearchResultAdapter.ViewHolder> implements Filterable {
     private final Activity mContext;
@@ -139,12 +137,7 @@ final class SearchResultAdapter
     public void onBindViewHolder(@NonNull SearchResultAdapter.ViewHolder holder, int position) {
         // Get the data item for this position
         AppMetaData app = mSearchResults.get(position);
-        View.OnClickListener onClickListener = v -> {
-            Intent intent =
-                    mContext.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
-            mContext.startActivity(intent);
-        };
-        holder.bind(app, onClickListener);
+        holder.bind(app, v -> AppLauncherUtils.launchApp(mContext, app));
     }
 
     @Override

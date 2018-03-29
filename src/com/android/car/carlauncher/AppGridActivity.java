@@ -30,6 +30,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.GridLayoutManager.SpanSizeLookup;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -40,7 +41,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import androidx.car.widget.DayNightStyle;
 import androidx.car.widget.PagedListView;
 
 /**
@@ -61,6 +61,7 @@ public final class AppGridActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mColumnNumber = getResources().getInteger(R.integer.car_app_selector_column_number);
         mPackageManager = getPackageManager();
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
 
@@ -73,14 +74,17 @@ public final class AppGridActivity extends Activity {
             startActivity(intent);
         });
 
-        mColumnNumber = getResources().getInteger(R.integer.car_app_selector_column_number);
-        mGridAdapter = new AppGridAdapter(this, getAllApps(), mColumnNumber);
+        mGridAdapter = new AppGridAdapter(this, getAllApps());
 
         PagedListView gridView = findViewById(R.id.apps_grid);
 
-        gridView.setDayNightStyle(DayNightStyle.AUTO);
-
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mColumnNumber);
+        gridLayoutManager.setSpanSizeLookup(new SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                return mGridAdapter.getSpanSizeLookup(position);
+            }
+        });
         gridView.getRecyclerView().setLayoutManager(gridLayoutManager);
 
         gridView.setAdapter(mGridAdapter);
