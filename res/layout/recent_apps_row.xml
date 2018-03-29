@@ -15,25 +15,22 @@
     limitations under the License.
 -->
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/car_card"
-    android:orientation="vertical">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content">
 
-    <include
-        layout="@layout/app_grid_activity_header"
+    <LinearLayout
+        android:id="@+id/recent_apps_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/car_action_bar_elevation" />
+        android:orientation="horizontal"/>
 
-    <androidx.car.widget.PagedListView
-        android:id="@+id/apps_grid"
+    <View
+        android:id="@+id/divider"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:listContentTopOffset="@dimen/car_padding_4"
-        app:dayNightStyle="auto"
-        app:showPagedListViewDivider="false" />
+        android:layout_height="@dimen/car_list_divider_height"
+        android:layout_marginTop="@dimen/recent_apps_divider_margin"
+        android:layout_marginBottom="@dimen/recent_apps_divider_margin"
+        android:background="@color/car_list_divider"/>
 </LinearLayout>

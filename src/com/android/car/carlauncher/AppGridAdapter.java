@@ -17,37 +17,39 @@
 package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
-import android.app.Activity;
-import android.content.Intent;
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.List;
 
 /**
  * The adapter that populates the grid view with apps.
  */
+final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    public static final int RECENT_APPS_TYPE = 1;
+    public static final int APP_ITEM_TYPE = 2;
 
-final class AppGridAdapter extends RecyclerView.Adapter<AppGridAdapter.ViewHolder> {
-    private final Activity mContext;
+    private final Context mContext;
     private final int mColumnNumber;
+    private final LayoutInflater mInflater;
 
     private List<AppMetaData> mApps;
     private List<AppMetaData> mMostRecentApps;
 
     AppGridAdapter(
-        Activity context,
-        List<AppMetaData> apps,
-        int columnNumber) {
+            Context context,
+            List<AppMetaData> apps) {
         mContext = context;
+        mInflater = LayoutInflater.from(context);
         mApps = apps;
-        mColumnNumber = columnNumber;
+        mColumnNumber =
+                mContext.getResources().getInteger(R.integer.car_app_selector_column_number);
     }
 
-    void updateMostRecentApps(List<AppMetaData> mostRecentApps) {
+    void updateMostRecentApps(@Nullable List<AppMetaData> mostRecentApps) {
         mMostRecentApps = mostRecentApps;
         notifyDataSetChanged();
     }
@@ -57,80 +59,55 @@ final class AppGridAdapter extends RecyclerView.Adapter<AppGridAdapter.ViewHolde
         notifyDataSetChanged();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public View mAppItem;
-        public ImageView mAppIconView;
-        public TextView mAppNameView;
-
-        public ViewHolder(View view) {
-            super(view);
-            mAppItem = view.findViewById(R.id.app_item);
-            mAppIconView = mAppItem.findViewById(R.id.app_icon);
-            mAppNameView = mAppItem.findViewById(R.id.app_name);
+    public int getSpanSizeLookup(int position) {
+        if (position == 0 && hasRecentlyUsedApps()) {
+            return mColumnNumber;
         }
-
-        public void bind(AppMetaData app, View.OnClickListener listener) {
-            if (app == null) {
-                // Empty out the view
-                mAppItem.setClickable(false);
-                mAppItem.setOnClickListener(null);
-                mAppIconView.setBackground(null);
-                mAppNameView.setText(null);
-            } else {
-                mAppItem.setClickable(true);
-                mAppItem.setOnClickListener(listener);
-                mAppIconView.setBackground(app.getIcon());
-                mAppNameView.setText(app.getDisplayName());
-            }
-        }
+        return 1;
     }
 
     @Override
-    public AppGridAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = mContext.getLayoutInflater().inflate(R.layout.grid_item, null);
-        return new ViewHolder(view);
+    public int getItemViewType(int position) {
+        if (position == 0 && hasRecentlyUsedApps()) {
+            return RECENT_APPS_TYPE;
+        }
+        return APP_ITEM_TYPE;
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        AppMetaData app;
-        if (mMostRecentApps == null || mMostRecentApps.size() == 0) {
-            // there are no most recent apps
-            app = mApps.get(position);
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if (viewType == RECENT_APPS_TYPE) {
+            View view =
+                    mInflater.inflate(R.layout.recent_apps_row, parent, /* attachToRoot= */ false);
+            return new RecentAppsRowViewHolder(view, mContext);
         } else {
-            // there are some recent apps
-            if (position < mMostRecentApps.size()) {
-                // bind the most recent apps
-                app = mMostRecentApps.get(position);
-            } else if (position < mColumnNumber) {
-                // bind the empty space of the first row
-                app = null;
-            } else {
-                // bind the grid of apps
-                app = mApps.get(position - mColumnNumber);
-            }
+            View view = mInflater.inflate(R.layout.app_item, parent, /* attachToRoot= */ false);
+            return new AppItemViewHolder(view, mContext);
         }
-        View.OnClickListener onClickListener = getOnClickListener(app);
-        holder.bind(app, onClickListener);
     }
 
-    /**
-     * Helper method to get the OnClickListener that launches the app given the app's AppMetaData.
-     */
-    private View.OnClickListener getOnClickListener(@Nullable AppMetaData app) {
-        if (app == null) {
-            return null;
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        switch (holder.getItemViewType()) {
+            case RECENT_APPS_TYPE:
+                ((RecentAppsRowViewHolder) holder).bind(mMostRecentApps);
+                break;
+            case APP_ITEM_TYPE:
+                int index = hasRecentlyUsedApps() ? position - 1 : position;
+                AppMetaData app = mApps.get(index);
+                ((AppItemViewHolder) holder).bind(app);
+                break;
+            default:
         }
-
-        Intent intent =
-            mContext.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
-        return v -> mContext.startActivity(intent);
     }
 
     @Override
     public int getItemCount() {
-        // If there are any most recently launched apps, add a first row (can be half filled)
-        boolean hasRecentApps = mMostRecentApps != null && mMostRecentApps.size() > 0;
-        return mApps.size() + (hasRecentApps ? mColumnNumber : 0);
+        // If there are any most recently launched apps, add a "most recently used apps row item"
+        return mApps.size() + (hasRecentlyUsedApps() ? 1 : 0);
+    }
+
+    private boolean hasRecentlyUsedApps() {
+        return mMostRecentApps != null && mMostRecentApps.size() > 0;
     }
 }
