@@ -41,8 +41,6 @@ public class RecentAppsRowViewHolder extends RecyclerView.ViewHolder {
         mContext = context;
         mRecentAppsRow = view.findViewById(R.id.recent_apps_row);
         mColumnNumber = context.getResources().getInteger(R.integer.car_app_selector_column_number);
-
-        mRecentAppsRow.setPadding(0, 0, 0, 0);
     }
 
     /**
@@ -73,9 +71,12 @@ public class RecentAppsRowViewHolder extends RecyclerView.ViewHolder {
             appNameView.setText(app.getDisplayName());
 
             LinearLayout.LayoutParams params =
-                    new LinearLayout.LayoutParams(
-                            0, ViewGroup.LayoutParams.WRAP_CONTENT, /* weight= */ 1);
-            mRecentAppsRow.addView(view, params);
+                    (LinearLayout.LayoutParams) view.getLayoutParams();
+            params.width = 0;
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            params.weight = 1;
+            params.bottomMargin = 0;
+            mRecentAppsRow.addView(view);
         }
 
         // Add empty views to fill out the entire first row
@@ -85,6 +86,7 @@ public class RecentAppsRowViewHolder extends RecyclerView.ViewHolder {
                             0, ViewGroup.LayoutParams.WRAP_CONTENT, /* weight= */ 1);
             mRecentAppsRow.addView(new View(mContext), params);
         }
+
     }
 }
 
