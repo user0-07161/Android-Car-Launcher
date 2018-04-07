@@ -65,7 +65,8 @@
         android:layout_alignParentEnd="true"
         android:background="@drawable/car_card_ripple_background"
         android:clickable="true"
-        android:focusable="true">
+        android:focusable="true"
+        android:visibility="gone">
         <ImageButton
             android:layout_width="@dimen/car_primary_icon_size"
             android:layout_height="@dimen/car_primary_icon_size"
