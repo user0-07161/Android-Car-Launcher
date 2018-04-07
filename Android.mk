@@ -41,14 +41,12 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
 
-LOCAL_STATIC_ANDROID_LIBRARIES += $(ANDROID_SUPPORT_CAR_TARGETS) \
+LOCAL_STATIC_ANDROID_LIBRARIES += \
+    android-support-car \
     android-support-constraint-layout
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-         android-support-constraint-layout-solver
-
-include packages/apps/Car/libs/car-apps-common/car-apps-common.mk
-include packages/services/Car/car-support-lib/car-support.mk
+    android-support-constraint-layout-solver
 
 include $(BUILD_PACKAGE)
 
