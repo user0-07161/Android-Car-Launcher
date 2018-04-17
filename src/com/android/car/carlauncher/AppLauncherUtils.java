@@ -18,7 +18,6 @@ package com.android.car.carlauncher;
 
 import android.content.Context;
 import android.content.Intent;
-import android.view.View;
 
 /**
  * Util class that contains helper method used by app launcher classes.
