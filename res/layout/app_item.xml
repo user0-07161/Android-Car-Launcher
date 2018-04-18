@@ -25,7 +25,7 @@
               android:layout_marginBottom="@dimen/car_padding_5"
               android:gravity="center"
               android:orientation="vertical"
-              android:background="@drawable/car_card_ripple_background">
+              android:background="@drawable/app_launcher_ripple_background">
 
     <ImageView
         android:id="@+id/app_icon"
