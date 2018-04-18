@@ -37,15 +37,24 @@ import java.util.regex.Pattern;
 final class SearchResultAdapter
         extends RecyclerView.Adapter<SearchResultAdapter.ViewHolder> implements Filterable {
     private final Activity mContext;
-    private final ArrayList<AppMetaData> mAllApps;
-    private ArrayList<AppMetaData> mSearchResults;
+    private List<AppMetaData> mAllApps;
+    private List<AppMetaData> mSearchResults;
     private AppSearchFilter filter;
+    private boolean mIsDistractionOptimizationRequired;
 
-    public SearchResultAdapter(Activity context, ArrayList<AppMetaData> apps) {
+    public SearchResultAdapter(Activity context) {
         mContext = context;
-        Collections.sort(apps);
-        mAllApps = apps;
         mSearchResults = null;
+    }
+
+    public void setIsDistractionOptimizationRequired(boolean isDistractionOptimizationRequired) {
+        mIsDistractionOptimizationRequired = isDistractionOptimizationRequired;
+        notifyDataSetChanged();
+    }
+
+    public void setAllApps(List<AppMetaData> apps) {
+        mAllApps = apps;
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -63,12 +72,12 @@ final class SearchResultAdapter
         public void bind(AppMetaData app, View.OnClickListener listener) {
             if (app == null) {
                 // Empty out the view
-                mAppIconView.setBackground(null);
+                mAppIconView.setImageDrawable(null);
                 mAppNameView.setText(null);
                 mAppItem.setClickable(false);
                 mAppItem.setOnClickListener(null);
             } else {
-                mAppIconView.setBackground(app.getIcon());
+                mAppIconView.setImageDrawable(app.getIcon());
                 mAppNameView.setText(app.getDisplayName());
                 mAppItem.setClickable(true);
                 mAppItem.setOnClickListener(listener);
@@ -90,10 +99,14 @@ final class SearchResultAdapter
                 List filterList = new ArrayList();
                 for (int i = 0; i < mAllApps.size(); i++) {
                     AppMetaData app = mAllApps.get(i);
-                    if (shouldShowApp(app.getDisplayName(), constraint.toString())) {
+                    if (shouldShowApp(
+                            app.getDisplayName(),
+                            constraint.toString(),
+                            app.getIsDistractionOptimized())) {
                         filterList.add(app);
                     }
                 }
+                Collections.sort(filterList, AppLauncherUtils.ALPHABETICAL_COMPARATOR);
                 results.count = filterList.size();
                 results.values = filterList;
             } else {
@@ -104,10 +117,15 @@ final class SearchResultAdapter
             return results;
         }
 
-        private boolean shouldShowApp(String displayName, String constraint) {
-            Pattern pattern = Pattern.compile(
-                    "^"+ constraint + ".*$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-            return pattern.matcher(displayName).matches();
+        private boolean shouldShowApp(
+                String displayName, String constraint, boolean isDistractionOptimized) {
+            if (!mIsDistractionOptimizationRequired
+                    || (mIsDistractionOptimizationRequired && isDistractionOptimized)) {
+                Pattern pattern = Pattern.compile(
+                        "^" + constraint + ".*$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+                return pattern.matcher(displayName).matches();
+            }
+            return false;
         }
 
         @Override
@@ -154,12 +172,8 @@ final class SearchResultAdapter
         }
     }
 
-    public void clearResults() {
+    void clearResults() {
         mSearchResults.clear();
         notifyDataSetChanged();
-    }
-
-    public List<AppMetaData> getSearchResults() {
-        return mSearchResults;
     }
 }
