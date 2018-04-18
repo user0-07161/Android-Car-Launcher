@@ -19,9 +19,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/header"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/car_app_bar_height"
+    android:layout_height="wrap_content"
     android:background="@color/car_card"
-    android:elevation="@dimen/car_action_bar_elevation"
     android:clipChildren="false"
     android:clipToPadding="false"
     android:gravity="center_vertical"
@@ -30,7 +29,7 @@
     <FrameLayout
         android:id="@+id/exit_button_container"
         android:layout_width="@dimen/car_margin"
-        android:layout_height="@dimen/car_touch_target_size"
+        android:layout_height="@dimen/car_app_bar_height"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
         android:background="@drawable/car_card_ripple_background"
@@ -79,5 +78,11 @@
             android:clickable="false"
             android:focusable="false" />
     </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/car_list_divider_height"
+        android:layout_alignBottom="@id/exit_button_container"
+        android:background="@color/car_list_divider"/>
 </RelativeLayout>
 
