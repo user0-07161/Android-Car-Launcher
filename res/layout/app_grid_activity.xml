@@ -19,15 +19,14 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="@color/car_card"
     android:orientation="vertical">
 
     <include
         layout="@layout/app_grid_activity_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/car_action_bar_elevation" />
+        android:layout_height="wrap_content" />
 
     <androidx.car.widget.PagedListView
         android:id="@+id/apps_grid"
