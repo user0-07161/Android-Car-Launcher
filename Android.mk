@@ -42,7 +42,7 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
-    android-support-car \
+    androidx.car_car \
     android-support-constraint-layout
 
 LOCAL_STATIC_JAVA_LIBRARIES := \

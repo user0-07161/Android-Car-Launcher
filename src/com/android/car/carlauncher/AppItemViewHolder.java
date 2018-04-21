@@ -18,10 +18,11 @@ package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * App item view holder that contains the app icon and name.

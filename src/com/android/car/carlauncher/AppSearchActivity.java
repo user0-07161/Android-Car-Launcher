@@ -28,11 +28,11 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import androidx.car.widget.PagedListView;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import androidx.car.widget.PagedListView;
 
 /**
  * Activity that allows user to search in apps.
