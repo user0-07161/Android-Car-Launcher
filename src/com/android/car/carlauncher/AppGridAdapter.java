@@ -39,12 +39,9 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private List<AppMetaData> mApps;
     private List<AppMetaData> mMostRecentApps;
 
-    AppGridAdapter(
-            Context context,
-            List<AppMetaData> apps) {
+    AppGridAdapter(Context context) {
         mContext = context;
         mInflater = LayoutInflater.from(context);
-        mApps = apps;
         mColumnNumber =
                 mContext.getResources().getInteger(R.integer.car_app_selector_column_number);
     }
