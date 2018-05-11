@@ -74,7 +74,7 @@ public final class AppGridActivity extends Activity {
             startActivity(intent);
         });
 
-        mGridAdapter = new AppGridAdapter(this, getAllApps());
+        mGridAdapter = new AppGridAdapter(this);
 
         PagedListView gridView = findViewById(R.id.apps_grid);
 
@@ -93,6 +93,7 @@ public final class AppGridActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        mGridAdapter.updateAllApps(getAllApps());
         // using onResume() to refresh most recently used apps because we want to refresh even if
         // the app being launched crashes/doesn't cover the entire screen.
         mGridAdapter.updateMostRecentApps(getMostRecentApps());
