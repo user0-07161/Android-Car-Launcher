@@ -48,6 +48,8 @@ LOCAL_STATIC_ANDROID_LIBRARIES += \
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-constraint-layout-solver
 
+LOCAL_JAVA_LIBRARIES += android.car
+
 include $(BUILD_PACKAGE)
 
 endif

@@ -20,15 +20,22 @@ import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.car.Car;
+import android.car.CarNotConnectedException;
+import android.car.content.pm.CarPackageManager;
+import android.car.drivingstate.CarUxRestrictionsManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
+import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.GridLayoutManager.SpanSizeLookup;
 import android.text.TextUtils;
@@ -46,17 +53,49 @@ import androidx.car.widget.PagedListView;
 /**
  * Launcher activity that shows a grid of apps.
  */
-
 public final class AppGridActivity extends Activity {
 
     private static final String TAG = "AppGridActivity";
-
-    private static AppInstallUninstallReceiver mReceiver;
 
     private int mColumnNumber;
     private AppGridAdapter mGridAdapter;
     private PackageManager mPackageManager;
     private UsageStatsManager mUsageStatsManager;
+    private AppInstallUninstallReceiver mInstallUninstallReceiver;
+    private Car mCar;
+    private CarUxRestrictionsManager mCarUxRestrictionsManager;
+    private CarPackageManager mCarPackageManager;
+
+    private ServiceConnection mCarConnectionListener = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            try {
+                mCarUxRestrictionsManager = (CarUxRestrictionsManager) mCar.getCarManager(
+                        Car.CAR_UX_RESTRICTION_SERVICE);
+                mGridAdapter.setIsDistractionOptimizationRequired(
+                        mCarUxRestrictionsManager
+                                .getCurrentCarUxRestrictions()
+                                .isRequiresDistractionOptimization());
+                mCarUxRestrictionsManager.registerListener(
+                        restrictionInfo ->
+                                mGridAdapter.setIsDistractionOptimizationRequired(
+                                        restrictionInfo.isRequiresDistractionOptimization()));
+
+                mCarPackageManager = (CarPackageManager) mCar.getCarManager(Car.PACKAGE_SERVICE);
+                mGridAdapter.setAllApps(getAllApps());
+                mGridAdapter.setMostRecentApps(getMostRecentApps());
+
+            } catch (CarNotConnectedException e) {
+                Log.e(TAG, "Car not connected in CarConnectionListener", e);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mCarUxRestrictionsManager = null;
+            mCarPackageManager = null;
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -64,6 +103,7 @@ public final class AppGridActivity extends Activity {
         mColumnNumber = getResources().getInteger(R.integer.car_app_selector_column_number);
         mPackageManager = getPackageManager();
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+        mCar = Car.createCar(this, mCarConnectionListener);
 
         setContentView(R.layout.app_grid_activity);
 
@@ -75,7 +115,6 @@ public final class AppGridActivity extends Activity {
         });
 
         mGridAdapter = new AppGridAdapter(this);
-
         PagedListView gridView = findViewById(R.id.apps_grid);
 
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mColumnNumber);
@@ -93,30 +132,47 @@ public final class AppGridActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        mGridAdapter.updateAllApps(getAllApps());
+        mGridAdapter.setAllApps(getAllApps());
         // using onResume() to refresh most recently used apps because we want to refresh even if
         // the app being launched crashes/doesn't cover the entire screen.
-        mGridAdapter.updateMostRecentApps(getMostRecentApps());
+        mGridAdapter.setMostRecentApps(getMostRecentApps());
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         // register broadcast receiver for package installation and uninstallation
-        mReceiver = new AppInstallUninstallReceiver();
+        mInstallUninstallReceiver = new AppInstallUninstallReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        filter.addAction(Intent.ACTION_PACKAGE_REPLACED);
         filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         filter.addDataScheme("package");
-        getApplicationContext().registerReceiver(mReceiver, filter);
+        registerReceiver(mInstallUninstallReceiver, filter);
+
+        // Connect to car service
+        mCar.connect();
     }
 
     @Override
     protected void onStop() {
         super.onPause();
-        if (mReceiver != null) {
-            getApplicationContext().unregisterReceiver(mReceiver);
-            mReceiver = null;
+        // disconnect from app install/uninstall receiver
+        if (mInstallUninstallReceiver != null) {
+            unregisterReceiver(mInstallUninstallReceiver);
+            mInstallUninstallReceiver = null;
+        }
+        // disconnect from car listeners
+        try {
+            if (mCarUxRestrictionsManager != null) {
+                mCarUxRestrictionsManager.unregisterListener();
+            }
+        } catch (CarNotConnectedException e) {
+            Log.e(TAG, "Error unregistering listeners", e);
+        }
+        if (mCar != null) {
+            mCar.disconnect();
         }
     }
 
@@ -129,10 +185,10 @@ public final class AppGridActivity extends Activity {
         // "During 2017 App B is last used at 2017/6/15 10:00"
         // "During 2018 App A is last used at 2018/1/1 15:12"
         List<UsageStats> stats =
-            mUsageStatsManager.queryUsageStats(
-                UsageStatsManager.INTERVAL_YEARLY,
-                System.currentTimeMillis() - DateUtils.YEAR_IN_MILLIS,
-                System.currentTimeMillis());
+                mUsageStatsManager.queryUsageStats(
+                        UsageStatsManager.INTERVAL_YEARLY,
+                        System.currentTimeMillis() - DateUtils.YEAR_IN_MILLIS,
+                        System.currentTimeMillis());
 
         if (stats == null || stats.size() == 0) {
             return apps; // empty list
@@ -160,14 +216,17 @@ public final class AppGridActivity extends Activity {
             }
 
             try {
-                // try getting application info from package name
-                ApplicationInfo info = mPackageManager.getApplicationInfo(packageName, 0);
-                Drawable icon = mPackageManager.getApplicationIcon(info);
-                String displayName = mPackageManager.getApplicationLabel(info).toString();
+                // try getting activity info from package name
+                Drawable icon = mPackageManager.getActivityIcon(intent);
+                ActivityInfo info = mPackageManager.getActivityInfo(intent.getComponent(), 0);
+                CharSequence displayName = info.loadLabel(mPackageManager);
                 if (icon == null || TextUtils.isEmpty(displayName)) {
                     continue;
                 }
-                AppMetaData app = new AppMetaData(displayName, packageName, icon);
+                boolean isDistractionOptimized = AppLauncherUtils.isActivityDistractionOptimized(
+                        mCarPackageManager, packageName, intent.getComponent().getClassName());
+                AppMetaData app =
+                        new AppMetaData(displayName, packageName, icon, isDistractionOptimized);
 
                 // edge case: do not include duplicated entries
                 // e.g. app is used at 2017/12/31 23:59, and 2018/01/01 00:00
@@ -179,7 +238,7 @@ public final class AppGridActivity extends Activity {
                 itemsAdded++;
             } catch (PackageManager.NameNotFoundException e) {
                 // this should never happen
-                Log.e(TAG, "NameNotFoundException when getting app icon in AppGridActivity");
+                Log.e(TAG, "NameNotFoundException when getting app icon in AppGridActivity", e);
             }
         }
         return apps;
@@ -199,35 +258,21 @@ public final class AppGridActivity extends Activity {
     }
 
     private List<AppMetaData> getAllApps() {
-        List<AppMetaData> apps = new ArrayList<>();
-
-        Intent intent = new Intent(Intent.ACTION_MAIN, null);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-        List<ResolveInfo> availableActivities = mPackageManager.queryIntentActivities(intent, 0);
-        for (ResolveInfo info : availableActivities) {
-            AppMetaData app =
-                new AppMetaData(
-                    info.loadLabel(mPackageManager),
-                    info.activityInfo.packageName,
-                    info.activityInfo.loadIcon(mPackageManager));
-            apps.add(app);
-        }
-        Collections.sort(apps);
-        return apps;
+        return AppLauncherUtils.getAllLaunchableApps(
+                getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
     }
 
-    public class AppInstallUninstallReceiver extends BroadcastReceiver {
+    private class AppInstallUninstallReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            final String packageName = intent.getData().getSchemeSpecificPart();
+            String packageName = intent.getData().getSchemeSpecificPart();
 
-            if (packageName == null || packageName.length() == 0) {
-                // they sent us a bad intent
+            if (TextUtils.isEmpty(packageName)) {
+                Log.e(TAG, "System sent an empty app install/uninstall broadcast");
                 return;
             }
 
-            mGridAdapter.updateAllApps(getAllApps());
+            mGridAdapter.setAllApps(getAllApps());
         }
     }
 }
