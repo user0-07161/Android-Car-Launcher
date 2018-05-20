@@ -20,6 +20,7 @@
     <uses-sdk
         android:minSdkVersion="27"
         android:targetSdkVersion='27'/>
+    <!-- System permission to get app usage data -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <application
         android:label="@string/app_title"

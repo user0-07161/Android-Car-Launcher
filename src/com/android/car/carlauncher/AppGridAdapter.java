@@ -23,6 +23,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -38,6 +40,7 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     private List<AppMetaData> mApps;
     private List<AppMetaData> mMostRecentApps;
+    private boolean mIsDistractionOptimizationRequired;
 
     AppGridAdapter(Context context) {
         mContext = context;
@@ -46,13 +49,20 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 mContext.getResources().getInteger(R.integer.car_app_selector_column_number);
     }
 
-    void updateMostRecentApps(@Nullable List<AppMetaData> mostRecentApps) {
+    void setIsDistractionOptimizationRequired(boolean isDistractionOptimizationRequired) {
+        mIsDistractionOptimizationRequired = isDistractionOptimizationRequired;
+        sortAllApps();
+        notifyDataSetChanged();
+    }
+
+    void setMostRecentApps(@Nullable List<AppMetaData> mostRecentApps) {
         mMostRecentApps = mostRecentApps;
         notifyDataSetChanged();
     }
 
-    void updateAllApps(List<AppMetaData> apps) {
+    void setAllApps(List<AppMetaData> apps) {
         mApps = apps;
+        sortAllApps();
         notifyDataSetChanged();
     }
 
@@ -87,12 +97,13 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         switch (holder.getItemViewType()) {
             case RECENT_APPS_TYPE:
-                ((RecentAppsRowViewHolder) holder).bind(mMostRecentApps);
+                ((RecentAppsRowViewHolder) holder).bind(
+                        mMostRecentApps, mIsDistractionOptimizationRequired);
                 break;
             case APP_ITEM_TYPE:
                 int index = hasRecentlyUsedApps() ? position - 1 : position;
                 AppMetaData app = mApps.get(index);
-                ((AppItemViewHolder) holder).bind(app);
+                ((AppItemViewHolder) holder).bind(app, mIsDistractionOptimizationRequired);
                 break;
             default:
         }
@@ -101,10 +112,20 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     @Override
     public int getItemCount() {
         // If there are any most recently launched apps, add a "most recently used apps row item"
-        return mApps.size() + (hasRecentlyUsedApps() ? 1 : 0);
+        return (mApps == null ? 0 : mApps.size()) + (hasRecentlyUsedApps() ? 1 : 0);
     }
 
     private boolean hasRecentlyUsedApps() {
         return mMostRecentApps != null && mMostRecentApps.size() > 0;
+    }
+
+    private void sortAllApps() {
+        if (mApps != null) {
+            Comparator<AppMetaData> comparator =
+                    mIsDistractionOptimizationRequired
+                            ? AppLauncherUtils.DISTRACTION_OPTIMIZED_COMPARATOR
+                            : AppLauncherUtils.ALPHABETICAL_COMPARATOR;
+            Collections.sort(mApps, comparator);
+        }
     }
 }

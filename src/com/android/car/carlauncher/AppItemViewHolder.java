@@ -45,19 +45,22 @@ public class AppItemViewHolder extends RecyclerView.ViewHolder {
      *
      * @param app Pass {@code null} will empty out the view.
      */
-    public void bind(@Nullable AppMetaData app) {
+    public void bind(@Nullable AppMetaData app, boolean isDistractionOptimizationRequired) {
         // Empty out the view
         mAppItem.setClickable(false);
-        mAppItem.setOnClickListener(null);
-        mAppIconView.setBackground(null);
+        mAppIconView.setImageDrawable(null);
         mAppNameView.setText(null);
 
         if (app == null) {
             return;
         }
 
-        mAppItem.setOnClickListener(v -> AppLauncherUtils.launchApp(mContext, app));
-        mAppIconView.setBackground(app.getIcon());
         mAppNameView.setText(app.getDisplayName());
+        if (isDistractionOptimizationRequired && !app.getIsDistractionOptimized()) {
+            mAppIconView.setImageDrawable(AppLauncherUtils.toGrayscale(app.getIcon()));
+        } else {
+            mAppIconView.setImageDrawable(app.getIcon());
+            mAppItem.setOnClickListener(v -> AppLauncherUtils.launchApp(mContext, app));
+        }
     }
 }
