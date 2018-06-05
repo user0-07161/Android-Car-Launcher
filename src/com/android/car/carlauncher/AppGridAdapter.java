@@ -25,7 +25,6 @@ import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -122,11 +121,7 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     private void sortAllApps() {
         if (mApps != null) {
-            Comparator<AppMetaData> comparator =
-                    mIsDistractionOptimizationRequired
-                            ? AppLauncherUtils.DISTRACTION_OPTIMIZED_COMPARATOR
-                            : AppLauncherUtils.ALPHABETICAL_COMPARATOR;
-            Collections.sort(mApps, comparator);
+            Collections.sort(mApps, AppLauncherUtils.ALPHABETICAL_COMPARATOR);
         }
     }
 }
