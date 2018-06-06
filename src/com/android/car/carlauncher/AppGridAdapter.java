@@ -121,11 +121,7 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     private void sortAllApps() {
         if (mApps != null) {
-            Comparator<AppMetaData> comparator =
-                    mIsDistractionOptimizationRequired
-                            ? AppLauncherUtils.DISTRACTION_OPTIMIZED_COMPARATOR
-                            : AppLauncherUtils.ALPHABETICAL_COMPARATOR;
-            Collections.sort(mApps, comparator);
+            Collections.sort(mApps, AppLauncherUtils.ALPHABETICAL_COMPARATOR);
         }
     }
 }
