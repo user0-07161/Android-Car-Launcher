@@ -46,16 +46,6 @@ class AppLauncherUtils {
 
     /**
      * Comparator for {@link AppMetaData} that sorts the list
-     * first by is distraction optimized in descending order (optimized apps first)
-     * then by the "displayName" property in ascending order.
-     * Used when distraction optimization is required.
-     */
-    static final Comparator<AppMetaData> DISTRACTION_OPTIMIZED_COMPARATOR = Comparator
-            .comparing(AppMetaData::getIsDistractionOptimized).reversed()
-            .thenComparing(AppMetaData::getDisplayName, String::compareToIgnoreCase);
-
-    /**
-     * Comparator for {@link AppMetaData} that sorts the list
      * by the "displayName" property in ascending order.
      */
     static final Comparator<AppMetaData> ALPHABETICAL_COMPARATOR = Comparator
