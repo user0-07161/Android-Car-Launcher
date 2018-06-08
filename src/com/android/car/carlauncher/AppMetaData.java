@@ -19,34 +19,28 @@ package com.android.car.carlauncher;
 import android.annotation.Nullable;
 import android.graphics.drawable.Drawable;
 
-import java.util.Comparator;
-
 /**
  * Meta data of an app including the display name, the full package name, and the icon drawable.
  */
 
-final class AppMetaData implements Comparable<AppMetaData> {
+final class AppMetaData {
     // The display name of the app
     @Nullable
     private String mDisplayName;
     // The package name of the app
     private String mPackageName;
     private Drawable mIcon;
+    private boolean mIsDistractionOptimized;
 
-    private static Comparator<String> nullSafeStringComparator = Comparator
-        .nullsFirst(String::compareToIgnoreCase);
-
-    /**
-     * Comparator for {@link AppMetaData} that sorts the list by the "displayName" property
-     * in ascending order.
-     */
-    private static Comparator<AppMetaData> metadataComparator = Comparator
-        .comparing(AppMetaData::getDisplayName, nullSafeStringComparator);
-
-    public AppMetaData(CharSequence displayName, String packageName, Drawable icon) {
+    public AppMetaData(
+            CharSequence displayName,
+            String packageName,
+            Drawable icon,
+            boolean isDistractionOptimized) {
         mDisplayName = displayName == null ? "" : displayName.toString();
         mPackageName = packageName == null ? "" : packageName;
         mIcon = icon;
+        mIsDistractionOptimized = isDistractionOptimized;
     }
 
     public String getDisplayName() {
@@ -61,9 +55,8 @@ final class AppMetaData implements Comparable<AppMetaData> {
         return mIcon;
     }
 
-    @Override
-    public int compareTo(AppMetaData that) {
-        return metadataComparator.compare(this, that);
+    public boolean getIsDistractionOptimized() {
+        return mIsDistractionOptimized;
     }
 
     /**

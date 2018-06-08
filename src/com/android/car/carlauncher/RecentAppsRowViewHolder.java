@@ -49,7 +49,7 @@ public class RecentAppsRowViewHolder extends RecyclerView.ViewHolder {
      *
      * @param apps Pass {@code null} will empty out the row.
      */
-    public void bind(@Nullable List<AppMetaData> apps) {
+    public void bind(@Nullable List<AppMetaData> apps, boolean isDistractionOptimizationRequired) {
         // Empty out the views
         mRecentAppsRow.removeAllViews();
         mRecentAppsRow.setWeightSum(mColumnNumber);
@@ -67,8 +67,12 @@ public class RecentAppsRowViewHolder extends RecyclerView.ViewHolder {
 
             AppMetaData app = apps.get(i);
 
-            view.setOnClickListener(v -> AppLauncherUtils.launchApp(mContext, app));
-            iconView.setBackground(app.getIcon());
+            if (isDistractionOptimizationRequired && !app.getIsDistractionOptimized()) {
+                iconView.setImageDrawable(AppLauncherUtils.toGrayscale(app.getIcon()));
+            } else {
+                iconView.setImageDrawable(app.getIcon());
+                view.setOnClickListener(v -> AppLauncherUtils.launchApp(mContext, app));
+            }
             appNameView.setText(app.getDisplayName());
 
             LinearLayout.LayoutParams params =

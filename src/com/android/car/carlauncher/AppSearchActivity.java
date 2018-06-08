@@ -17,21 +17,30 @@ package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
 import android.app.Activity;
+import android.car.Car;
+import android.car.CarNotConnectedException;
+import android.car.content.pm.CarPackageManager;
+import android.car.drivingstate.CarUxRestrictionsManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.car.widget.PagedListView;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,9 +48,50 @@ import java.util.List;
  */
 public final class AppSearchActivity extends Activity {
 
+    private static final String TAG = "AppSearchActivity";
+
+    private PackageManager mPackageManager;
+    private SearchResultAdapter mSearchResultAdapter;
+    private AppInstallUninstallReceiver mInstallUninstallReceiver;
+    private Car mCar;
+    private CarPackageManager mCarPackageManager;
+    private CarUxRestrictionsManager mCarUxRestrictionsManager;
+
+    private ServiceConnection mCarConnectionListener = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            try {
+                mCarUxRestrictionsManager = (CarUxRestrictionsManager) mCar.getCarManager(
+                        Car.CAR_UX_RESTRICTION_SERVICE);
+                mSearchResultAdapter.setIsDistractionOptimizationRequired(
+                        mCarUxRestrictionsManager
+                                .getCurrentCarUxRestrictions()
+                                .isRequiresDistractionOptimization());
+                mCarUxRestrictionsManager.registerListener(
+                        restrictionInfo ->
+                                mSearchResultAdapter.setIsDistractionOptimizationRequired(
+                                        restrictionInfo.isRequiresDistractionOptimization()));
+
+                mCarPackageManager = (CarPackageManager) mCar.getCarManager(Car.PACKAGE_SERVICE);
+                mSearchResultAdapter.setAllApps(getAllApps());
+            } catch (CarNotConnectedException e) {
+                Log.e(TAG, "Car not connected in CarConnectionListener", e);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mCarUxRestrictionsManager = null;
+            mCarPackageManager = null;
+        }
+    };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mPackageManager = getPackageManager();
+        mCar = Car.createCar(this, mCarConnectionListener);
+
         setContentView(R.layout.app_search_activity);
         findViewById(R.id.container).setOnTouchListener(
                 (view, event) -> {
@@ -50,12 +100,10 @@ public final class AppSearchActivity extends Activity {
                 });
         findViewById(R.id.exit_button_container).setOnClickListener(view -> finish());
 
-        ArrayList<AppMetaData> apps = getAppsList();
-
         PagedListView searchResultView = findViewById(R.id.search_result);
         searchResultView.setClipToOutline(true);
-        SearchResultAdapter searchResultAdapter = new SearchResultAdapter(this, apps);
-        searchResultView.setAdapter(searchResultAdapter);
+        mSearchResultAdapter = new SearchResultAdapter(this);
+        searchResultView.setAdapter(mSearchResultAdapter);
 
         EditText searchBar = findViewById(R.id.app_search_bar);
         searchBar.addTextChangedListener(new TextWatcher() {
@@ -71,37 +119,75 @@ public final class AppSearchActivity extends Activity {
             public void afterTextChanged(Editable s) {
                 if (TextUtils.isEmpty(s)) {
                     searchResultView.setVisibility(View.GONE);
+                    mSearchResultAdapter.clearResults();
                 } else {
                     searchResultView.setVisibility(View.VISIBLE);
-                    searchResultAdapter.getFilter().filter(s.toString());
+                    mSearchResultAdapter.getFilter().filter(s.toString());
                 }
             }
         });
     }
 
-    private ArrayList<AppMetaData> getAppsList() {
-        ArrayList<AppMetaData> apps = new ArrayList<>();
-        PackageManager manager = getPackageManager();
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // register broadcast receiver for package installation and uninstallation
+        mInstallUninstallReceiver = new AppInstallUninstallReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        filter.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter.addDataScheme("package");
+        registerReceiver(mInstallUninstallReceiver, filter);
 
-        Intent intent = new Intent(Intent.ACTION_MAIN, null);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        // Connect to car service
+        mCar.connect();
+    }
 
-        List<ResolveInfo> availableActivities = manager.queryIntentActivities(intent, 0);
-        for (ResolveInfo info : availableActivities) {
-            AppMetaData app =
-                    new AppMetaData(
-                            info.loadLabel(manager),
-                            info.activityInfo.packageName,
-                            info.activityInfo.loadIcon(manager));
-            apps.add(app);
+    @Override
+    protected void onStop() {
+        super.onPause();
+        // disconnect from app install/uninstall receiver
+        if (mInstallUninstallReceiver != null) {
+            unregisterReceiver(mInstallUninstallReceiver);
+            mInstallUninstallReceiver = null;
         }
-        Collections.sort(apps);
-        return apps;
+        // disconnect from car listeners
+        try {
+            if (mCarUxRestrictionsManager != null) {
+                mCarUxRestrictionsManager.unregisterListener();
+            }
+        } catch (CarNotConnectedException e) {
+            Log.e(TAG, "Error unregistering listeners", e);
+        }
+        if (mCar != null) {
+            mCar.disconnect();
+        }
+    }
+
+    private List<AppMetaData> getAllApps() {
+        return AppLauncherUtils.getAllLaunchableApps(
+                getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
     }
 
     public void hideKeyboard() {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(
                 Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+    }
+
+    private class AppInstallUninstallReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String packageName = intent.getData().getSchemeSpecificPart();
+
+            if (TextUtils.isEmpty(packageName)) {
+                Log.e(TAG, "System sent an empty app install/uninstall broadcast");
+                return;
+            }
+
+            mSearchResultAdapter.setAllApps(getAllApps());
+        }
     }
 }

@@ -33,7 +33,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_PRIVILEGED_MODULE := true
 
-LOCAL_OVERRIDES_PACKAGES += Launcher2 Launcher3
+LOCAL_OVERRIDES_PACKAGES += Launcher2 Launcher3 Launcher3QuickStep
 
 LOCAL_USE_AAPT2 := true
 
@@ -47,6 +47,8 @@ LOCAL_STATIC_ANDROID_LIBRARIES += \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-constraint-layout-solver
+
+LOCAL_JAVA_LIBRARIES += android.car
 
 include $(BUILD_PACKAGE)
 
