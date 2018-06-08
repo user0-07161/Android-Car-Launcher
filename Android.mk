@@ -33,7 +33,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_PRIVILEGED_MODULE := true
 
-LOCAL_OVERRIDES_PACKAGES += Launcher2 Launcher3
+LOCAL_OVERRIDES_PACKAGES += Launcher2 Launcher3 Launcher3QuickStep
 
 LOCAL_USE_AAPT2 := true
 
