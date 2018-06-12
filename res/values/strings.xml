@@ -15,7 +15,6 @@
     limitations under the License.
 -->
 <resources>
-    <string name="title_text">Let\'s Drive</string>
     <string name="app_title">Car Launcher</string>
     <string name="all_apps">All apps</string>
 </resources>
