@@ -43,10 +43,10 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx.car_car \
-    android-support-constraint-layout
+    androidx-constraintlayout_constraintlayout
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-constraint-layout-solver
+    androidx-constraintlayout_constraintlayout-solver
 
 LOCAL_JAVA_LIBRARIES += android.car
 
