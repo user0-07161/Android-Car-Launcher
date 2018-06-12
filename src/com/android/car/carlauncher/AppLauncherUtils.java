@@ -98,9 +98,6 @@ class AppLauncherUtils {
 
         List<AppMetaData> apps = new ArrayList<>();
 
-        Intent intent = new Intent(Intent.ACTION_MAIN, null);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
         List<LauncherActivityInfo> availableActivities =
                 launcherApps.getActivityList(null, Process.myUserHandle());
         for (LauncherActivityInfo info : availableActivities) {
