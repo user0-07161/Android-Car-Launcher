@@ -49,13 +49,5 @@
         <activity
             android:name=".AppSearchActivity">
         </activity>
-        <receiver android:name=".AppGridActivity$AppInstallUninstallReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED"/>
-                <action android:name="android.intent.action.PACKAGE_CHANGED"/>
-                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
-                <data android:scheme="package"/>
-            </intent-filter>
-        </receiver>
     </application>
 </manifest>
