@@ -16,7 +16,6 @@
 
 package com.android.car.carlauncher;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityView;
@@ -26,6 +25,8 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.Set;
+
+import androidx.fragment.app.FragmentActivity;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link ActivityView} to host
@@ -41,7 +42,7 @@ import java.util.Set;
  * Launcher with the {@link Intent#CATEGORY_APP_MAPS} category, and the launcher will start the
  * Activity on the real display.
  */
-public class CarLauncher extends Activity {
+public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
 
     private ActivityView mActivityView;
