@@ -44,10 +44,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AppGridActivity">
-        </activity>
+            android:name=".AppGridActivity"
+            android:noHistory="true"
+            android:launchMode="singleInstance"/>
         <activity
-            android:name=".AppSearchActivity">
-        </activity>
+            android:name=".AppSearchActivity"
+            android:noHistory="true"
+            android:launchMode="singleInstance"/>
     </application>
 </manifest>
