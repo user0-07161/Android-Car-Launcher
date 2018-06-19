@@ -30,27 +30,29 @@
     <uses-permission android:name="android.permission.REORDER_TASKS"/>
     <!-- System permission to host maps activity -->
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING"/>
+    <!-- System permission to control media playback of the active session -->
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
     <application
-        android:label="@string/app_title"
         android:icon="@drawable/ic_launcher_home"
+        android:label="@string/app_title"
         android:theme="@style/Theme.Car.Light.NoActionBar">
         <activity
             android:name=".CarLauncher"
-            android:theme="@android:style/Theme.NoTitleBar"
-            android:launchMode="singleInstance">
+            android:launchMode="singleInstance"
+            android:theme="@android:style/Theme.NoTitleBar">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
             android:name=".AppGridActivity"
-            android:noHistory="true"
-            android:launchMode="singleInstance"/>
+            android:launchMode="singleInstance"
+            android:noHistory="true"/>
         <activity
             android:name=".AppSearchActivity"
-            android:noHistory="true"
-            android:launchMode="singleInstance"/>
+            android:launchMode="singleInstance"
+            android:noHistory="true"/>
     </application>
 </manifest>
