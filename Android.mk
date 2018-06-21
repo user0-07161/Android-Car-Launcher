@@ -44,6 +44,7 @@ LOCAL_DEX_PREOPT := false
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx.car_car \
     androidx-constraintlayout_constraintlayout \
+    androidx.lifecycle_lifecycle-extensions \
     car-media-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \

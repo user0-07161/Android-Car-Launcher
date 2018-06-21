@@ -30,4 +30,6 @@
     <dimen name="list_item_vertical_padding">32dp</dimen>
     <dimen name="list_item_marginStart">24dp</dimen>
     <dimen name="list_item_text_margin_start">105dp</dimen>
+
+    <dimen name="launcher_card_corner_radius">6dp</dimen>
 </resources>
