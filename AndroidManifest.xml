@@ -16,38 +16,43 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.car.carlauncher">
+          package="com.android.car.carlauncher"
+          android:sharedUserId="android.uid.system">
     <uses-sdk
         android:minSdkVersion="27"
         android:targetSdkVersion='27'/>
     <!-- System permission to get app usage data -->
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+    <!-- System permission to send events to hosted maps activity -->
+    <uses-permission android:name="android.permission.INJECT_EVENTS"/>
+    <!-- System permissions to bring hosted maps activity to front on main display -->
+    <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS"/>
+    <uses-permission android:name="android.permission.REORDER_TASKS"/>
+    <!-- System permission to host maps activity -->
+    <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING"/>
+    <!-- System permission to control media playback of the active session -->
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
     <application
-        android:label="@string/app_title"
         android:icon="@drawable/ic_launcher_home"
+        android:label="@string/app_title"
         android:theme="@style/Theme.Car.Light.NoActionBar">
         <activity
-            android:name=".HomeActivity"
-            android:launchMode="singleInstance"
-            android:label="@string/app_title"
-            android:resizeableActivity="true">
-        </activity>
-        <activity
             android:name=".CarLauncher"
+            android:launchMode="singleInstance"
             android:theme="@android:style/Theme.NoTitleBar">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LAUNCHER_APP" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".AppGridActivity">
-        </activity>
+            android:name=".AppGridActivity"
+            android:launchMode="singleInstance"
+            android:noHistory="true"/>
         <activity
-            android:name=".AppSearchActivity">
-        </activity>
+            android:name=".AppSearchActivity"
+            android:launchMode="singleInstance"
+            android:noHistory="true"/>
     </application>
 </manifest>
