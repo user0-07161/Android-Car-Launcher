@@ -19,14 +19,16 @@ package com.android.car.carlauncher;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityView;
+import android.app.UserSwitchObserver;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.IRemoteCallback;
 import android.os.RemoteException;
 import android.util.Log;
 
-import java.util.Set;
-
 import androidx.fragment.app.FragmentActivity;
+
+import java.util.Set;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link ActivityView} to host
@@ -41,6 +43,10 @@ import androidx.fragment.app.FragmentActivity;
  * Intent will not work. To start the maps Activity on the real display, send the Intent to the
  * Launcher with the {@link Intent#CATEGORY_APP_MAPS} category, and the launcher will start the
  * Activity on the real display.
+ *
+ * <p>Note: The state of the virtual display in the ActivityView is nondeterministic when
+ * switching away from and back to the current user. To avoid a crash, this Activity will finish
+ * when switching users.
  */
 public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
@@ -76,6 +82,14 @@ public class CarLauncher extends FragmentActivity {
                 }
             };
 
+    private final UserSwitchObserver mUserSwitchObserver = new UserSwitchObserver() {
+        @Override
+        public void onUserSwitching(int newUserId, IRemoteCallback reply) throws RemoteException {
+            super.onUserSwitching(newUserId, reply);
+            CarLauncher.this.finish();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,6 +97,13 @@ public class CarLauncher extends FragmentActivity {
 
         mActivityView = findViewById(R.id.maps);
         mActivityView.setCallback(mActivityViewCallback);
+
+        try {
+            ActivityManager.getService().registerUserSwitchObserver(mUserSwitchObserver,
+                    getLocalClassName());
+        } catch (RemoteException e) {
+            Log.e(TAG, "Failed to register user switch observer", e);
+        }
     }
 
     @Override
@@ -115,6 +136,11 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        try {
+            ActivityManager.getService().unregisterUserSwitchObserver(mUserSwitchObserver);
+        } catch (RemoteException e) {
+            Log.e(TAG, "Failed to unregister user switch observer", e);
+        }
         if (mActivityViewReady) {
             mActivityView.release();
         }
