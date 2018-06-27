@@ -41,6 +41,7 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 
+import androidx.car.widget.PagedListView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 
@@ -48,8 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import androidx.car.widget.PagedListView;
 
 /**
  * Launcher activity that shows a grid of apps.
