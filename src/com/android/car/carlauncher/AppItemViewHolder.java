@@ -21,6 +21,7 @@ import android.content.Context;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -48,7 +49,6 @@ public class AppItemViewHolder extends RecyclerView.ViewHolder {
      */
     public void bind(@Nullable AppMetaData app, boolean isDistractionOptimizationRequired) {
         // Empty out the view
-        mAppItem.setClickable(false);
         mAppIconView.setImageDrawable(null);
         mAppNameView.setText(null);
 
@@ -57,11 +57,19 @@ public class AppItemViewHolder extends RecyclerView.ViewHolder {
         }
 
         mAppNameView.setText(app.getDisplayName());
-        if (isDistractionOptimizationRequired && !app.getIsDistractionOptimized()) {
-            mAppIconView.setImageDrawable(AppLauncherUtils.toGrayscale(app.getIcon()));
-        } else {
-            mAppIconView.setImageDrawable(app.getIcon());
+        mAppIconView.setImageDrawable(app.getIcon());
+        boolean isLaunchable =
+                !isDistractionOptimizationRequired || app.getIsDistractionOptimized();
+        mAppIconView.setAlpha(mContext.getResources().getFloat(
+                isLaunchable ? R.dimen.app_icon_opacity : R.dimen.app_icon_opacity_unavailable));
+
+        if (isLaunchable) {
             mAppItem.setOnClickListener(v -> AppLauncherUtils.launchApp(mContext, app));
+        } else {
+            String warningText = mContext.getResources()
+                    .getString(R.string.driving_toast_text, app.getDisplayName());
+            mAppItem.setOnClickListener(
+                    v -> Toast.makeText(mContext, warningText, Toast.LENGTH_LONG).show());
         }
     }
 }
