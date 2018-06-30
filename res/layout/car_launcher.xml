@@ -20,7 +20,36 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/black"
     tools:context=".CarLauncher">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/start_edge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="@dimen/car_padding_1"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/top_edge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="@dimen/car_padding_1"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/end_edge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_end="@dimen/car_padding_1"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/bottom_edge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_end="@dimen/car_padding_1"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/divider_vertical"
@@ -29,23 +58,63 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.60"/>
 
-    <ActivityView
-        android:id="@+id/maps"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/divider_horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.30"/>
+
+    <View
+        android:id="@+id/top_line"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/car_list_divider_light"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <androidx.cardview.widget.CardView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="@dimen/car_padding_1"
+        app:cardCornerRadius="@dimen/launcher_card_corner_radius"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
         app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintStart_toEndOf="@+id/start_edge"
+        app:layout_constraintTop_toBottomOf="@+id/top_edge">
+        <ActivityView
+            android:id="@+id/maps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </androidx.cardview.widget.CardView>
+
+    <fragment
+        android:id="@+id/contextual"
+        android:name="com.android.car.carlauncher.ContextualFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/car_padding_1"
+        app:layout_constraintBottom_toTopOf="@+id/divider_horizontal"
+        app:layout_constraintEnd_toStartOf="@+id/end_edge"
+        app:layout_constraintStart_toEndOf="@+id/divider_vertical"
+        app:layout_constraintTop_toBottomOf="@+id/top_edge"/>
 
     <fragment
         android:id="@+id/playback"
         android:name="com.android.car.media.common.PlaybackFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="@dimen/car_padding_1"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
+        app:layout_constraintEnd_toStartOf="@+id/end_edge"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@+id/divider_horizontal"/>
+
+    <View
+        android:id="@+id/bottom_line"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/car_list_divider_light"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,7 +14,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_title">Car Launcher</string>
     <string name="all_apps">All apps</string>
+
+    <string name="driving_toast_text">
+        <xliff:g id="app_name" example="Settings">%1$s</xliff:g> can\'t be used while driving.
+    </string>
+
+    <!-- Contextual Fragment -->
+    <string name="greeting">Hi,
+        <xliff:g example="Owner" id="user">%s</xliff:g>
+    </string>
+    <string name="temperature" translatable="false">%d\u00B0</string>
+    <string name="date" translatable="false">EEEMMMd</string>
 </resources>

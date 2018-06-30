@@ -21,13 +21,8 @@
     <dimen name="search_box_height">65dp</dimen>
     <dimen name="search_bar_drawable_text_padding">46dp</dimen>
 
-    <dimen name="tile_text_size">56sp</dimen>
-    <dimen name="title_text_margin_bottom">96dp</dimen>
-    <dimen name="button_size">96dp</dimen>
+    <dimen name="launcher_card_corner_radius">6dp</dimen>
 
-    <dimen name="list_item_text_size">32sp</dimen>
-    <dimen name="list_item_icon_size">96dp</dimen>
-    <dimen name="list_item_vertical_padding">32dp</dimen>
-    <dimen name="list_item_marginStart">24dp</dimen>
-    <dimen name="list_item_text_margin_start">105dp</dimen>
+    <item name="app_icon_opacity_unavailable" type="dimen" format="float">0.5</item>
+    <item name="app_icon_opacity" type="dimen" format="float">1.0</item>
 </resources>
