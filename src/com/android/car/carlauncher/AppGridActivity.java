@@ -202,11 +202,17 @@ public final class AppGridActivity extends Activity {
         int statsSize = stats.size();
         int itemCount = Math.min(mColumnNumber, statsSize);
         while (itemsAdded < itemCount && currentIndex < statsSize) {
-            String packageName = stats.get(currentIndex).getPackageName();
+            UsageStats usageStats = stats.get(currentIndex);
+            String packageName = usageStats.getPackageName();
             currentIndex++;
 
             // do not include self
             if (packageName.equals(getPackageName())) {
+                continue;
+            }
+
+            // do not include apps that only ran in the background
+            if (usageStats.getTotalTimeInForeground() == 0) {
                 continue;
             }
 
