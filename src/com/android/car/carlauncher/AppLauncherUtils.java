@@ -24,9 +24,6 @@ import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Process;
 import android.util.Log;
 
@@ -60,22 +57,6 @@ class AppLauncherUtils {
         Intent intent =
                 context.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
         context.startActivity(intent);
-    }
-
-    /**
-     * Converts a {@link Drawable} to grey scale.
-     *
-     * @param drawable the original drawable
-     * @return the grey scale drawable
-     */
-    static Drawable toGrayscale(Drawable drawable) {
-        ColorMatrix matrix = new ColorMatrix();
-        matrix.setSaturation(0);
-        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
-        // deep copy the original drawable
-        Drawable newDrawable = drawable.getConstantState().newDrawable().mutate();
-        newDrawable.setColorFilter(filter);
-        return newDrawable;
     }
 
     /**
