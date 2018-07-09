@@ -41,6 +41,7 @@
         <activity
             android:name=".CarLauncher"
             android:launchMode="singleInstance"
+            android:configChanges="uiMode|mcc|mnc"
             android:theme="@android:style/Theme.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
