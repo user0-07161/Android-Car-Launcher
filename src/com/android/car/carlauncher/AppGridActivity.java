@@ -176,6 +176,10 @@ public final class AppGridActivity extends Activity {
         }
     }
 
+    /**
+     * Note that in order to obtain usage stats from the previous boot,
+     * the device must have gone through a clean shut down process.
+     */
     private List<AppMetaData> getMostRecentApps() {
         ArrayList<AppMetaData> apps = new ArrayList<>();
 
