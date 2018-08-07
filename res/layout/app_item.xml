@@ -38,7 +38,7 @@
         android:id="@+id/app_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.Car.Label1"
+        android:textAppearance="@style/TextAppearance.Car.Body3"
         android:ellipsize="end"
         android:maxLines="1" />
 </LinearLayout>
