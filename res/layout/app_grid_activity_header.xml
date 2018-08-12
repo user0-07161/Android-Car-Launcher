@@ -54,7 +54,7 @@
         android:layout_toEndOf="@id/exit_button_container"
         android:gravity="center_vertical"
         android:text="@string/all_apps"
-        android:textAppearance="@style/TextAppearance.Car.Title2" />
+        android:textAppearance="@style/TextAppearance.Car.Body1.Medium" />
 
     <FrameLayout
         android:id="@+id/search_button_container"
