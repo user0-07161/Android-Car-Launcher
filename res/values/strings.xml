@@ -27,5 +27,6 @@
         <xliff:g example="Owner" id="user">%s</xliff:g>
     </string>
     <string name="temperature" translatable="false">%d\u00B0</string>
+    <string name="temperature_empty" translatable="false">--\u00B0</string>
     <string name="date" translatable="false">EEEMMMd</string>
 </resources>
