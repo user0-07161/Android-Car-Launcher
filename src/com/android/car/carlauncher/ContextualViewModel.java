@@ -80,7 +80,8 @@ public class ContextualViewModel extends AndroidViewModel {
     private class WeatherTemperatureLiveData extends MutableLiveData<Integer> {
 
         WeatherTemperatureLiveData() {
-            setValue(82);
+            // TODO: Provide real data.
+            setValue(null);
         }
     }
 }

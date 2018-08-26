@@ -56,10 +56,10 @@ public class ContextualFragment extends Fragment {
         });
 
         viewModel.getWeatherTemperature().observe(this, temperature -> {
-            if (temperature != null) {
-                temperatureText.setText(
-                        getResources().getString(R.string.temperature, temperature));
-            }
+            String tempString = temperature != null
+                    ? getString(R.string.temperature, temperature)
+                    : getString(R.string.temperature_empty);
+            temperatureText.setText(tempString);
         });
 
         return rootView;
