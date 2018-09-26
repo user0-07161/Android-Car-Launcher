@@ -18,6 +18,7 @@ package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
 import android.content.Context;
+import android.content.Intent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -30,11 +31,11 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 public class AppItemViewHolder extends RecyclerView.ViewHolder {
     private final Context mContext;
-    public View mAppItem;
-    public ImageView mAppIconView;
-    public TextView mAppNameView;
+    private View mAppItem;
+    private ImageView mAppIconView;
+    private TextView mAppNameView;
 
-    public AppItemViewHolder(View view, Context context) {
+    AppItemViewHolder(View view, Context context) {
         super(view);
         mContext = context;
         mAppItem = view.findViewById(R.id.app_item);
@@ -65,11 +66,22 @@ public class AppItemViewHolder extends RecyclerView.ViewHolder {
 
         if (isLaunchable) {
             mAppItem.setOnClickListener(v -> AppLauncherUtils.launchApp(mContext, app));
+            mAppItem.setLongClickable(app.getAlternateLaunchIntent() != null);
+            mAppItem.setOnLongClickListener(v-> openAlternateLaunchIntent(app));
         } else {
             String warningText = mContext.getResources()
                     .getString(R.string.driving_toast_text, app.getDisplayName());
             mAppItem.setOnClickListener(
                     v -> Toast.makeText(mContext, warningText, Toast.LENGTH_LONG).show());
         }
+    }
+
+    private boolean openAlternateLaunchIntent(AppMetaData app) {
+        Intent intent = app.getAlternateLaunchIntent();
+        if (intent != null) {
+            mContext.startActivity(intent);
+            return true;
+        }
+        return false;
     }
 }
