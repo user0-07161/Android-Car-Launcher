@@ -39,9 +39,13 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import androidx.car.widget.PagedListView;
 
 import java.util.List;
+
 
 /**
  * Activity that allows user to search in apps.
@@ -167,8 +171,9 @@ public final class AppSearchActivity extends Activity {
     }
 
     private List<AppMetaData> getAllApps() {
-        return AppLauncherUtils.getAllLaunchableApps(
+        Map<String, AppMetaData> apps = AppLauncherUtils.getAllLauncherApps(
                 getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
+        return apps != null ? new ArrayList<>(apps.values()) : Collections.emptyList();
     }
 
     public void hideKeyboard() {
