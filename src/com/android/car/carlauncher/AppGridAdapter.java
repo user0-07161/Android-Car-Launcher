@@ -60,7 +60,7 @@ final class AppGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         notifyDataSetChanged();
     }
 
-    void setAllApps(List<AppMetaData> apps) {
+    void setAllApps(@Nullable List<AppMetaData> apps) {
         mApps = apps;
         sortAllApps();
         notifyDataSetChanged();

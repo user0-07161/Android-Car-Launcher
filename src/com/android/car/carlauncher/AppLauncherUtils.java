@@ -17,19 +17,24 @@
 package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
+import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Process;
+import android.service.media.MediaBrowserService;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Util class that contains helper method used by app launcher classes.
@@ -54,21 +59,20 @@ class AppLauncherUtils {
      * @param app the requesting app's AppMetaData
      */
     static void launchApp(Context context, AppMetaData app) {
-        Intent intent =
-                context.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
-        context.startActivity(intent);
+        context.startActivity(app.getMainLaunchIntent());
     }
 
     /**
-     * Gets all apps that support launching from launcher in unsorted order.
+     * Gets all the apps that we want to see in the launcher in unsorted order. Includes media
+     * services without launcher activities.
      *
      * @param launcherApps      The {@link LauncherApps} system service
      * @param carPackageManager The {@link CarPackageManager} system service
      * @param packageManager    The {@link PackageManager} system service
-     * @return a list of all apps' metadata
+     * @return a new map of all apps' metadata keyed by package name
      */
     @Nullable
-    static List<AppMetaData> getAllLaunchableApps(
+    static Map<String, AppMetaData> getAllLauncherApps(
             LauncherApps launcherApps,
             CarPackageManager carPackageManager,
             PackageManager packageManager) {
@@ -77,22 +81,54 @@ class AppLauncherUtils {
             return null;
         }
 
-        List<AppMetaData> apps = new ArrayList<>();
-
+        List<ResolveInfo> mediaServices = packageManager.queryIntentServices(
+                new Intent(MediaBrowserService.SERVICE_INTERFACE),
+                PackageManager.GET_RESOLVED_FILTER);
         List<LauncherActivityInfo> availableActivities =
                 launcherApps.getActivityList(null, Process.myUserHandle());
+
+        Map<String, AppMetaData> apps = new HashMap<>(
+                mediaServices.size() + availableActivities.size());
+
+        // Process media services
+        for (ResolveInfo info : mediaServices) {
+            String packageName = info.serviceInfo.packageName;
+            if (!apps.containsKey(packageName)) {
+                final boolean isDistractionOptimized = true;
+
+                Intent intent = new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE);
+                intent.putExtra(Car.CAR_EXTRA_MEDIA_PACKAGE, packageName);
+
+                AppMetaData appMetaData = new AppMetaData(
+                        info.serviceInfo.loadLabel(packageManager),
+                        packageName,
+                        info.serviceInfo.applicationInfo.loadIcon(packageManager),
+                        isDistractionOptimized,
+                        intent,
+                        packageManager.getLaunchIntentForPackage(packageName));
+                apps.put(packageName, appMetaData);
+            }
+        }
+
+        // Process activities
         for (LauncherActivityInfo info : availableActivities) {
             String packageName = info.getComponentName().getPackageName();
-            boolean isDistractionOptimized =
-                    isActivityDistractionOptimized(carPackageManager, packageName, info.getName());
+            if (!apps.containsKey(packageName)) {
+                boolean isDistractionOptimized =
+                        isActivityDistractionOptimized(carPackageManager, packageName,
+                                info.getName());
 
-            AppMetaData app = new AppMetaData(
-                    info.getLabel(),
-                    packageName,
-                    info.getApplicationInfo().loadIcon(packageManager),
-                    isDistractionOptimized);
-            apps.add(app);
+                AppMetaData appMetaData = new AppMetaData(
+                        info.getLabel(),
+                        packageName,
+                        info.getApplicationInfo().loadIcon(packageManager),
+                        isDistractionOptimized,
+                        packageManager.getLaunchIntentForPackage(packageName),
+                        null);
+                apps.put(packageName, appMetaData);
+            }
         }
+
         return apps;
     }
 
