@@ -27,10 +27,6 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProviders;
-
-import com.android.car.media.common.source.MediaSourceViewModel;
-import com.android.car.media.common.source.SimpleMediaSource;
 
 import java.util.Set;
 
@@ -101,15 +97,6 @@ public class CarLauncher extends FragmentActivity {
 
         mActivityView = findViewById(R.id.maps);
         mActivityView.setCallback(mActivityViewCallback);
-
-        MediaSourceViewModel mediaSrcVM =
-                ViewModelProviders.of(this).get(MediaSourceViewModel.class);
-        mediaSrcVM.getTopActiveMediaController()
-                .observe(this,
-                        mediaController ->
-                                mediaSrcVM.setSelectedMediaSource(
-                                        new SimpleMediaSource(CarLauncher.this,
-                                                mediaController.getPackageName())));
 
         try {
             ActivityManager.getService().registerUserSwitchObserver(mUserSwitchObserver,
