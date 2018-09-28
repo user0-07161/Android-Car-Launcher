@@ -30,7 +30,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.android.car.media.common.source.MediaSourceViewModel;
-import com.android.car.media.common.source.SimpleMediaSource;
+import com.android.car.media.common.source.MediaSource;
 
 import java.util.Set;
 
@@ -108,7 +108,7 @@ public class CarLauncher extends FragmentActivity {
                 .observe(this,
                         mediaController ->
                                 mediaSrcVM.setSelectedMediaSource(
-                                        new SimpleMediaSource(CarLauncher.this,
+                                        new MediaSource(CarLauncher.this,
                                                 mediaController.getPackageName())));
 
         try {
