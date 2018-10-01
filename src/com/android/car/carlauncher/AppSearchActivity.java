@@ -41,10 +41,10 @@ import android.widget.EditText;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
-import androidx.car.widget.PagedListView;
-
 import java.util.List;
+import java.util.Map;
+
+import androidx.car.widget.PagedListView;
 
 
 /**
