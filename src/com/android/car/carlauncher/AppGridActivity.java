@@ -43,11 +43,11 @@ import androidx.car.widget.PagedListView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 
+import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Launcher activity that shows a grid of apps.
@@ -136,10 +136,10 @@ public final class AppGridActivity extends Activity {
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
     private void updateAppsLists() {
-        Map<String, AppMetaData> apps = AppLauncherUtils.getAllLauncherApps(
+        LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(
                 getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
-        mGridAdapter.setAllApps(apps != null ? new ArrayList<>(apps.values()) : null);
-        mGridAdapter.setMostRecentApps(getMostRecentApps(apps));
+        mGridAdapter.setAllApps(appsInfo.getApplicationsList());
+        mGridAdapter.setMostRecentApps(getMostRecentApps(appsInfo));
     }
 
     @Override
@@ -184,9 +184,9 @@ public final class AppGridActivity extends Activity {
      * Note that in order to obtain usage stats from the previous boot,
      * the device must have gone through a clean shut down process.
      */
-    private List<AppMetaData> getMostRecentApps(@Nullable Map<String, AppMetaData> allApps) {
+    private List<AppMetaData> getMostRecentApps(LauncherAppsInfo appsInfo) {
         ArrayList<AppMetaData> apps = new ArrayList<>();
-        if (allApps == null) {
+        if (appsInfo.isEmpty()) {
             return apps;
         }
 
@@ -205,7 +205,7 @@ public final class AppGridActivity extends Activity {
             return apps; // empty list
         }
 
-        Collections.sort(stats, new LastTimeUsedComparator());
+        stats.sort(new LastTimeUsedComparator());
 
         int currentIndex = 0;
         int itemsAdded = 0;
@@ -213,7 +213,7 @@ public final class AppGridActivity extends Activity {
         int itemCount = Math.min(mColumnNumber, statsSize);
         while (itemsAdded < itemCount && currentIndex < statsSize) {
             UsageStats usageStats = stats.get(currentIndex);
-            String packageName = usageStats.getPackageName();
+            String packageName = usageStats.mPackageName;
             currentIndex++;
 
             // do not include self
@@ -221,18 +221,21 @@ public final class AppGridActivity extends Activity {
                 continue;
             }
 
-            // do not include apps that only ran in the background
-            if (usageStats.getTotalTimeInForeground() == 0) {
-                continue;
+            // Exempt media services from background and launcher checks
+            if (!appsInfo.isMediaService(packageName)) {
+                // do not include apps that only ran in the background
+                if (usageStats.getTotalTimeInForeground() == 0) {
+                    continue;
+                }
+
+                // do not include apps that don't support starting from launcher
+                Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
+                if (intent == null || !intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                    continue;
+                }
             }
 
-            // do not include apps that don't support starting from launcher
-            Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
-            if (intent == null || !intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-                continue;
-            }
-
-            AppMetaData app = allApps.get(packageName);
+            AppMetaData app = appsInfo.getAppMetaData(packageName);
             // Prevent duplicated entries
             // e.g. app is used at 2017/12/31 23:59, and 2018/01/01 00:00
             if (app != null && !apps.contains(app)) {
