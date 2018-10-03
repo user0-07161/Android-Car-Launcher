@@ -41,10 +41,10 @@ import android.widget.EditText;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
-import androidx.car.widget.PagedListView;
-
 import java.util.List;
+import java.util.Map;
+
+import androidx.car.widget.PagedListView;
 
 
 /**
@@ -171,9 +171,9 @@ public final class AppSearchActivity extends Activity {
     }
 
     private List<AppMetaData> getAllApps() {
-        Map<String, AppMetaData> apps = AppLauncherUtils.getAllLauncherApps(
+        AppLauncherUtils.LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(
                 getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
-        return apps != null ? new ArrayList<>(apps.values()) : Collections.emptyList();
+        return appsInfo.getApplicationsList();
     }
 
     public void hideKeyboard() {
