@@ -17,11 +17,9 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/ContextualSpace"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:cardBackgroundColor="@color/car_grey_800"
-    app:cardCornerRadius="@dimen/launcher_card_corner_radius"
-    app:cardElevation="0dp">
+    android:layout_height="match_parent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
@@ -32,7 +30,7 @@
             android:id="@+id/weather_image"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:layout_marginStart="@dimen/car_padding_3"
+            android:layout_marginStart="@dimen/weather_image_margin"
             app:layout_constraintBottom_toBottomOf="@+id/temperature"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
@@ -41,10 +39,10 @@
             android:id="@+id/greeting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/car_padding_4"
+            android:layout_marginStart="@dimen/text_weather_image_margin"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textAppearance="@style/TextAppearance.Car.Body1.Light"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             app:layout_constraintStart_toEndOf="@+id/weather_image"
             app:layout_constraintTop_toTopOf="@+id/parent"/>
 
@@ -52,9 +50,9 @@
             android:id="@+id/temperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/car_padding_4"
-            android:layout_marginTop="@dimen/car_padding_1"
-            android:textAppearance="@style/TextAppearance.Car.Body1.Light"
+            android:layout_marginStart="@dimen/text_weather_image_margin"
+            android:layout_marginTop="@dimen/date_greeting_margin"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             app:layout_constraintStart_toEndOf="@+id/weather_image"
             app:layout_constraintTop_toBottomOf="@+id/greeting"/>
 
@@ -63,8 +61,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=" |  "
-            android:textAppearance="@style/TextAppearance.Car.Body1.Light"
-            android:textColor="@color/car_grey_50"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/weather_divider_bar_color"
             app:layout_constraintStart_toEndOf="@+id/temperature"
             app:layout_constraintTop_toTopOf="@+id/temperature"/>
 
@@ -74,7 +72,7 @@
             android:layout_height="wrap_content"
             android:format12Hour="@string/date"
             android:format24Hour="@string/date"
-            android:textAppearance="@style/TextAppearance.Car.Body1.Light"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             app:layout_constraintStart_toEndOf="@+id/weather_divider"
             app:layout_constraintTop_toTopOf="@+id/weather_divider"/>
 
