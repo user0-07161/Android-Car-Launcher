@@ -20,19 +20,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/car_card"
     android:orientation="vertical">
 
     <include
         layout="@layout/app_grid_activity_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/car_padding_4" />
+        android:layout_marginBottom="@dimen/app_grid_header_margin"/>
 
     <androidx.car.widget.PagedListView
         android:id="@+id/apps_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:theme="@style/PagedListTheme"
         app:scrollBarTopMargin="0dp"
-        app:showPagedListViewDivider="false" />
+        app:showPagedListViewDivider="false"/>
 </LinearLayout>

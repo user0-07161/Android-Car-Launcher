@@ -20,7 +20,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
     tools:context=".CarLauncher">
 
     <androidx.constraintlayout.widget.Guideline
@@ -28,56 +27,53 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_begin="@dimen/car_padding_1"/>
+        app:layout_constraintGuide_begin="@dimen/horizontal_border_size"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/top_edge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="@dimen/car_padding_1"/>
+        app:layout_constraintGuide_begin="@dimen/vertical_border_size"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/end_edge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_end="@dimen/car_padding_1"/>
+        app:layout_constraintGuide_end="@dimen/horizontal_border_size"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/bottom_edge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_end="@dimen/car_padding_1"/>
+        app:layout_constraintGuide_end="@dimen/vertical_border_size"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/divider_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.60"/>
+        app:layout_constraintGuide_percent="@dimen/maps_screen_percentage"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/divider_horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.30"/>
+        app:layout_constraintGuide_percent="@dimen/contextual_screen_percentage"/>
 
     <View
         android:id="@+id/top_line"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/car_list_divider_light"
+        style="@style/HorizontalLineDivider"
         app:layout_constraintTop_toTopOf="parent"/>
 
     <androidx.cardview.widget.CardView
+        style="@style/CardViewStyle"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="@dimen/car_padding_1"
-        app:cardCornerRadius="@dimen/launcher_card_corner_radius"
-        app:cardElevation="0dp"
+        android:layout_margin="@dimen/main_screen_widget_margin"
         app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
         app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
         app:layout_constraintStart_toEndOf="@+id/start_edge"
@@ -93,7 +89,7 @@
         android:name="com.android.car.carlauncher.ContextualFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="@dimen/car_padding_1"
+        android:layout_margin="@dimen/main_screen_widget_margin"
         app:layout_constraintBottom_toTopOf="@+id/divider_horizontal"
         app:layout_constraintEnd_toStartOf="@+id/end_edge"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
@@ -104,17 +100,14 @@
         android:name="com.android.car.media.common.PlaybackFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="@dimen/car_padding_1"
+        android:layout_margin="@dimen/main_screen_widget_margin"
         app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
         app:layout_constraintEnd_toStartOf="@+id/end_edge"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/divider_horizontal"/>
-
     <View
         android:id="@+id/bottom_line"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/car_list_divider_light"
+        style="@style/HorizontalLineDivider"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -37,12 +37,11 @@
     <application
         android:icon="@drawable/ic_launcher_home"
         android:label="@string/app_title"
-        android:theme="@style/Theme.Car.Light.NoActionBar">
+        android:theme="@style/Theme.Launcher">
         <activity
             android:name=".CarLauncher"
             android:launchMode="singleInstance"
-            android:configChanges="uiMode|mcc|mnc"
-            android:theme="@android:style/Theme.NoTitleBar">
+            android:configChanges="uiMode|mcc|mnc">
             <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
