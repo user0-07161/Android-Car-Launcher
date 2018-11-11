@@ -37,12 +37,12 @@
     <application
         android:icon="@drawable/ic_launcher_home"
         android:label="@string/app_title"
-        android:theme="@style/Theme.Car.Light.NoActionBar">
+        android:theme="@style/Theme.Launcher">
         <activity
             android:name=".CarLauncher"
             android:launchMode="singleInstance"
-            android:configChanges="uiMode|mcc|mnc"
-            android:theme="@android:style/Theme.NoTitleBar">
+            android:configChanges="uiMode|mcc|mnc">
+            <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.HOME"/>
@@ -52,10 +52,14 @@
         <activity
             android:name=".AppGridActivity"
             android:launchMode="singleInstance"
-            android:noHistory="true"/>
+            android:noHistory="true">
+            <meta-data android:name="distractionOptimized" android:value="true"/>
+        </activity>
         <activity
             android:name=".AppSearchActivity"
             android:launchMode="singleInstance"
-            android:noHistory="true"/>
+            android:noHistory="true">
+            <meta-data android:name="distractionOptimized" android:value="true"/>
+        </activity>
     </application>
 </manifest>
