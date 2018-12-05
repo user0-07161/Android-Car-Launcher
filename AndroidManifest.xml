@@ -34,6 +34,8 @@
     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
     <!-- System permission to query users on device -->
     <uses-permission android:name="android.permission.MANAGE_USERS"/>
+    <!-- Media Center permission to fetch the currently selected media source -->
+    <uses-permission android:name="com.android.car.media.provider.READ"/>
     <application
         android:icon="@drawable/ic_launcher_home"
         android:label="@string/app_title"
