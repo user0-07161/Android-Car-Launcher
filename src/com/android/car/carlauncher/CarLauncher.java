@@ -21,12 +21,16 @@ import android.app.ActivityOptions;
 import android.app.ActivityView;
 import android.app.UserSwitchObserver;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.IRemoteCallback;
 import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.android.car.media.common.PlaybackFragment;
 
 import java.util.Set;
 
@@ -94,7 +98,7 @@ public class CarLauncher extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.car_launcher);
-
+        initializeFragments();
         mActivityView = findViewById(R.id.maps);
         mActivityView.setCallback(mActivityViewCallback);
 
@@ -163,5 +167,21 @@ public class CarLauncher extends FragmentActivity {
 
     private Intent getMapsIntent() {
         return Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MAPS);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        initializeFragments();
+    }
+
+    private void initializeFragments() {
+        PlaybackFragment playbackFragment = new PlaybackFragment();
+        ContextualFragment contextualFragment = new ContextualFragment();
+        FragmentTransaction fragmentTransaction =
+                getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.playback, playbackFragment);
+        fragmentTransaction.replace(R.id.contextual, contextualFragment);
+        fragmentTransaction.commitNow();
     }
 }
