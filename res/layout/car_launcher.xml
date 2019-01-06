@@ -84,9 +84,8 @@
             android:layout_height="match_parent"/>
     </androidx.cardview.widget.CardView>
 
-    <fragment
+    <FrameLayout
         android:id="@+id/contextual"
-        android:name="com.android.car.carlauncher.ContextualFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
@@ -95,9 +94,8 @@
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/top_edge"/>
 
-    <fragment
+    <FrameLayout
         android:id="@+id/playback"
-        android:name="com.android.car.media.common.PlaybackFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
