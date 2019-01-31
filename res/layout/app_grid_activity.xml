@@ -32,7 +32,6 @@
         android:id="@+id/apps_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:scrollBarContainerWidth="@dimen/panel_margin"
         android:theme="@style/PagedListTheme"
         app:scrollBarTopMargin="0dp"
         app:showPagedListViewDivider="false"/>
