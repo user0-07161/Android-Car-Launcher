@@ -46,8 +46,12 @@ import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Launcher activity that shows a grid of apps.
@@ -57,6 +61,8 @@ public final class AppGridActivity extends Activity {
     private static final String TAG = "AppGridActivity";
 
     private int mColumnNumber;
+    private boolean mShowAllApps = true;
+    private final Set<String> mHiddenApps = new HashSet<>();
     private AppGridAdapter mGridAdapter;
     private PackageManager mPackageManager;
     private UsageStatsManager mUsageStatsManager;
@@ -101,10 +107,20 @@ public final class AppGridActivity extends Activity {
         mPackageManager = getPackageManager();
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         mCar = Car.createCar(this, mCarConnectionListener);
+        mHiddenApps.addAll(Arrays.asList(getResources().getStringArray(R.array.hidden_apps)));
 
         setContentView(R.layout.app_grid_activity);
 
-        findViewById(R.id.exit_button_container).setOnClickListener(v -> finish());
+        View exitView = findViewById(R.id.exit_button_container);
+        exitView.setOnClickListener(v -> finish());
+        exitView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                mShowAllApps = !mShowAllApps;
+                updateAppsLists();
+                return true;
+            }
+        });
 
         findViewById(R.id.search_button_container).setOnClickListener((View view) -> {
             Intent intent = new Intent(this, AppSearchActivity.class);
@@ -136,7 +152,8 @@ public final class AppGridActivity extends Activity {
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
     private void updateAppsLists() {
-        LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(
+        Set<String> blackList = mShowAllApps ? Collections.emptySet() : mHiddenApps;
+        LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(blackList,
                 getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
         mGridAdapter.setAllApps(appsInfo.getApplicationsList());
         mGridAdapter.setMostRecentApps(getMostRecentApps(appsInfo));
