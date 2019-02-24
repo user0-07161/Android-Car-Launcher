@@ -73,7 +73,7 @@ public class CarLauncher extends FragmentActivity {
                 }
 
                 @Override
-                public void onTaskMovedToFront(ActivityManager.StackInfo stackInfo) {
+                public void onTaskMovedToFront(int taskId) {
                     try {
                         if (!mIsStarted) {
                             ActivityManager.getService().moveTaskToFront(
