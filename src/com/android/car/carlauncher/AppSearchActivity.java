@@ -172,7 +172,8 @@ public final class AppSearchActivity extends Activity {
 
     private List<AppMetaData> getAllApps() {
         AppLauncherUtils.LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(
-                getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
+                Collections.emptySet(), getSystemService(LauncherApps.class), mCarPackageManager,
+                mPackageManager);
         return appsInfo.getApplicationsList();
     }
 
