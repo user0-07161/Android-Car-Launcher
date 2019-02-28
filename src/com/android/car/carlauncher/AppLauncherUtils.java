@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Util class that contains helper method used by app launcher classes.
@@ -109,6 +110,7 @@ class AppLauncherUtils {
      * Gets all the apps that we want to see in the launcher in unsorted order. Includes media
      * services without launcher activities.
      *
+     * @param blackList         A (possibly empty) list of apps to hide
      * @param launcherApps      The {@link LauncherApps} system service
      * @param carPackageManager The {@link CarPackageManager} system service
      * @param packageManager    The {@link PackageManager} system service
@@ -116,6 +118,7 @@ class AppLauncherUtils {
      */
     @NonNull
     static LauncherAppsInfo getAllLauncherApps(
+            @NonNull Set<String> blackList,
             LauncherApps launcherApps,
             CarPackageManager carPackageManager,
             PackageManager packageManager) {
@@ -138,7 +141,7 @@ class AppLauncherUtils {
         for (ResolveInfo info : mediaServices) {
             String packageName = info.serviceInfo.packageName;
             mediaServicesMap.put(packageName, info);
-            if (!apps.containsKey(packageName)) {
+            if (shouldAdd(packageName, apps, blackList)) {
                 final boolean isDistractionOptimized = true;
 
                 Intent intent = new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE);
@@ -158,7 +161,7 @@ class AppLauncherUtils {
         // Process activities
         for (LauncherActivityInfo info : availableActivities) {
             String packageName = info.getComponentName().getPackageName();
-            if (!apps.containsKey(packageName)) {
+            if (shouldAdd(packageName, apps, blackList)) {
                 boolean isDistractionOptimized =
                         isActivityDistractionOptimized(carPackageManager, packageName,
                                 info.getName());
@@ -175,6 +178,11 @@ class AppLauncherUtils {
         }
 
         return new LauncherAppsInfo(apps, mediaServicesMap);
+    }
+
+    private static boolean shouldAdd(String packageName, Map<String, AppMetaData> apps,
+            @NonNull Set<String> blackList) {
+        return !apps.containsKey(packageName) && !blackList.contains(packageName);
     }
 
     /**
