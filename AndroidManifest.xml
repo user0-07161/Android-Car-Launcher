@@ -40,8 +40,9 @@
         android:theme="@style/Theme.Launcher">
         <activity
             android:name=".CarLauncher"
+            android:configChanges="uiMode|mcc|mnc"
             android:launchMode="singleInstance"
-            android:configChanges="uiMode|mcc|mnc">
+            android:resizeableActivity="true">
             <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
