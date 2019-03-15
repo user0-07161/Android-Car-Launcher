@@ -19,6 +19,7 @@
               android:id="@+id/app_item"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
+              android:layout_marginTop="@dimen/app_grid_row_margin"
               android:layout_marginBottom="@dimen/app_grid_row_margin"
               android:layout_marginEnd="@dimen/app_touch_target_margin"
               android:layout_marginStart="@dimen/app_touch_target_margin"
