@@ -42,8 +42,6 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
-    androidx.car_car \
-    car-theme-lib \
     androidx-constraintlayout_constraintlayout \
     androidx.lifecycle_lifecycle-extensions \
     car-media-common
