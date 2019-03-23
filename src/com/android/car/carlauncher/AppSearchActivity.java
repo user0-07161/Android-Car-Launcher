@@ -39,13 +39,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
-import java.util.ArrayList;
+import androidx.recyclerview.widget.RecyclerView;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-import androidx.car.widget.PagedListView;
-
 
 /**
  * Activity that allows user to search in apps.
@@ -104,7 +100,7 @@ public final class AppSearchActivity extends Activity {
                 });
         findViewById(R.id.exit_button_container).setOnClickListener(view -> finish());
 
-        PagedListView searchResultView = findViewById(R.id.search_result);
+        RecyclerView searchResultView = findViewById(R.id.search_result);
         searchResultView.setClipToOutline(true);
         mSearchResultAdapter = new SearchResultAdapter(this);
         searchResultView.setAdapter(mSearchResultAdapter);

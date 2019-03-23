@@ -18,8 +18,7 @@
 <resources>
     <!--Theme for the app, it's defined empty here so it can be overlaid easily -->
     <style name="Theme.Launcher" parent="android:Theme.DeviceDefault.NoActionBar">
-    </style>
-    <!--This Theme contains attributes required for components from the car support lib -->
-    <style name="PagedListTheme" parent="Theme.CarSupportWrapper.NoActionBar">
+        <item name="textAppearanceGridItem">@android:style/TextAppearance.DeviceDefault.Medium</item>
+        <item name="textAppearanceGridItemSecondary">@android:style/TextAppearance.DeviceDefault.Small</item>
     </style>
 </resources>

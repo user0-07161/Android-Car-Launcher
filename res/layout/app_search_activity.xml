@@ -67,14 +67,11 @@
             android:textAppearance="?android:attr/textAppearanceLarge"/>
     </RelativeLayout>
 
-    <androidx.car.widget.PagedListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/search_result"
-        android:theme="@style/PagedListTheme"
         android:layout_width="@dimen/search_item_width"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/search_result_margin"
-        app:gutter="none"
-        app:scrollBarEnabled="false"/>
+        android:layout_marginTop="@dimen/search_result_margin"/>
 
 </LinearLayout>
 

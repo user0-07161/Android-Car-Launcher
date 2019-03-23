@@ -39,10 +39,10 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 
-import androidx.car.widget.PagedListView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 
+import androidx.recyclerview.widget.RecyclerView;
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
 
 import java.util.ArrayList;
@@ -128,7 +128,7 @@ public final class AppGridActivity extends Activity {
         });
 
         mGridAdapter = new AppGridAdapter(this);
-        PagedListView gridView = findViewById(R.id.apps_grid);
+        RecyclerView gridView = findViewById(R.id.apps_grid);
 
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mColumnNumber);
         gridLayoutManager.setSpanSizeLookup(new SpanSizeLookup() {
@@ -137,7 +137,7 @@ public final class AppGridActivity extends Activity {
                 return mGridAdapter.getSpanSizeLookup(position);
             }
         });
-        gridView.getRecyclerView().setLayoutManager(gridLayoutManager);
+        gridView.setLayoutManager(gridLayoutManager);
 
         gridView.setAdapter(mGridAdapter);
     }
