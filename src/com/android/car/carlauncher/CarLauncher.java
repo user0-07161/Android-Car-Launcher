@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.IRemoteCallback;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.FrameLayout;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -100,8 +101,9 @@ public class CarLauncher extends FragmentActivity {
         setContentView(R.layout.car_launcher);
         initializeFragments();
         mActivityView = findViewById(R.id.maps);
-        mActivityView.setCallback(mActivityViewCallback);
-
+        if (mActivityView != null) {
+            mActivityView.setCallback(mActivityViewCallback);
+        }
         try {
             ActivityManager.getService().registerUserSwitchObserver(mUserSwitchObserver,
                     getLocalClassName());
@@ -145,7 +147,7 @@ public class CarLauncher extends FragmentActivity {
         } catch (RemoteException e) {
             Log.e(TAG, "Failed to unregister user switch observer", e);
         }
-        if (mActivityViewReady) {
+        if (mActivityView != null && mActivityViewReady) {
             mActivityView.release();
         }
     }
@@ -154,7 +156,9 @@ public class CarLauncher extends FragmentActivity {
         if (!mActivityViewReady) {
             return;
         }
-        mActivityView.startActivity(getMapsIntent());
+        if (mActivityView != null) {
+            mActivityView.startActivity(getMapsIntent());
+        }
     }
 
     private void launchMapsActivity() {
@@ -177,11 +181,18 @@ public class CarLauncher extends FragmentActivity {
 
     private void initializeFragments() {
         PlaybackFragment playbackFragment = new PlaybackFragment();
-        ContextualFragment contextualFragment = new ContextualFragment();
+        ContextualFragment contextualFragment = null;
+        FrameLayout contextual = findViewById(R.id.contextual);
+        if(contextual != null) {
+            contextualFragment = new ContextualFragment();
+        }
+
         FragmentTransaction fragmentTransaction =
                 getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.playback, playbackFragment);
-        fragmentTransaction.replace(R.id.contextual, contextualFragment);
+        if(contextual != null) {
+            fragmentTransaction.replace(R.id.contextual, contextualFragment);
+        }
         fragmentTransaction.commitNow();
     }
 }
