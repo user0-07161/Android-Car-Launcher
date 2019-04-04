@@ -25,14 +25,13 @@
     <include
         layout="@layout/app_grid_activity_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/app_grid_header_margin"/>
+        android:layout_height="wrap_content"/>
 
-    <androidx.car.widget.PagedListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/apps_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:theme="@style/PagedListTheme"
-        app:scrollBarTopMargin="0dp"
-        app:showPagedListViewDivider="false"/>
+        android:layout_marginStart="@dimen/panel_margin"
+        android:layout_marginEnd="@dimen/panel_margin"/>
+
 </LinearLayout>
