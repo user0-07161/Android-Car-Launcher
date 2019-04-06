@@ -76,7 +76,7 @@ public class CarLauncher extends FragmentActivity {
                 @Override
                 public void onTaskMovedToFront(int taskId) {
                     try {
-                        if (!mIsStarted) {
+                        if (mIsStarted) {
                             ActivityManager.getService().moveTaskToFront(
                                     CarLauncher.this.getTaskId(), /* flags= */ 0, /* options= */
                                     null);
@@ -98,7 +98,14 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.car_launcher);
+        // Don't show the maps panel in multi window mode.
+        // NOTE: CTS tests for split screen are not compatible with activity views on the default
+        // activity of the launcher
+        if (isInMultiWindowMode() || isInPictureInPictureMode()) {
+            setContentView(R.layout.car_launcher_multiwindow);
+        } else {
+            setContentView(R.layout.car_launcher);
+        }
         initializeFragments();
         mActivityView = findViewById(R.id.maps);
         if (mActivityView != null) {
@@ -153,7 +160,9 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void startMapsInActivityView() {
-        if (!mActivityViewReady) {
+        // If we happen to be be resurfaced into a multi display mode we skip launching content
+        // in the activity view as we will get recreated anyway.
+        if (!mActivityViewReady || isInMultiWindowMode() || isInPictureInPictureMode()) {
             return;
         }
         if (mActivityView != null) {
