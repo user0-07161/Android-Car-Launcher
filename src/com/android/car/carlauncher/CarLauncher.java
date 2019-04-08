@@ -87,14 +87,6 @@ public class CarLauncher extends FragmentActivity {
                 }
             };
 
-    private final UserSwitchObserver mUserSwitchObserver = new UserSwitchObserver() {
-        @Override
-        public void onUserSwitching(int newUserId, IRemoteCallback reply) throws RemoteException {
-            super.onUserSwitching(newUserId, reply);
-            CarLauncher.this.finish();
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,12 +102,6 @@ public class CarLauncher extends FragmentActivity {
         mActivityView = findViewById(R.id.maps);
         if (mActivityView != null) {
             mActivityView.setCallback(mActivityViewCallback);
-        }
-        try {
-            ActivityManager.getService().registerUserSwitchObserver(mUserSwitchObserver,
-                    getLocalClassName());
-        } catch (RemoteException e) {
-            Log.e(TAG, "Failed to register user switch observer", e);
         }
     }
 
@@ -149,11 +135,6 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        try {
-            ActivityManager.getService().unregisterUserSwitchObserver(mUserSwitchObserver);
-        } catch (RemoteException e) {
-            Log.e(TAG, "Failed to unregister user switch observer", e);
-        }
         if (mActivityView != null && mActivityViewReady) {
             mActivityView.release();
         }
