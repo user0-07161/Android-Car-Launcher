@@ -17,7 +17,7 @@
 
 <resources>
     <!--Theme for the app, it's defined empty here so it can be overlaid easily -->
-    <style name="Theme.Launcher" parent="android:Theme.DeviceDefault.NoActionBar">
+    <style name="Theme.Launcher" parent="android:Theme.DeviceDefault.Wallpaper.NoTitleBar">
         <item name="textAppearanceGridItem">@android:style/TextAppearance.DeviceDefault.Medium</item>
         <item name="textAppearanceGridItemSecondary">@android:style/TextAppearance.DeviceDefault.Small</item>
     </style>
