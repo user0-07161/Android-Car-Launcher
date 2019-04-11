@@ -18,9 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.car.carlauncher"
           android:sharedUserId="android.uid.system">
-    <uses-sdk
-        android:minSdkVersion="27"
-        android:targetSdkVersion='27'/>
     <!-- System permission to get app usage data -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
     <!-- System permission to send events to hosted maps activity -->
@@ -40,8 +37,13 @@
         android:theme="@style/Theme.Launcher">
         <activity
             android:name=".CarLauncher"
-            android:launchMode="singleInstance"
-            android:configChanges="uiMode|mcc|mnc">
+            android:configChanges="uiMode|mcc|mnc"
+            android:launchMode="singleTask"
+            android:clearTaskOnLaunch="true"
+            android:stateNotNeeded="true"
+            android:resumeWhilePausing="true"
+            android:windowSoftInputMode="adjustPan"
+            android:screenOrientation="nosensor">
             <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
