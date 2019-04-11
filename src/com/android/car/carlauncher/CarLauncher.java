@@ -77,11 +77,11 @@ public class CarLauncher extends FragmentActivity {
                 public void onTaskMovedToFront(int taskId) {
                     try {
                         if (mIsStarted) {
-                            ActivityManager.getService().moveTaskToFront(
-                                    CarLauncher.this.getTaskId(), /* flags= */ 0, /* options= */
-                                    null);
+                            ActivityManager am =
+                                    (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                            am.moveTaskToFront(CarLauncher.this.getTaskId(), /* flags= */ 0);
                         }
-                    } catch (RemoteException e) {
+                    } catch (RuntimeException e) {
                         Log.w(TAG, "Failed to move CarLauncher to front.");
                     }
                 }
