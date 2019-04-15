@@ -41,15 +41,20 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    androidx-constraintlayout_constraintlayout-solver
+
+LOCAL_JAVA_LIBRARIES += android.car
+
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx-constraintlayout_constraintlayout \
     androidx.lifecycle_lifecycle-extensions \
     car-media-common
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    androidx-constraintlayout_constraintlayout-solver
-
-LOCAL_JAVA_LIBRARIES += android.car
+# Including the resources for the static android libraries allows to pick up their static overlays.
+LOCAL_RESOURCE_DIR += \
+    $(LOCAL_PATH)/../libs/car-apps-common/res \
+    $(LOCAL_PATH)/../libs/car-media-common/res
 
 include $(BUILD_PACKAGE)
 
