@@ -27,6 +27,8 @@ LOCAL_PACKAGE_NAME := CarLauncher
 
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
+LOCAL_REQUIRED_MODULES := privapp_whitelist_com.android.car.carlauncher
+
 LOCAL_CERTIFICATE := platform
 
 LOCAL_MODULE_TAGS := optional
