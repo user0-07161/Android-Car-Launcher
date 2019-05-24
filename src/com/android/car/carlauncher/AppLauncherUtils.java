@@ -17,6 +17,7 @@
 package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
+import android.app.ActivityOptions;
 import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
@@ -29,6 +30,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Process;
 import android.service.media.MediaBrowserService;
 import android.util.Log;
+import android.view.Display;
 
 import androidx.annotation.NonNull;
 
@@ -63,7 +65,11 @@ class AppLauncherUtils {
      * @param app the requesting app's AppMetaData
      */
     static void launchApp(Context context, AppMetaData app) {
-        context.startActivity(app.getMainLaunchIntent());
+        ActivityOptions options = ActivityOptions.makeBasic();
+        Display display = context.getDisplay();
+        options.setLaunchDisplayId(
+                (display != null) ? display.getDisplayId() : Display.DEFAULT_DISPLAY);
+        context.startActivity(app.getMainLaunchIntent(), options.toBundle());
     }
 
     /** Bundles application and services info. */
