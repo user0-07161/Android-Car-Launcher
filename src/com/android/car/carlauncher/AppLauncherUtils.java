@@ -153,7 +153,7 @@ class AppLauncherUtils {
                 AppMetaData appMetaData = new AppMetaData(
                         info.serviceInfo.loadLabel(packageManager),
                         packageName,
-                        info.serviceInfo.applicationInfo.loadIcon(packageManager),
+                        info.serviceInfo.loadIcon(packageManager),
                         isDistractionOptimized,
                         intent,
                         packageManager.getLaunchIntentForPackage(packageName));
@@ -172,7 +172,7 @@ class AppLauncherUtils {
                 AppMetaData appMetaData = new AppMetaData(
                         info.getLabel(),
                         packageName,
-                        info.getApplicationInfo().loadIcon(packageManager),
+                        info.getBadgedIcon(0),
                         isDistractionOptimized,
                         packageManager.getLaunchIntentForPackage(packageName),
                         null);
