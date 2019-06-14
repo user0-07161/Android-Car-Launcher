@@ -60,12 +60,16 @@ public class CarLauncher extends FragmentActivity {
     private boolean mActivityViewReady = false;
     private boolean mIsStarted = false;
 
+    /** Set to {@code true} once we've logged that the Activity is fully drawn. */
+    private boolean mIsReadyLogged = false;
+
     private final ActivityView.StateCallback mActivityViewCallback =
             new ActivityView.StateCallback() {
                 @Override
                 public void onActivityViewReady(ActivityView view) {
                     mActivityViewReady = true;
                     startMapsInActivityView();
+                    maybeLogReady();
                 }
 
                 @Override
@@ -124,6 +128,7 @@ public class CarLauncher extends FragmentActivity {
     protected void onStart() {
         super.onStart();
         mIsStarted = true;
+        maybeLogReady();
     }
 
     @Override
@@ -184,5 +189,13 @@ public class CarLauncher extends FragmentActivity {
             fragmentTransaction.replace(R.id.contextual, contextualFragment);
         }
         fragmentTransaction.commitNow();
+    }
+
+    /** Logs that the Activity is ready. Used for startup time diagnostics. */
+    private void maybeLogReady() {
+        if (mActivityViewReady && !mIsReadyLogged) {
+            reportFullyDrawn();
+            mIsReadyLogged = true;
+        }
     }
 }
