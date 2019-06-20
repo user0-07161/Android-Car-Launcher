@@ -16,8 +16,7 @@
 
 package com.android.car.carlauncher;
 
-import static java.util.Objects.requireNonNull;
-
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,31 +34,45 @@ public class ContextualFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.contextual_fragment, container, false);
-        TextView greetingText = requireNonNull(rootView.findViewById(R.id.greeting));
-        ImageView weatherImage = requireNonNull(rootView.findViewById(R.id.weather_image));
-        TextView temperatureText = requireNonNull(rootView.findViewById(R.id.temperature));
+        ImageView iconView = rootView.findViewById(R.id.icon);
+        TextView topLineView = rootView.findViewById(R.id.top_line);
+        TextView bottomLineView = rootView.findViewById(R.id.bottom_line);
+        View dateDividerView = rootView.findViewById(R.id.date_divider);
+        View dateView = rootView.findViewById(R.id.date);
+        View bottomLineContainerView = rootView.findViewById(R.id.bottom_line_container);
 
         ContextualViewModel viewModel = ViewModelProviders.of(this).get(ContextualViewModel.class);
 
-        viewModel.getUserName().observe(this, userName -> {
-            if (userName != null) {
-                greetingText.setText(getResources().getString(R.string.greeting, userName));
-            } else {
-                greetingText.setText("");
+        viewModel.getContextualInfo().observe(this, info -> {
+            if (info == null) {
+                return;
             }
-        });
 
-        viewModel.getWeatherImageResource().observe(this, resourceId -> {
-            if (resourceId != null) {
-                weatherImage.setImageResource(resourceId);
-            }
-        });
+            iconView.setImageDrawable(info.getIcon());
+            topLineView.setText(info.getTopLine());
 
-        viewModel.getWeatherTemperature().observe(this, temperature -> {
-            String tempString = temperature != null
-                    ? getString(R.string.temperature, temperature)
-                    : getString(R.string.temperature_empty);
-            temperatureText.setText(tempString);
+            boolean showBottomLineMessage = (info.getBottomLine() != null);
+
+            bottomLineView.setVisibility(showBottomLineMessage ? View.VISIBLE : View.GONE);
+            bottomLineView.setText(info.getBottomLine());
+
+            dateView.setVisibility(info.getShowClock() ? View.VISIBLE : View.GONE);
+
+            // If both the bottom-line message and the clock are shown, show the divider.
+            dateDividerView.setVisibility(
+                    (showBottomLineMessage && info.getShowClock()) ? View.VISIBLE : View.GONE);
+            // Hide the bottom-line container if neither the bottom-line message nor the clock
+            // is being shown. This will center the top-line message in the card.
+            bottomLineContainerView.setVisibility(
+                    (showBottomLineMessage || info.getShowClock()) ? View.VISIBLE : View.GONE);
+
+            Intent onClickActivity = info.getOnClickActivity();
+            View.OnClickListener listener =
+                    onClickActivity != null
+                            ? v -> startActivity(info.getOnClickActivity())
+                            : null;
+            rootView.setOnClickListener(listener);
+            rootView.setClickable(listener != null);
         });
 
         return rootView;

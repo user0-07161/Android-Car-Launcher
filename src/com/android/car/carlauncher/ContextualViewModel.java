@@ -17,71 +17,83 @@
 package com.android.car.carlauncher;
 
 import android.app.Application;
+import android.car.Car;
+import android.car.CarNotConnectedException;
+import android.car.CarProjectionManager;
+import android.car.CarProjectionManager.ProjectionStatusListener;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.UserManager;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
 /**
- * Default implementation {@link ViewModel} for {@link ContextualFragment} which only returns
- * placeholder data.
+ * Implementation {@link ViewModel} for {@link ContextualFragment}.
+ *
+ * Returns the first non-null {@link ContextualInfo} from a set of delegates.
  */
 public class ContextualViewModel extends AndroidViewModel {
+    private final MediatorLiveData<ContextualInfo> mContextualInfo = new MediatorLiveData<>();
 
-    private final LiveData<String> mUserName = new UserNameLiveData();
-    private final LiveData<Integer> mWeatherCondition = new WeatherImageResourceLiveData();
-    private final LiveData<Integer> mWeatherTemperature = new WeatherTemperatureLiveData();
+    private final List<LiveData<ContextualInfo>> mInfoDelegates;
 
     public ContextualViewModel(Application application) {
+        this(application, getCarProjectionManager(application));
+    }
+
+    private static CarProjectionManager getCarProjectionManager(Context context) {
+        try {
+            return (CarProjectionManager)
+                    Car.createCar(context).getCarManager(Car.PROJECTION_SERVICE);
+        } catch (CarNotConnectedException e) {
+            // Never actually thrown.
+            throw new AssertionError(e);
+        }
+    }
+
+    @VisibleForTesting
+    ContextualViewModel(Application application, CarProjectionManager carProjectionManager) {
         super(application);
-    }
 
-    /**
-     * Returns a {@link LiveData} containing the name of the current system user.
-     */
-    public LiveData<String> getUserName() {
-        return mUserName;
-    }
+        mInfoDelegates =
+                Collections.unmodifiableList(Arrays.asList(
+                        new ProjectionContextualInfoLiveData(application, carProjectionManager),
+                        new WeatherContextualInfoLiveData(application)
+                ));
 
-    /**
-     * Returns a {@link LiveData} containing the drawable resource ID of the current weather
-     * condition.
-     */
-    public LiveData<Integer> getWeatherImageResource() {
-        return mWeatherCondition;
-    }
-
-    /**
-     * Returns a {@link LiveData} containing the current outdoor temperature.
-     */
-    public LiveData<Integer> getWeatherTemperature() {
-        return mWeatherTemperature;
-    }
-
-    private class UserNameLiveData extends MutableLiveData<String> {
-
-        @Override
-        protected void onActive() {
-            UserManager userManager = UserManager.get(getApplication());
-            String userName = userManager.getUserName();
-            setValue(userName);
+        Observer<Object> observer = x -> updateLiveData();
+        for (LiveData<ContextualInfo> delegate : mInfoDelegates) {
+            mContextualInfo.addSource(delegate, observer);
         }
     }
 
-    private class WeatherImageResourceLiveData extends MutableLiveData<Integer> {
-
-        WeatherImageResourceLiveData() {
-            setValue(R.drawable.ic_partly_cloudy);
+    private void updateLiveData() {
+        for (LiveData<ContextualInfo> delegate : mInfoDelegates) {
+            ContextualInfo value = delegate.getValue();
+            if (value != null) {
+                mContextualInfo.setValue(value);
+                return;
+            }
         }
+
+        mContextualInfo.setValue(null);
     }
 
-    private class WeatherTemperatureLiveData extends MutableLiveData<Integer> {
-
-        WeatherTemperatureLiveData() {
-            // TODO: Provide real data.
-            setValue(null);
-        }
+    public LiveData<ContextualInfo> getContextualInfo() {
+        return mContextualInfo;
     }
 }
