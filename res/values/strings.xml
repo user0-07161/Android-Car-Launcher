@@ -30,6 +30,11 @@
     <string name="temperature_empty" translatable="false">--\u00B0</string>
     <string name="date" translatable="false">EEEMMMd</string>
 
+    <plurals name="projection_devices">
+        <item quantity="one"><xliff:g example="1" id="count">%d</xliff:g> device</item>
+        <item quantity="other"><xliff:g example="2" id="count">%d</xliff:g> devices</item>
+    </plurals>
+
     <!--
         A list of package names to exclude from the app selector when filtering is active.
         DO NOT TRANSLATE.
