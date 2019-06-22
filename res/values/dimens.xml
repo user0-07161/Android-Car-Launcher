@@ -28,11 +28,11 @@
     <!-- Margin surrounding fragments on the main activity -->
     <dimen name="main_screen_widget_margin">@*android:dimen/car_padding_1</dimen>
     <!-- Margin between the edge of the card and start of the icon -->
-    <dimen name="weather_image_margin">@*android:dimen/car_padding_4</dimen>
-    <!-- Gap between the end of the weather image and the start of the text -->
-    <dimen name="text_weather_image_margin">@*android:dimen/car_padding_3</dimen>
+    <dimen name="icon_start_margin">@*android:dimen/car_padding_4</dimen>
+    <!-- Gap between the end of the icon and the start of the text -->
+    <dimen name="icon_end_margin">@*android:dimen/car_padding_3</dimen>
     <!-- Gap between text lines -->
-    <dimen name="date_greeting_margin">@*android:dimen/car_padding_1</dimen>
+    <dimen name="line_gap_margin">@*android:dimen/car_padding_1</dimen>
 
     <!-- AppGridActivity -->
     <dimen name="recent_apps_divider_margin">40dp</dimen>
