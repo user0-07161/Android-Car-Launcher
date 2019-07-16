@@ -41,8 +41,8 @@ import android.view.View;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
-
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
 
 import java.util.ArrayList;
@@ -155,7 +155,7 @@ public final class AppGridActivity extends Activity {
         Set<String> blackList = mShowAllApps ? Collections.emptySet() : mHiddenApps;
         LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(blackList,
                 getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
-        mGridAdapter.setAllApps(appsInfo.getApplicationsList());
+        mGridAdapter.setAllApps(appsInfo.getLaunchableComponentsList());
         mGridAdapter.setMostRecentApps(getMostRecentApps(appsInfo));
     }
 
@@ -238,8 +238,12 @@ public final class AppGridActivity extends Activity {
                 continue;
             }
 
+            // TODO(b/136222320): UsageStats is obtained per package, but a package may contain
+            //  multiple media services. We need to find a way to get the usage stats per service.
+            ComponentName componentName = AppLauncherUtils.getMediaSource(mPackageManager,
+                    packageName);
             // Exempt media services from background and launcher checks
-            if (!appsInfo.isMediaService(packageName)) {
+            if (!appsInfo.isMediaService(componentName)) {
                 // do not include apps that only ran in the background
                 if (usageStats.getTotalTimeInForeground() == 0) {
                     continue;
@@ -252,7 +256,7 @@ public final class AppGridActivity extends Activity {
                 }
             }
 
-            AppMetaData app = appsInfo.getAppMetaData(packageName);
+            AppMetaData app = appsInfo.getAppMetaData(componentName);
             // Prevent duplicated entries
             // e.g. app is used at 2017/12/31 23:59, and 2018/01/01 00:00
             if (app != null && !apps.contains(app)) {
