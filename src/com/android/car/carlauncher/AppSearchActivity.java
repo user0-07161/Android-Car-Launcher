@@ -170,7 +170,7 @@ public final class AppSearchActivity extends Activity {
         AppLauncherUtils.LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(
                 Collections.emptySet(), getSystemService(LauncherApps.class), mCarPackageManager,
                 mPackageManager);
-        return appsInfo.getApplicationsList();
+        return appsInfo.getLaunchableComponentsList();
     }
 
     public void hideKeyboard() {
