@@ -18,6 +18,7 @@ package com.android.car.carlauncher;
 
 import android.app.ActivityManager;
 import android.app.ActivityView;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -137,7 +138,11 @@ public class CarLauncher extends FragmentActivity {
             return;
         }
         if (mActivityView != null) {
-            mActivityView.startActivity(getMapsIntent());
+            try {
+                mActivityView.startActivity(getMapsIntent());
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "Maps activity not found", e);
+            }
         }
     }
 
