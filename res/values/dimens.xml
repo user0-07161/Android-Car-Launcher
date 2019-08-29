@@ -20,7 +20,7 @@
     <item name="maps_screen_percentage" type="dimen" format="float">0.6</item>
     <!-- Vertical percentage of screen (not occupied by maps to devote to the contextual space
       (Ex: date time temp) -->
-    <item name="contextual_screen_percentage" type="dimen" format="float">.3</item>
+    <item name="contextual_screen_percentage" type="dimen" format="float">.6</item>
     <!-- Padding on the edges of the contextual card -->
     <dimen name="contextual_padding">@*android:dimen/car_padding_4</dimen>
      <!--Used for the space between the top, and bottom of the screen and the content -->

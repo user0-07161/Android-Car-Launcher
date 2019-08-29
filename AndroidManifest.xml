@@ -46,8 +46,7 @@
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
             android:resumeWhilePausing="true"
-            android:windowSoftInputMode="adjustPan"
-            android:screenOrientation="nosensor">
+            android:windowSoftInputMode="adjustPan">
             <meta-data android:name="distractionOptimized" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
