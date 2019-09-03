@@ -209,13 +209,18 @@ class AppLauncherUtils {
                         isActivityDistractionOptimized(carPackageManager, packageName,
                                 info.getName());
 
+                Intent intent = new Intent(Intent.ACTION_MAIN)
+                        .setComponent(componentName)
+                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
                 AppMetaData appMetaData = new AppMetaData(
                         info.getLabel(),
                         componentName,
                         info.getBadgedIcon(0),
                         isDistractionOptimized,
-                        packageManager.getLaunchIntentForPackage(packageName),
-                        null);
+                        intent,
+                        packageManager.getLaunchIntentForPackage(packageName));
                 components.put(componentName, appMetaData);
             }
         }
