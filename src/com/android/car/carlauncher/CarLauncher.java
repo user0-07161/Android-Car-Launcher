@@ -55,18 +55,20 @@ import java.util.Set;
  */
 public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
+    private static final boolean DEBUG = false;
 
     private ActivityView mActivityView;
-    private boolean mActivityViewReady = false;
-    private boolean mIsStarted = false;
+    private boolean mActivityViewReady;
+    private boolean mIsStarted;
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
-    private boolean mIsReadyLogged = false;
+    private boolean mIsReadyLogged;
 
     private final ActivityView.StateCallback mActivityViewCallback =
             new ActivityView.StateCallback() {
                 @Override
                 public void onActivityViewReady(ActivityView view) {
+                    if (DEBUG) Log.d(TAG, "onActivityViewReady(" + getUserId() + ")");
                     mActivityViewReady = true;
                     startMapsInActivityView();
                     maybeLogReady();
@@ -74,11 +76,16 @@ public class CarLauncher extends FragmentActivity {
 
                 @Override
                 public void onActivityViewDestroyed(ActivityView view) {
+                    if (DEBUG) Log.d(TAG, "onActivityViewDestroyed(" + getUserId() + ")");
                     mActivityViewReady = false;
                 }
 
                 @Override
                 public void onTaskMovedToFront(ActivityManager.StackInfo stackInfo) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onTaskMovedToFront(" + getUserId() + "): started="
+                                + mIsStarted);
+                    }
                     try {
                         if (mIsStarted) {
                             ActivityManager.getService().moveTaskToFront(
@@ -193,9 +200,21 @@ public class CarLauncher extends FragmentActivity {
 
     /** Logs that the Activity is ready. Used for startup time diagnostics. */
     private void maybeLogReady() {
-        if (mActivityViewReady && !mIsReadyLogged) {
+        if (DEBUG) {
+            Log.d(TAG, "maybeLogReady(" + getUserId() + "): activityReady=" + mActivityViewReady
+                    + ", started=" + mIsStarted + ", alreadyLogged: " + mIsReadyLogged);
+        }
+        if (mActivityViewReady && mIsStarted) {
+            // We should report everytime - the Android framework will take care of logging just
+            // when it's effectivelly drawn for the first time, but....
             reportFullyDrawn();
-            mIsReadyLogged = true;
+            if (!mIsReadyLogged) {
+                // ... we want to manually check that the Log.i below (which is useful to show
+                // the user id) is only logged once (otherwise it would be logged everytime the user
+                // taps Home)
+                Log.i(TAG, "Launcher for user " + getUserId() + " is ready");
+                mIsReadyLogged = true;
+            }
         }
     }
 }
