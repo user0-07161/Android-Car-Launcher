@@ -55,7 +55,7 @@ import java.util.Set;
  */
 public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private ActivityView mActivityView;
     private boolean mActivityViewReady;
@@ -148,6 +148,7 @@ public class CarLauncher extends FragmentActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (mActivityView != null && mActivityViewReady) {
+            if (DEBUG) Log.d(TAG, "onDestroy calling release of activity view");
             mActivityView.release();
         }
     }
@@ -159,6 +160,7 @@ public class CarLauncher extends FragmentActivity {
             return;
         }
         if (mActivityView != null) {
+            if (DEBUG) Log.d(TAG, "startMapsInActivityView calling ActivityView start");
             mActivityView.startActivity(getMapsIntent());
         }
     }
