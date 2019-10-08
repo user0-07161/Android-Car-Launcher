@@ -18,6 +18,7 @@ package com.android.car.carlauncher;
 
 import android.app.ActivityManager;
 import android.app.ActivityView;
+import android.car.app.CarActivityView;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -52,7 +53,7 @@ public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
 
-    private ActivityView mActivityView;
+    private CarActivityView mActivityView;
     private boolean mActivityViewReady;
     private boolean mIsStarted;
 
