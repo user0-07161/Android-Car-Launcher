@@ -12,15 +12,13 @@
   ~ distributed under the License is distributed on an "AS IS" BASIS,
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
+  ~ limitations under the License
   -->
-<ripple
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="?android:attr/colorControlHighlight">
-    <item android:id="@android:id/mask">
-        <shape android:shape="rectangle">
-            <solid android:color="@android:color/white" />
-            <corners android:radius="@dimen/app_icon_ripple_radius" />
-        </shape>
-    </item>
-</ripple>
+
+<resources>
+    <!--Theme for the app, it's defined empty here so it can be overlaid easily -->
+    <style name="Theme.Launcher" parent="android:Theme.DeviceDefault.Wallpaper.NoTitleBar">
+        <item name="textAppearanceGridItem">@android:style/TextAppearance.DeviceDefault.Medium</item>
+        <item name="textAppearanceGridItemSecondary">@android:style/TextAppearance.DeviceDefault.Small</item>
+    </style>
+</resources>
