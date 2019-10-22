@@ -48,37 +48,13 @@
     </FrameLayout>
 
     <TextView
+        android:id="@+id/title"
         style="@style/TitleText"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/app_bar_height"
         android:layout_toEndOf="@id/exit_button_container"
         android:gravity="center_vertical"
-        android:text="@string/all_apps"
-    />
-
-    <FrameLayout
-        android:id="@+id/search_button_container"
-        android:layout_width="@dimen/panel_margin"
-        android:layout_height="@dimen/app_grid_touch_target_size"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:visibility="gone"
-    >
-        <ImageButton
-            android:layout_width="@dimen/icon_size"
-            android:layout_height="@dimen/icon_size"
-            android:layout_gravity="center"
-            android:adjustViewBounds="true"
-            android:background="@null"
-            android:clickable="false"
-            android:focusable="false"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_search_black"
-            android:tint="@color/icon_tint"/>
-    </FrameLayout>
+        android:text="@string/app_launcher_title_all_apps"/>
 
     <View
         style="@style/HorizontalLineDivider"
