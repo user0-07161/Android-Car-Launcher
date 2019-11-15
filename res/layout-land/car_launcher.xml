@@ -78,7 +78,7 @@
         app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
         app:layout_constraintStart_toEndOf="@+id/start_edge"
         app:layout_constraintTop_toBottomOf="@+id/top_edge">
-        <ActivityView
+        <android.car.app.CarActivityView
             android:id="@+id/maps"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
