@@ -18,8 +18,11 @@ package com.android.car.carlauncher;
 
 import android.annotation.Nullable;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+
+import java.util.function.Consumer;
 
 /**
  * Meta data of an app including the display name, the component name, the icon drawable, and an
@@ -34,8 +37,8 @@ final class AppMetaData {
     private final ComponentName mComponentName;
     private final Drawable mIcon;
     private final boolean mIsDistractionOptimized;
-    private final Intent mMainLaunchIntent;
-    private final Intent mAlternateLaunchIntent;
+    private final Consumer<Context> mLaunchCallback;
+    private final Consumer<Context> mAlternateLaunchCallback;
 
     /**
      * AppMetaData
@@ -44,24 +47,23 @@ final class AppMetaData {
      * @param componentName          the component name
      * @param icon                   the application's icon
      * @param isDistractionOptimized whether mainLaunchIntent is safe for driving
-     * @param mainLaunchIntent       what to open by default (goes to the media center for media
-     *                               apps)
-     * @param alternateLaunchIntent  temporary allowance for media apps that still need to show UI
-     *                               beyond sign in and settings
+     * @param launchCallback         action to execute to launch this app
+     * @param alternateLaunchCallback  temporary alternative action to execute (e.g.: for media apps
+     *                               this allows opening their own UI).
      */
     AppMetaData(
             CharSequence displayName,
             ComponentName componentName,
             Drawable icon,
             boolean isDistractionOptimized,
-            Intent mainLaunchIntent,
-            @Nullable Intent alternateLaunchIntent) {
+            Consumer<Context> launchCallback,
+            Consumer<Context> alternateLaunchCallback) {
         mDisplayName = displayName == null ? "" : displayName.toString();
         mComponentName = componentName;
         mIcon = icon;
         mIsDistractionOptimized = isDistractionOptimized;
-        mMainLaunchIntent = mainLaunchIntent;
-        mAlternateLaunchIntent = alternateLaunchIntent;
+        mLaunchCallback = launchCallback;
+        mAlternateLaunchCallback = alternateLaunchCallback;
     }
 
     public String getDisplayName() {
@@ -76,12 +78,12 @@ final class AppMetaData {
         return mComponentName;
     }
 
-    Intent getMainLaunchIntent() {
-        return mMainLaunchIntent;
+    Consumer<Context> getLaunchCallback() {
+        return mLaunchCallback;
     }
 
-    Intent getAlternateLaunchIntent() {
-        return mAlternateLaunchIntent;
+    Consumer<Context> getAlternateLaunchCallback() {
+        return mAlternateLaunchCallback;
     }
 
     public Drawable getIcon() {
