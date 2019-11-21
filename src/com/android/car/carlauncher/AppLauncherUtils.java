@@ -228,11 +228,6 @@ class AppLauncherUtils {
             for (LauncherActivityInfo info : availableActivities) {
                 ComponentName componentName = info.getComponentName();
                 String packageName = componentName.getPackageName();
-                // If a media service has been added to the map, don't add the activity belonging to
-                // the same package.
-                if (mediaPackages.contains(packageName)) {
-                    continue;
-                }
                 if (shouldAdd(componentName, components, blackList)) {
                     boolean isDistractionOptimized =
                             isActivityDistractionOptimized(carPackageManager, packageName,
