@@ -139,12 +139,11 @@ public final class AppGridActivity extends Activity {
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         mCar = Car.createCar(this, mCarConnectionListener);
         mHiddenApps.addAll(Arrays.asList(getResources().getStringArray(R.array.hidden_apps)));
-        mMode = parseMode(getIntent());
 
         setContentView(R.layout.app_grid_activity);
 
-        TextView titleView = findViewById(R.id.title);
-        titleView.setText(mMode.mTitleStringId);
+        updateMode();
+
         View exitView = findViewById(R.id.exit_button_container);
         exitView.setOnClickListener(v -> finish());
         exitView.setOnLongClickListener(v -> {
@@ -165,6 +164,19 @@ public final class AppGridActivity extends Activity {
         });
         gridView.setLayoutManager(gridLayoutManager);
         gridView.setAdapter(mGridAdapter);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        updateMode();
+    }
+
+    private void updateMode() {
+        mMode = parseMode(getIntent());
+        TextView titleView = findViewById(R.id.title);
+        titleView.setText(mMode.mTitleStringId);
     }
 
     /**
