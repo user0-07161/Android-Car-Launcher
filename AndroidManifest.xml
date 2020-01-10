@@ -16,6 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
           package="com.android.car.carlauncher">
 
     <uses-permission android:name="android.car.permission.ACCESS_CAR_PROJECTION_STATUS"/>
@@ -61,5 +62,13 @@
             android:noHistory="true">
             <meta-data android:name="distractionOptimized" android:value="true"/>
         </activity>
+
+        <!-- Workaround for b/113294940, remove when converting to Android.bp -->
+        <provider
+            android:name="androidx.lifecycle.ProcessLifecycleOwnerInitializer"
+            tools:replace="android:authorities"
+            android:authorities="${applicationId}"
+            android:exported="false"
+            android:multiprocess="true" />
     </application>
 </manifest>
