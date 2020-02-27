@@ -70,6 +70,7 @@ public final class AppGridActivity extends Activity {
     private int mColumnNumber;
     private boolean mShowAllApps = true;
     private final Set<String> mHiddenApps = new HashSet<>();
+    private final Set<String> mCustomMediaComponents = new HashSet<>();
     private AppGridAdapter mGridAdapter;
     private PackageManager mPackageManager;
     private UsageStatsManager mUsageStatsManager;
@@ -139,6 +140,8 @@ public final class AppGridActivity extends Activity {
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         mCar = Car.createCar(this, mCarConnectionListener);
         mHiddenApps.addAll(Arrays.asList(getResources().getStringArray(R.array.hidden_apps)));
+        mCustomMediaComponents.addAll(
+                Arrays.asList(getResources().getStringArray(R.array.custom_media_packages)));
 
         setContentView(R.layout.app_grid_activity);
 
@@ -205,6 +208,7 @@ public final class AppGridActivity extends Activity {
     private void updateAppsLists() {
         Set<String> blackList = mShowAllApps ? Collections.emptySet() : mHiddenApps;
         LauncherAppsInfo appsInfo = AppLauncherUtils.getLauncherApps(blackList,
+                mCustomMediaComponents,
                 mMode.mAppTypes,
                 mMode.mOpenMediaCenter,
                 getSystemService(LauncherApps.class),
