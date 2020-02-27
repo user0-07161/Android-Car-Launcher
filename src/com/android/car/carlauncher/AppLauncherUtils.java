@@ -200,8 +200,8 @@ class AppLauncherUtils {
                 String className = info.serviceInfo.name;
                 ComponentName componentName = new ComponentName(packageName, className);
                 mediaServicesMap.put(componentName, info);
-                if (shouldAddServiceToLaunchables(componentName, launchablesMap, blackList,
-                    customMediaComponents)) {
+                if (shouldAddToLaunchables(componentName, blackList, customMediaComponents,
+                        appTypes, APP_TYPE_MEDIA_SERVICES)) {
                     final boolean isDistractionOptimized = true;
 
                     Intent intent = new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE);
@@ -231,7 +231,8 @@ class AppLauncherUtils {
             for (LauncherActivityInfo info : availableActivities) {
                 ComponentName componentName = info.getComponentName();
                 String packageName = componentName.getPackageName();
-                if (shouldAddToLaunchables(componentName, launchablesMap, blackList)) {
+                if (shouldAddToLaunchables(componentName, blackList, customMediaComponents,
+                        appTypes, APP_TYPE_LAUNCHABLES)) {
                     boolean isDistractionOptimized =
                         isActivityDistractionOptimized(carPackageManager, packageName,
                             info.getName());
@@ -253,24 +254,35 @@ class AppLauncherUtils {
             }
         }
 
-
-
         return new LauncherAppsInfo(launchablesMap, mediaServicesMap);
     }
 
-    private static boolean shouldAddToLaunchables(ComponentName componentName,
-            Map<ComponentName, AppMetaData> launchablesMap,
-            @NonNull Set<String> blackList) {
-        return !launchablesMap.containsKey(componentName) && !blackList.contains(
-                componentName.getPackageName());
-    }
-
-    private static boolean shouldAddServiceToLaunchables(ComponentName componentName,
-                                             Map<ComponentName, AppMetaData> launchablesMap,
-                                             @NonNull Set<String> blackList,
-                                             @NonNull Set<String> customMediaComponents) {
-        return shouldAddToLaunchables(componentName, launchablesMap, blackList)
-                && !customMediaComponents.contains(componentName.flattenToString());
+    private static boolean shouldAddToLaunchables(@NonNull ComponentName componentName,
+            @NonNull Set<String> blackList,
+            @NonNull Set<String> customMediaComponents,
+            @AppTypes int appTypesToShow,
+            @AppTypes int componentAppType) {
+        if (blackList.contains(componentName.getPackageName())) {
+            return false;
+        }
+        switch (componentAppType) {
+            // Process media services
+            case APP_TYPE_MEDIA_SERVICES:
+                // For a media service in customMediaComponents, if its application's launcher
+                // activity will be shown in the Launcher, don't show the service's icon in the
+                // Launcher.
+                if (customMediaComponents.contains(componentName.flattenToString())
+                        && (appTypesToShow & APP_TYPE_LAUNCHABLES) != 0) {
+                    return false;
+                }
+                return true;
+            // Process activities
+            case APP_TYPE_LAUNCHABLES:
+                return true;
+            default:
+                Log.e(TAG, "Invalid componentAppType : " + componentAppType);
+                return false;
+        }
     }
 
     private static void selectMediaSourceAndFinish(Context context, ComponentName componentName) {
