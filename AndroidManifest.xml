@@ -35,6 +35,14 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
     <uses-permission android:name="android.permission.REORDER_TASKS"/>
 
+    <!-- To connect to media browser services in other apps, media browser clients
+    that target Android 11 need to add the following in their manifest -->
+    <queries>
+        <intent>
+            <action android:name="android.media.browse.MediaBrowserService" />
+        </intent>
+    </queries>
+
     <application
         android:icon="@drawable/ic_launcher_home"
         android:label="@string/app_title"
