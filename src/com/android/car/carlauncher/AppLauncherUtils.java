@@ -290,7 +290,7 @@ class AppLauncherUtils {
             Car carApi = Car.createCar(context);
             CarMediaManager manager = (CarMediaManager) carApi
                     .getCarManager(Car.CAR_MEDIA_SERVICE);
-            manager.setMediaSource(componentName);
+            manager.setMediaSource(componentName, CarMediaManager.MEDIA_SOURCE_MODE_BROWSE);
             if (context instanceof Activity) {
                 ((Activity) context).finish();
             }
