@@ -47,6 +47,7 @@ android_app {
         "androidx-constraintlayout_constraintlayout",
         "androidx.lifecycle_lifecycle-extensions",
         "car-media-common",
+        "car-ui-lib",
     ],
 
     libs: ["android.car"],
