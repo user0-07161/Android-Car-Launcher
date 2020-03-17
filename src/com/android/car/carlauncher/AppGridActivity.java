@@ -34,23 +34,27 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
+import com.android.car.ui.baselayout.Insets;
+import com.android.car.ui.baselayout.InsetsChangedListener;
+import com.android.car.ui.core.CarUi;
+import com.android.car.ui.toolbar.MenuItem;
+import com.android.car.ui.toolbar.Toolbar;
+import com.android.car.ui.toolbar.ToolbarController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,7 +67,7 @@ import java.util.Set;
 /**
  * Launcher activity that shows a grid of apps.
  */
-public final class AppGridActivity extends Activity {
+public final class AppGridActivity extends Activity implements InsetsChangedListener {
     private static final String TAG = "AppGridActivity";
     private static final String MODE_INTENT_EXTRA = "com.android.car.carlauncher.mode";
 
@@ -147,16 +151,26 @@ public final class AppGridActivity extends Activity {
 
         updateMode();
 
-        View exitView = findViewById(R.id.exit_button_container);
-        exitView.setOnClickListener(v -> finish());
-        exitView.setOnLongClickListener(v -> {
-            mShowAllApps = !mShowAllApps;
-            updateAppsLists();
-            return true;
-        });
+        ToolbarController toolbar = CarUi.requireToolbar(this);
+        toolbar.setNavButtonMode(Toolbar.NavButtonMode.CLOSE);
+        toolbar.setState(Toolbar.State.SUBPAGE);
+
+        if (Build.IS_DEBUGGABLE) {
+            toolbar.setMenuItems(Collections.singletonList(MenuItem.builder(this)
+                    .setDisplayBehavior(MenuItem.DisplayBehavior.NEVER)
+                    .setTitle(R.string.hide_debug_apps)
+                    .setOnClickListener(i -> {
+                        mShowAllApps = !mShowAllApps;
+                        i.setTitle(mShowAllApps
+                                ? R.string.hide_debug_apps
+                                : R.string.show_debug_apps);
+                        updateAppsLists();
+                    })
+                    .build()));
+        }
 
         mGridAdapter = new AppGridAdapter(this);
-        RecyclerView gridView = findViewById(R.id.apps_grid);
+        RecyclerView gridView = requireViewById(R.id.apps_grid);
 
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mColumnNumber);
         gridLayoutManager.setSpanSizeLookup(new SpanSizeLookup() {
@@ -178,8 +192,8 @@ public final class AppGridActivity extends Activity {
 
     private void updateMode() {
         mMode = parseMode(getIntent());
-        TextView titleView = findViewById(R.id.title);
-        titleView.setText(mMode.mTitleStringId);
+        setTitle(mMode.mTitleStringId);
+        CarUi.requireToolbar(this).setTitle(mMode.mTitleStringId);
     }
 
     /**
@@ -324,6 +338,14 @@ public final class AppGridActivity extends Activity {
             }
         }
         return apps;
+    }
+
+    @Override
+    public void onCarUiInsetsChanged(Insets insets) {
+        requireViewById(R.id.apps_grid)
+                .setPadding(0, insets.getTop(), 0, insets.getBottom());
+        requireViewById(android.R.id.content)
+                .setPadding(insets.getLeft(), 0, insets.getRight(), 0);
     }
 
     /**
