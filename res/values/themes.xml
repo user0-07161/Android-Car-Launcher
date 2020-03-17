@@ -16,8 +16,14 @@
   -->
 
 <resources>
-    <style name="Theme.Launcher" parent="android:Theme.DeviceDefault.NoActionBar">
+    <style name="Theme.Launcher" parent="Theme.CarUi.NoToolbar">
         <item name="textAppearanceGridItem">@android:style/TextAppearance.DeviceDefault.Medium</item>
         <item name="textAppearanceGridItemSecondary">@android:style/TextAppearance.DeviceDefault.Small</item>
     </style>
+
+    <style name="Theme.Launcher.AppGridActivity" parent="Theme.CarUi.WithToolbar">
+        <item name="textAppearanceGridItem">@android:style/TextAppearance.DeviceDefault.Medium</item>
+        <item name="textAppearanceGridItemSecondary">@android:style/TextAppearance.DeviceDefault.Small</item>
+    </style>
+
 </resources>
