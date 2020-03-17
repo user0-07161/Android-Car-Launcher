@@ -15,23 +15,11 @@
     limitations under the License.
 -->
 
-<LinearLayout
+<com.android.car.ui.recyclerview.CarUiRecyclerView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/apps_grid"
+    app:layoutStyle="grid"
+    app:numOfColumns="4"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <include
-        layout="@layout/app_grid_activity_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <com.android.car.ui.recyclerview.CarUiRecyclerView
-        android:id="@+id/apps_grid"
-        app:layoutStyle="grid"
-        app:numOfColumns="4"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-</LinearLayout>
-
+    android:layout_height="match_parent"/>

@@ -68,7 +68,8 @@
             android:name=".AppGridActivity"
             android:launchMode="singleInstance"
             android:exported="true"
-            android:noHistory="true">
+            android:noHistory="true"
+            android:theme="@style/Theme.Launcher.AppGridActivity">
             <meta-data android:name="distractionOptimized" android:value="true"/>
         </activity>
     </application>
