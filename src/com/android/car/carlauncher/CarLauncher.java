@@ -16,15 +16,17 @@
 
 package com.android.car.carlauncher;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityView;
-import android.app.UserSwitchObserver;
+import android.app.ActivityTaskManager;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.os.IRemoteCallback;
-import android.os.RemoteException;
 import android.util.Log;
 import android.widget.FrameLayout;
 
@@ -34,6 +36,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.android.car.media.common.PlaybackFragment;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link ActivityView} to host
@@ -66,6 +69,12 @@ public class CarLauncher extends FragmentActivity {
 
     private final ActivityView.StateCallback mActivityViewCallback =
             new ActivityView.StateCallback() {
+
+                // EmptyActivity last task ID. Used to prevent this task to be moved to front.
+                // This value can't be cached since it will be concurrently accessed.
+                private final AtomicInteger mEmptyActivityTaskId = new AtomicInteger(
+                        ActivityTaskManager.INVALID_TASK_ID);
+
                 @Override
                 public void onActivityViewReady(ActivityView view) {
                     if (DEBUG) Log.d(TAG, "onActivityViewReady(" + getUserId() + ")");
@@ -83,17 +92,38 @@ public class CarLauncher extends FragmentActivity {
                 @Override
                 public void onTaskMovedToFront(int taskId) {
                     if (DEBUG) {
-                        Log.d(TAG, "onTaskMovedToFront(" + getUserId() + "): started="
-                                + mIsStarted);
+                        Log.d(TAG, "onTaskMovedToFront(" + getUserId() + ") with taskId= " +
+                                + taskId + "invoked on " + "CarLauncher(mIsStarted=" + mIsStarted
+                                + ", mActivityViewReady=" + mActivityViewReady
+                                + ", mIsStarted=" + mIsStarted
+                                + "mEmptyActivityTaskId=" + mEmptyActivityTaskId + ")");
+                    }
+
+                    // Skip EmptyActivity, since we don't want to move CarLauncher forward for it.
+                    if (mEmptyActivityTaskId.get() == taskId) {
+                        return;
                     }
                     try {
-                        if (mIsStarted) {
+                        if (mActivityViewReady && !mIsStarted) {
                             ActivityManager am =
                                     (ActivityManager) getSystemService(ACTIVITY_SERVICE);
                             am.moveTaskToFront(CarLauncher.this.getTaskId(), /* flags= */ 0);
                         }
                     } catch (RuntimeException e) {
                         Log.w(TAG, "Failed to move CarLauncher to front.");
+                    }
+                }
+
+                @Override
+                public void onTaskCreated(int taskId, ComponentName componentName) {
+                    if (DEBUG) {
+                        Log.d(TAG, "onTaskCreated(" + taskId + ", " + componentName + ")");
+                    }
+                    if (componentName == null) {
+                        return;
+                    }
+                    if (EmptyActivity.class.getName().equals(componentName.getClassName())) {
+                        mEmptyActivityTaskId.set(taskId);
                     }
                 }
             };
@@ -136,12 +166,31 @@ public class CarLauncher extends FragmentActivity {
         super.onStart();
         mIsStarted = true;
         maybeLogReady();
+
+        // Request EmptyActivity to finish
+        sendIntentToEmptyActivity(/* stopActivity= */ true);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         mIsStarted = false;
+
+        // Request EmptyActivity to start
+        sendIntentToEmptyActivity(/* stopActivity= */ false);
+    }
+
+    private void sendIntentToEmptyActivity(boolean stopActivity) {
+        if (DEBUG) Log.d(TAG, "Sending intent to EmptyActivity with stopActivity:" + stopActivity);
+        Intent intent = new Intent(mActivityView.getContext(), EmptyActivity.class);
+        intent.putExtra(EmptyActivity.EXTRA_STOP_ACTIVITY, stopActivity);
+        if (mActivityView != null && mActivityViewReady) {
+            try {
+                mActivityView.startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Log.e(TAG, "EmptyActivity not found", e);
+            }
+        }
     }
 
     @Override
@@ -149,6 +198,43 @@ public class CarLauncher extends FragmentActivity {
         super.onDestroy();
         if (mActivityView != null && mActivityViewReady) {
             mActivityView.release();
+        }
+    }
+
+    /**
+     * Empty activity used to ensure that onTaskMovedToFront is invoked when the Activity inside
+     * the ActivityView gets the intent while CarLauncher is in the background. See b/154739682
+     * for more info.
+     */
+    public static final class EmptyActivity extends Activity {
+
+        public static final String EXTRA_STOP_ACTIVITY = "EXTRA_STOP_EMPTY_ACTIVITY";
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // Setting background color to transparent in order to avoid unnecessary flash when
+            // starting this activity.
+            getWindow().getDecorView().setBackgroundColor(Color.TRANSPARENT);
+            handleEmptyActivityIntent(getIntent());
+        }
+
+        @Override
+        protected void onNewIntent(Intent intent) {
+            super.onNewIntent(intent);
+            handleEmptyActivityIntent(intent);
+        }
+
+        private void handleEmptyActivityIntent(Intent intent) {
+            if (DEBUG) Log.d(TAG, "Received intent: " + intent);
+
+            // Finish this activity if required.
+            boolean stopActivity = intent.getBooleanExtra(EXTRA_STOP_ACTIVITY,
+                    /* defaultValue= */ true);
+            if (DEBUG) Log.d(TAG, "Requested to stop EmptyActivity: " + stopActivity);
+            if (stopActivity) {
+                finish();
+            }
         }
     }
 
@@ -205,13 +291,13 @@ public class CarLauncher extends FragmentActivity {
                     + ", started=" + mIsStarted + ", alreadyLogged: " + mIsReadyLogged);
         }
         if (mActivityViewReady && mIsStarted) {
-            // We should report everytime - the Android framework will take care of logging just
-            // when it's effectivelly drawn for the first time, but....
+            // We should report every time - the Android framework will take care of logging just
+            // when it's effectively drawn for the first time, but....
             reportFullyDrawn();
             if (!mIsReadyLogged) {
                 // ... we want to manually check that the Log.i below (which is useful to show
-                // the user id) is only logged once (otherwise it would be logged everytime the user
-                // taps Home)
+                // the user id) is only logged once (otherwise it would be logged every time the
+                // user taps Home)
                 Log.i(TAG, "Launcher for user " + getUserId() + " is ready");
                 mIsReadyLogged = true;
             }
