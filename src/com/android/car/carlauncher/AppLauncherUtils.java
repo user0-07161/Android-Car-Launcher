@@ -16,11 +16,15 @@
 
 package com.android.car.carlauncher;
 
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 import android.annotation.Nullable;
+import android.app.Activity;
 import android.app.ActivityOptions;
 import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
+import android.car.media.CarMediaManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -33,8 +37,12 @@ import android.service.media.MediaBrowserService;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.car.media.common.source.MediaSourceViewModel;
+
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 
+import java.lang.annotation.Retention;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,6 +57,12 @@ import java.util.Set;
  */
 class AppLauncherUtils {
     private static final String TAG = "AppLauncherUtils";
+
+    @Retention(SOURCE)
+    @IntDef({APP_TYPE_LAUNCHABLES, APP_TYPE_MEDIA_SERVICES})
+    @interface AppTypes {}
+    static final int APP_TYPE_LAUNCHABLES = 1;
+    static final int APP_TYPE_MEDIA_SERVICES = 2;
 
     private AppLauncherUtils() {
     }
@@ -65,10 +79,10 @@ class AppLauncherUtils {
      *
      * @param app the requesting app's AppMetaData
      */
-    static void launchApp(Context context, AppMetaData app) {
+    static void launchApp(Context context, Intent intent) {
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchDisplayId(context.getDisplayId());
-        context.startActivity(app.getMainLaunchIntent(), options.toBundle());
+        context.startActivity(intent, options.toBundle());
     }
 
     /** Bundles application and services info. */
@@ -144,14 +158,19 @@ class AppLauncherUtils {
      * launcher activities and media services.
      *
      * @param blackList         A (possibly empty) list of apps (package names) to hide
+     * @param appTypes          Types of apps to show (e.g.: all, or media sources only)
+     * @param openMediaCenter   Whether launcher should navigate to media center when the user
+     *                          selects a media source.
      * @param launcherApps      The {@link LauncherApps} system service
      * @param carPackageManager The {@link CarPackageManager} system service
      * @param packageManager    The {@link PackageManager} system service
      * @return a new {@link LauncherAppsInfo}
      */
     @NonNull
-    static LauncherAppsInfo getAllLauncherApps(
+    static LauncherAppsInfo getLauncherApps(
             @NonNull Set<String> blackList,
+            @AppTypes int appTypes,
+            boolean openMediaCenter,
             LauncherApps launcherApps,
             CarPackageManager carPackageManager,
             PackageManager packageManager) {
@@ -172,56 +191,62 @@ class AppLauncherUtils {
         Set<String> mediaPackages = new HashSet<>();
 
         // Process media services
-        for (ResolveInfo info : mediaServices) {
-            String packageName = info.serviceInfo.packageName;
-            String className = info.serviceInfo.name;
-            ComponentName componentName = new ComponentName(packageName, className);
-            mediaServicesMap.put(componentName, info);
-            if (shouldAdd(componentName, components, blackList)) {
-                mediaPackages.add(packageName);
-                final boolean isDistractionOptimized = true;
+        if ((appTypes & APP_TYPE_MEDIA_SERVICES) != 0) {
+            for (ResolveInfo info : mediaServices) {
+                String packageName = info.serviceInfo.packageName;
+                String className = info.serviceInfo.name;
+                ComponentName componentName = new ComponentName(packageName, className);
+                mediaServicesMap.put(componentName, info);
+                if (shouldAdd(componentName, components, blackList)) {
+                    mediaPackages.add(packageName);
+                    final boolean isDistractionOptimized = true;
 
-                Intent intent = new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE);
-                intent.putExtra(Car.CAR_EXTRA_MEDIA_COMPONENT, componentName.flattenToString());
+                    Intent intent = new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE);
+                    intent.putExtra(Car.CAR_EXTRA_MEDIA_COMPONENT, componentName.flattenToString());
 
-                AppMetaData appMetaData = new AppMetaData(
-                        info.serviceInfo.loadLabel(packageManager),
-                        componentName,
-                        info.serviceInfo.loadIcon(packageManager),
-                        isDistractionOptimized,
-                        intent,
-                        packageManager.getLaunchIntentForPackage(packageName));
-                components.put(componentName, appMetaData);
+                    AppMetaData appMetaData = new AppMetaData(
+                            info.serviceInfo.loadLabel(packageManager),
+                            componentName,
+                            info.serviceInfo.loadIcon(packageManager),
+                            isDistractionOptimized,
+                            context -> {
+                                if (openMediaCenter) {
+                                    AppLauncherUtils.launchApp(context, intent);
+                                } else {
+                                    selectMediaSourceAndFinish(context, componentName);
+                                }
+                            },
+                            context -> AppLauncherUtils.launchApp(context,
+                                    packageManager.getLaunchIntentForPackage(packageName)));
+                    components.put(componentName, appMetaData);
+                }
             }
         }
 
         // Process activities
-        for (LauncherActivityInfo info : availableActivities) {
-            ComponentName componentName = info.getComponentName();
-            String packageName = componentName.getPackageName();
-            // If a media service has been added to the map, don't add the activity belonging to the
-            // same package.
-            if (mediaPackages.contains(packageName)) {
-                continue;
-            }
-            if (shouldAdd(componentName, components, blackList)) {
-                boolean isDistractionOptimized =
-                        isActivityDistractionOptimized(carPackageManager, packageName,
-                                info.getName());
+        if ((appTypes & APP_TYPE_LAUNCHABLES) != 0) {
+            for (LauncherActivityInfo info : availableActivities) {
+                ComponentName componentName = info.getComponentName();
+                String packageName = componentName.getPackageName();
+                if (shouldAdd(componentName, components, blackList)) {
+                    boolean isDistractionOptimized =
+                            isActivityDistractionOptimized(carPackageManager, packageName,
+                                    info.getName());
 
-                Intent intent = new Intent(Intent.ACTION_MAIN)
-                        .setComponent(componentName)
-                        .addCategory(Intent.CATEGORY_LAUNCHER)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Intent intent = new Intent(Intent.ACTION_MAIN)
+                            .setComponent(componentName)
+                            .addCategory(Intent.CATEGORY_LAUNCHER)
+                            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                AppMetaData appMetaData = new AppMetaData(
-                        info.getLabel(),
-                        componentName,
-                        info.getBadgedIcon(0),
-                        isDistractionOptimized,
-                        intent,
-                        packageManager.getLaunchIntentForPackage(packageName));
-                components.put(componentName, appMetaData);
+                    AppMetaData appMetaData = new AppMetaData(
+                            info.getLabel(),
+                            componentName,
+                            info.getBadgedIcon(0),
+                            isDistractionOptimized,
+                            context -> AppLauncherUtils.launchApp(context, intent),
+                            null);
+                    components.put(componentName, appMetaData);
+                }
             }
         }
 
@@ -233,6 +258,20 @@ class AppLauncherUtils {
             @NonNull Set<String> blackList) {
         return !components.containsKey(componentName) && !blackList.contains(
                 componentName.getPackageName());
+    }
+
+    private static void selectMediaSourceAndFinish(Context context, ComponentName componentName) {
+        try {
+            Car carApi = Car.createCar(context);
+            CarMediaManager manager = (CarMediaManager) carApi
+                    .getCarManager(Car.CAR_MEDIA_SERVICE);
+            manager.setMediaSource(componentName);
+            if (context instanceof Activity) {
+                ((Activity) context).finish();
+            }
+        } catch (CarNotConnectedException e) {
+            Log.e(TAG, "Car not connected", e);
+        }
     }
 
     /**
