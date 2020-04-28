@@ -16,7 +16,9 @@
 
 package com.android.car.carlauncher;
 
-import android.annotation.Nullable;
+import static com.android.car.carlauncher.AppLauncherUtils.APP_TYPE_LAUNCHABLES;
+import static com.android.car.carlauncher.AppLauncherUtils.APP_TYPE_MEDIA_SERVICES;
+
 import android.app.Activity;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -32,13 +34,18 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 import androidx.recyclerview.widget.RecyclerView;
@@ -57,12 +64,13 @@ import java.util.Set;
  * Launcher activity that shows a grid of apps.
  */
 public final class AppGridActivity extends Activity {
-
     private static final String TAG = "AppGridActivity";
+    private static final String MODE_INTENT_EXTRA = "com.android.car.carlauncher.mode";
 
     private int mColumnNumber;
     private boolean mShowAllApps = true;
     private final Set<String> mHiddenApps = new HashSet<>();
+    private final Set<String> mCustomMediaComponents = new HashSet<>();
     private AppGridAdapter mGridAdapter;
     private PackageManager mPackageManager;
     private UsageStatsManager mUsageStatsManager;
@@ -70,6 +78,30 @@ public final class AppGridActivity extends Activity {
     private Car mCar;
     private CarUxRestrictionsManager mCarUxRestrictionsManager;
     private CarPackageManager mCarPackageManager;
+    private Mode mMode;
+
+    private enum Mode {
+        ALL_APPS(R.string.app_launcher_title_all_apps,
+                APP_TYPE_LAUNCHABLES + APP_TYPE_MEDIA_SERVICES,
+                true),
+        MEDIA_ONLY(R.string.app_launcher_title_media_only,
+                APP_TYPE_MEDIA_SERVICES,
+                true),
+        MEDIA_POPUP(R.string.app_launcher_title_media_only,
+                APP_TYPE_MEDIA_SERVICES,
+                false),
+        ;
+        public final @StringRes int mTitleStringId;
+        public final @AppLauncherUtils.AppTypes int mAppTypes;
+        public final boolean mOpenMediaCenter;
+
+        Mode(@StringRes int titleStringId, @AppLauncherUtils.AppTypes int appTypes,
+                boolean openMediaCenter) {
+            mTitleStringId = titleStringId;
+            mAppTypes = appTypes;
+            mOpenMediaCenter = openMediaCenter;
+        }
+    }
 
     private ServiceConnection mCarConnectionListener = new ServiceConnection() {
         @Override
@@ -108,23 +140,19 @@ public final class AppGridActivity extends Activity {
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         mCar = Car.createCar(this, mCarConnectionListener);
         mHiddenApps.addAll(Arrays.asList(getResources().getStringArray(R.array.hidden_apps)));
+        mCustomMediaComponents.addAll(
+                Arrays.asList(getResources().getStringArray(R.array.custom_media_packages)));
 
         setContentView(R.layout.app_grid_activity);
 
+        updateMode();
+
         View exitView = findViewById(R.id.exit_button_container);
         exitView.setOnClickListener(v -> finish());
-        exitView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                mShowAllApps = !mShowAllApps;
-                updateAppsLists();
-                return true;
-            }
-        });
-
-        findViewById(R.id.search_button_container).setOnClickListener((View view) -> {
-            Intent intent = new Intent(this, AppSearchActivity.class);
-            startActivity(intent);
+        exitView.setOnLongClickListener(v -> {
+            mShowAllApps = !mShowAllApps;
+            updateAppsLists();
+            return true;
         });
 
         mGridAdapter = new AppGridAdapter(this);
@@ -138,8 +166,34 @@ public final class AppGridActivity extends Activity {
             }
         });
         gridView.setLayoutManager(gridLayoutManager);
-
         gridView.setAdapter(mGridAdapter);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        updateMode();
+    }
+
+    private void updateMode() {
+        mMode = parseMode(getIntent());
+        TextView titleView = findViewById(R.id.title);
+        titleView.setText(mMode.mTitleStringId);
+    }
+
+    /**
+     * Note: This activity is exported, meaning that it might receive intents from any source.
+     * Intent data parsing must be extra careful.
+     */
+    @NonNull
+    private Mode parseMode(@Nullable Intent intent) {
+        String mode = intent != null ? intent.getStringExtra(MODE_INTENT_EXTRA) : null;
+        try {
+            return mode != null ? Mode.valueOf(mode) : Mode.ALL_APPS;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Received invalid mode: " + mode, e);
+        }
     }
 
     @Override
@@ -153,8 +207,13 @@ public final class AppGridActivity extends Activity {
     /** Updates the list of all apps, and the list of the most recently used ones. */
     private void updateAppsLists() {
         Set<String> blackList = mShowAllApps ? Collections.emptySet() : mHiddenApps;
-        LauncherAppsInfo appsInfo = AppLauncherUtils.getAllLauncherApps(blackList,
-                getSystemService(LauncherApps.class), mCarPackageManager, mPackageManager);
+        LauncherAppsInfo appsInfo = AppLauncherUtils.getLauncherApps(blackList,
+                mCustomMediaComponents,
+                mMode.mAppTypes,
+                mMode.mOpenMediaCenter,
+                getSystemService(LauncherApps.class),
+                mCarPackageManager,
+                mPackageManager);
         mGridAdapter.setAllApps(appsInfo.getLaunchableComponentsList());
         mGridAdapter.setMostRecentApps(getMostRecentApps(appsInfo));
     }
