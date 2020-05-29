@@ -26,6 +26,7 @@ import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
 import android.car.drivingstate.CarUxRestrictionsManager;
+import android.car.media.CarMediaManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -82,6 +83,7 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
     private Car mCar;
     private CarUxRestrictionsManager mCarUxRestrictionsManager;
     private CarPackageManager mCarPackageManager;
+    private CarMediaManager mCarMediaManager;
     private Mode mMode;
 
     private enum Mode {
@@ -123,6 +125,7 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
                                         restrictionInfo.isRequiresDistractionOptimization()));
 
                 mCarPackageManager = (CarPackageManager) mCar.getCarManager(Car.PACKAGE_SERVICE);
+                mCarMediaManager = (CarMediaManager) mCar.getCarManager(Car.CAR_MEDIA_SERVICE);
                 updateAppsLists();
             } catch (CarNotConnectedException e) {
                 Log.e(TAG, "Car not connected in CarConnectionListener", e);
@@ -190,6 +193,15 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
         updateMode();
     }
 
+    @Override
+    protected void onDestroy() {
+        if (mCar != null && mCar.isConnected()) {
+            mCar.disconnect();
+            mCar = null;
+        }
+        super.onDestroy();
+    }
+
     private void updateMode() {
         mMode = parseMode(getIntent());
         setTitle(mMode.mTitleStringId);
@@ -227,7 +239,8 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
                 mMode.mOpenMediaCenter,
                 getSystemService(LauncherApps.class),
                 mCarPackageManager,
-                mPackageManager);
+                mPackageManager,
+                mCarMediaManager);
         mGridAdapter.setAllApps(appsInfo.getLaunchableComponentsList());
         mGridAdapter.setMostRecentApps(getMostRecentApps(appsInfo));
     }
