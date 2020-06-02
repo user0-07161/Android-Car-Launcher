@@ -20,6 +20,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layoutDirection="ltr"
     tools:context=".CarLauncher">
 
     <androidx.constraintlayout.widget.Guideline
@@ -74,9 +75,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
+        android:layoutDirection="locale"
         app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
-        app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
-        app:layout_constraintStart_toEndOf="@+id/start_edge"
+        app:layout_constraintRight_toLeftOf="@+id/divider_vertical"
+        app:layout_constraintLeft_toRightOf="@+id/start_edge"
         app:layout_constraintTop_toBottomOf="@+id/top_edge">
         <ActivityView
             android:id="@+id/maps"
@@ -89,9 +91,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
+        android:layoutDirection="locale"
         app:layout_constraintBottom_toTopOf="@+id/divider_horizontal"
-        app:layout_constraintEnd_toStartOf="@+id/end_edge"
-        app:layout_constraintStart_toEndOf="@+id/divider_vertical"
+        app:layout_constraintRight_toLeftOf="@+id/end_edge"
+        app:layout_constraintLeft_toRightOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/top_edge"/>
 
     <FrameLayout
@@ -99,9 +102,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
+        android:layoutDirection="locale"
         app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
-        app:layout_constraintEnd_toStartOf="@+id/end_edge"
-        app:layout_constraintStart_toEndOf="@+id/divider_vertical"
+        app:layout_constraintRight_toLeftOf="@+id/end_edge"
+        app:layout_constraintLeft_toRightOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/divider_horizontal"/>
     <View
         android:id="@+id/bottom_line"

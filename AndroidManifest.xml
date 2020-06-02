@@ -38,7 +38,8 @@
     <application
         android:icon="@drawable/ic_launcher_home"
         android:label="@string/app_title"
-        android:theme="@style/Theme.Launcher">
+        android:theme="@style/Theme.Launcher"
+        android:supportsRtl="true">
         <activity
             android:name=".CarLauncher"
             android:configChanges="uiMode|mcc|mnc"

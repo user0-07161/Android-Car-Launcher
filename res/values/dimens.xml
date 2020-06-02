@@ -43,6 +43,8 @@
     <dimen name="panel_margin">@*android:dimen/car_margin</dimen>
     <!-- Height of the text and exit button on the app selection screen -->
     <dimen name="app_bar_height">@*android:dimen/car_app_bar_height</dimen>
+    <!-- Margin between the right edge of the screen and the app bar title -->
+    <dimen name="app_bar_title_right_margin">@*android:dimen/car_padding_5</dimen>
     <dimen name="icon_size">@*android:dimen/car_primary_icon_size</dimen>
     <dimen name="recent_apps_row_height">@*android:dimen/car_list_divider_height</dimen>
     <dimen name="app_grid_touch_target_size">@*android:dimen/car_touch_target_size</dimen>
