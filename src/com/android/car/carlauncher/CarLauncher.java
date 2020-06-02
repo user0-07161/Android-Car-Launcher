@@ -16,17 +16,21 @@
 
 package com.android.car.carlauncher;
 
+import static android.app.ActivityTaskManager.INVALID_STACK_ID;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityView;
 import android.app.ActivityTaskManager;
+import android.app.IActivityManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.widget.FrameLayout;
 
@@ -60,6 +64,7 @@ public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
 
+    private IActivityManager mAm;
     private ActivityView mActivityView;
     private boolean mActivityViewReady;
     private boolean mIsStarted;
@@ -144,6 +149,7 @@ public class CarLauncher extends FragmentActivity {
         if (mActivityView != null) {
             mActivityView.setCallback(mActivityViewCallback);
         }
+        mAm = ActivityManager.getService();
     }
 
     @Override
@@ -168,7 +174,7 @@ public class CarLauncher extends FragmentActivity {
         maybeLogReady();
 
         // Request EmptyActivity to finish
-        sendIntentToEmptyActivity(/* stopActivity= */ true);
+        sendIntentToEmptyActivity(/* stopActivity= */ true, INVALID_STACK_ID);
     }
 
     @Override
@@ -176,19 +182,30 @@ public class CarLauncher extends FragmentActivity {
         super.onStop();
         mIsStarted = false;
 
+        int focusedStackId = INVALID_STACK_ID;
+        try {
+            ActivityManager.StackInfo focusedStackInfo = mAm.getFocusedStackInfo();
+            if (focusedStackInfo != null) {
+                focusedStackId = focusedStackInfo.stackId;
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "cannot getFocusedStackId", e);
+        }
         // Request EmptyActivity to start
-        sendIntentToEmptyActivity(/* stopActivity= */ false);
+        sendIntentToEmptyActivity(/* stopActivity= */ false, focusedStackId);
     }
 
-    private void sendIntentToEmptyActivity(boolean stopActivity) {
-        if (DEBUG) Log.d(TAG, "Sending intent to EmptyActivity with stopActivity:" + stopActivity);
-
+    private void sendIntentToEmptyActivity(boolean stopActivity, int focusedStackId) {
+        if (DEBUG) {
+            Log.d(TAG, "Sending intent to EmptyActivity with stopActivity=" + stopActivity
+                    + ", focusedStackId=" + focusedStackId);
+        }
         if (mActivityView != null && mActivityViewReady) {
             if (DEBUG) Log.d(TAG, "Maps exists in CarLauncher");
 
             Intent intent = new Intent(mActivityView.getContext(), EmptyActivity.class);
             intent.putExtra(EmptyActivity.EXTRA_STOP_ACTIVITY, stopActivity);
-
+            intent.putExtra(EmptyActivity.EXTRA_FOCUSED_STACK_ID, focusedStackId);
             try {
                 mActivityView.startActivity(intent);
             } catch (ActivityNotFoundException e) {
@@ -213,6 +230,7 @@ public class CarLauncher extends FragmentActivity {
     public static final class EmptyActivity extends Activity {
 
         public static final String EXTRA_STOP_ACTIVITY = "EXTRA_STOP_EMPTY_ACTIVITY";
+        public static final String EXTRA_FOCUSED_STACK_ID = "EXTRA_FOCUSED_STACK_ID";
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -235,9 +253,20 @@ public class CarLauncher extends FragmentActivity {
             // Finish this activity if required.
             boolean stopActivity = intent.getBooleanExtra(EXTRA_STOP_ACTIVITY,
                     /* defaultValue= */ true);
-            if (DEBUG) Log.d(TAG, "Requested to stop EmptyActivity: " + stopActivity);
+            int focusedStackId = intent.getIntExtra(EXTRA_FOCUSED_STACK_ID, INVALID_STACK_ID);
+            if (DEBUG) {
+                Log.d(TAG, "Requested to stop EmptyActivity: stopActivity=" + stopActivity
+                        + ", focusedStackId=" + focusedStackId);
+            }
             if (stopActivity) {
                 finish();
+            }
+            if (focusedStackId != INVALID_STACK_ID) {
+                try {
+                    ActivityManager.getService().setFocusedStack(focusedStackId);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "cannot setFocusedStack", e);
+                }
             }
         }
     }
