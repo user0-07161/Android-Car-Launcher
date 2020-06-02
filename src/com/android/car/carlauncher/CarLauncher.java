@@ -182,9 +182,13 @@ public class CarLauncher extends FragmentActivity {
 
     private void sendIntentToEmptyActivity(boolean stopActivity) {
         if (DEBUG) Log.d(TAG, "Sending intent to EmptyActivity with stopActivity:" + stopActivity);
-        Intent intent = new Intent(mActivityView.getContext(), EmptyActivity.class);
-        intent.putExtra(EmptyActivity.EXTRA_STOP_ACTIVITY, stopActivity);
+
         if (mActivityView != null && mActivityViewReady) {
+            if (DEBUG) Log.d(TAG, "Maps exists in CarLauncher");
+
+            Intent intent = new Intent(mActivityView.getContext(), EmptyActivity.class);
+            intent.putExtra(EmptyActivity.EXTRA_STOP_ACTIVITY, stopActivity);
+
             try {
                 mActivityView.startActivity(intent);
             } catch (ActivityNotFoundException e) {
