@@ -50,6 +50,7 @@ import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
+import com.android.car.ui.FocusArea;
 import com.android.car.ui.baselayout.Insets;
 import com.android.car.ui.baselayout.InsetsChangedListener;
 import com.android.car.ui.core.CarUi;
@@ -357,6 +358,9 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
     public void onCarUiInsetsChanged(Insets insets) {
         requireViewById(R.id.apps_grid)
                 .setPadding(0, insets.getTop(), 0, insets.getBottom());
+        FocusArea focusArea = requireViewById(R.id.car_ui_recycler_view_container);
+        focusArea.setHighlightPadding(0, insets.getTop(), 0, insets.getBottom());
+
         requireViewById(android.R.id.content)
                 .setPadding(insets.getLeft(), 0, insets.getRight(), 0);
     }
