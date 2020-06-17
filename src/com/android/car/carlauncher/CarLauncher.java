@@ -22,8 +22,13 @@ import android.car.app.CarActivityView;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.view.Display;
 import android.widget.FrameLayout;
 
 import androidx.fragment.app.FragmentActivity;
@@ -56,6 +61,8 @@ public class CarLauncher extends FragmentActivity {
     private CarActivityView mActivityView;
     private boolean mActivityViewReady;
     private boolean mIsStarted;
+    private DisplayManager mDisplayManager;
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
@@ -94,6 +101,22 @@ public class CarLauncher extends FragmentActivity {
                 }
             };
 
+    private final DisplayListener mDisplayListener = new DisplayListener() {
+        @Override
+        public void onDisplayAdded(int displayId) {}
+        @Override
+        public void onDisplayRemoved(int displayId) {}
+
+        @Override
+        public void onDisplayChanged(int displayId) {
+            if (displayId != getDisplay().getDisplayId()) {
+                return;
+            }
+            // startMapsInActivityView() will check Display's State.
+            startMapsInActivityView();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +133,8 @@ public class CarLauncher extends FragmentActivity {
         if (mActivityView != null) {
             mActivityView.setCallback(mActivityViewCallback);
         }
+        mDisplayManager = getSystemService(DisplayManager.class);
+        mDisplayManager.registerDisplayListener(mDisplayListener, mMainHandler);
     }
 
     @Override
@@ -134,23 +159,29 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mDisplayManager.unregisterDisplayListener(mDisplayListener);
         if (mActivityView != null && mActivityViewReady) {
             mActivityView.release();
         }
     }
 
     private void startMapsInActivityView() {
-        // If we happen to be be resurfaced into a multi display mode we skip launching content
-        // in the activity view as we will get recreated anyway.
-        if (!mActivityViewReady || isInMultiWindowMode() || isInPictureInPictureMode()) {
+        if (mActivityView == null || !mActivityViewReady) {
             return;
         }
-        if (mActivityView != null) {
-            try {
-                mActivityView.startActivity(getMapsIntent());
-            } catch (ActivityNotFoundException e) {
-                Log.w(TAG, "Maps activity not found", e);
-            }
+        // If we happen to be be resurfaced into a multi display mode we skip launching content
+        // in the activity view as we will get recreated anyway.
+        if (isInMultiWindowMode() || isInPictureInPictureMode()) {
+            return;
+        }
+        // Don't start Maps when the display is off for ActivityVisibilityTests.
+        if (getDisplay().getState() != Display.STATE_ON) {
+            return;
+        }
+        try {
+            mActivityView.startActivity(getMapsIntent());
+        } catch (ActivityNotFoundException e) {
+            Log.w(TAG, "Maps activity not found", e);
         }
     }
 
