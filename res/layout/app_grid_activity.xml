@@ -14,12 +14,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-
-<com.android.car.ui.recyclerview.CarUiRecyclerView
+<com.android.car.ui.FocusArea
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/apps_grid"
-    app:layoutStyle="grid"
-    app:numOfColumns="4"
+    android:id="@+id/focus_area"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+    android:layout_height="match_parent">
+    <com.android.car.ui.recyclerview.CarUiRecyclerView
+        android:id="@+id/apps_grid"
+        app:layoutStyle="grid"
+        app:numOfColumns="4"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</com.android.car.ui.FocusArea>
