@@ -37,8 +37,6 @@ import android.service.media.MediaBrowserService;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.android.car.media.common.source.MediaSourceViewModel;
-
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 
@@ -47,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -221,8 +218,15 @@ class AppLauncherUtils {
                                 selectMediaSourceAndFinish(context, componentName, carMediaManager);
                             }
                         },
-                        context -> AppLauncherUtils.launchApp(context,
-                            packageManager.getLaunchIntentForPackage(packageName)));
+                        context -> {
+                            // getLaunchIntentForPackage looks for a main activity in the category
+                            // Intent.CATEGORY_INFO, then Intent.CATEGORY_LAUNCHER, and returns null
+                            // if neither are found
+                            Intent packageLaunchIntent =
+                                    packageManager.getLaunchIntentForPackage(packageName);
+                            AppLauncherUtils.launchApp(context,
+                                    packageLaunchIntent != null ? packageLaunchIntent : intent);
+                        });
                     launchablesMap.put(componentName, appMetaData);
                 }
             }
