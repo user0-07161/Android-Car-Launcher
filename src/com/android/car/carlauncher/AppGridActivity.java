@@ -233,8 +233,8 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
     private void updateAppsLists() {
-        Set<String> blackList = mShowAllApps ? Collections.emptySet() : mHiddenApps;
-        LauncherAppsInfo appsInfo = AppLauncherUtils.getLauncherApps(blackList,
+        Set<String> appsToHide = mShowAllApps ? Collections.emptySet() : mHiddenApps;
+        LauncherAppsInfo appsInfo = AppLauncherUtils.getLauncherApps(appsToHide,
                 mCustomMediaComponents,
                 mMode.mAppTypes,
                 mMode.mOpenMediaCenter,
