@@ -22,7 +22,7 @@ android_app {
 
     platform_apis: true,
 
-    required: ["privapp_whitelist_com.android.car.carlauncher"],
+    required: ["allowed_privapp_com.android.car.carlauncher"],
 
     certificate: "platform",
 
