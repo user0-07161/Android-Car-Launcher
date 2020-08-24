@@ -64,7 +64,8 @@
             <meta-data android:name="distractionOptimized" android:value="true"/>
         </activity>
         <activity
-            android:name=".CarLauncher$EmptyActivity"
+	    android:name=".CarLauncher$EmptyActivity"
+            android:configChanges="uiMode"
             android:launchMode="singleTask">
             <meta-data android:name="distractionOptimized" android:value="true"/>
         </activity>
