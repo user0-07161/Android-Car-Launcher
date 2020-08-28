@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ Copyright (C) 2020 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="@dimen/home_card_button_size"
+        android:height="@dimen/home_card_button_size"
+        android:viewportWidth="34"
+        android:viewportHeight="36">
+    <path
+        android:pathData="M29.8333,17.1667H26.7167C26.7167,18.5326 26.4325,19.7976 25.9192,20.9251L28.1742,23.1801C29.2192,21.3926 29.8333,19.3484 29.8333,17.1667ZM22.4725,17.4692C22.4725,17.3684 22.5,17.2676 22.5,17.1667V6.1667C22.5,3.1234 20.0342,0.6667 17,0.6667C13.9658,0.6667 11.5,3.1234 11.5,6.1667V6.5059L22.4725,17.4692ZM2.8375,2.5001L0.5,4.8376L11.5183,15.8559V17.1759C11.5183,20.2101 13.9658,22.6759 17,22.6759C17.4125,22.6759 17.8067,22.6209 18.1917,22.5384L21.235,25.5817C19.9242,26.1867 18.485,26.5259 17,26.5259C11.94,26.5259 7.2833,22.6759 7.2833,17.1759H4.1667C4.1667,23.4367 9.1533,28.6067 15.1667,29.4959V35.5001H18.8333V29.4867C20.4925,29.2392 22.0692,28.6617 23.49,27.8276L31.1625,35.5001L33.5,33.1717L2.8375,2.5001Z"
+        android:fillColor="@color/dialer_button_icon_color"/>
+</vector>

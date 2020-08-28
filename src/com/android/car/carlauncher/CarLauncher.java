@@ -37,6 +37,8 @@ import android.widget.FrameLayout;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.android.car.carlauncher.homescreen.assistive.AssistiveFragment;
+import com.android.car.carlauncher.homescreen.audio.AudioFragment;
 import com.android.car.media.common.PlaybackFragment;
 
 /**
@@ -214,20 +216,10 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void initializeFragments() {
-        PlaybackFragment playbackFragment = new PlaybackFragment();
-        ContextualFragment contextualFragment = null;
-        FrameLayout contextual = findViewById(R.id.contextual);
-        if (contextual != null) {
-            contextualFragment = new ContextualFragment();
-        }
-
-        FragmentTransaction fragmentTransaction =
-                getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.playback, playbackFragment);
-        if (contextual != null) {
-            fragmentTransaction.replace(R.id.contextual, contextualFragment);
-        }
-        fragmentTransaction.commitNow();
+        AudioFragment audioFragment = new AudioFragment();
+        AssistiveFragment assistiveFragment = new AssistiveFragment();
+        getSupportFragmentManager().beginTransaction().replace(R.id.top_card,
+                assistiveFragment).replace(R.id.bottom_card, audioFragment).commitNow();
     }
 
     /** Logs that the Activity is ready. Used for startup time diagnostics. */
@@ -237,13 +229,13 @@ public class CarLauncher extends FragmentActivity {
                     + ", started=" + mIsStarted + ", alreadyLogged: " + mIsReadyLogged);
         }
         if (mActivityViewReady && mIsStarted) {
-            // We should report everytime - the Android framework will take care of logging just
-            // when it's effectivelly drawn for the first time, but....
+            // We should report every time - the Android framework will take care of logging just
+            // when it's effectively drawn for the first time, but....
             reportFullyDrawn();
             if (!mIsReadyLogged) {
                 // ... we want to manually check that the Log.i below (which is useful to show
-                // the user id) is only logged once (otherwise it would be logged everytime the user
-                // taps Home)
+                // the user id) is only logged once (otherwise it would be logged every time the
+                // user taps Home)
                 Log.i(TAG, "Launcher for user " + getUserId() + " is ready");
                 mIsReadyLogged = true;
             }
