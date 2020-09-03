@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowInsets;
@@ -126,7 +127,7 @@ public class CarLauncher extends FragmentActivity {
         // TODO (b/167412330): The following is the workaround for two 'Loading' screen: b/166670668
         // Investigate if it is caused by the early end of boot-animation, if so, remove the
         // following code after fixing it.
-        if (getUserId() == UserHandle.USER_SYSTEM) {
+        if (getUserId() == UserHandle.USER_SYSTEM && UserManager.isHeadlessSystemUserMode()) {
             mIsUser0 = true;
             setContentView(R.layout.car_launcher_user0);
             getWindow().getInsetsController().hide(WindowInsets.Type.systemBars());
