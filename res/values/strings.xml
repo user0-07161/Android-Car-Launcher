@@ -40,6 +40,11 @@
         <item quantity="other"><xliff:g example="2" id="count">%d</xliff:g>devices</item>
     </plurals>
 
+    <!-- FakeWeatherModel strings -->
+    <string name="weather_app_name">Weather</string>
+    <string name="fake_weather_main_text">--\u00B0 Mostly sunny</string>
+    <string name="fake_weather_footer_text">Mountain View &#8226; H: --\u00B0 L: --\u00B0</string>
+
     <!-- Toolbar MenuItem text for hiding debug apps, only visible on debug builds [CHAR_LIMIT=50] -->
     <string name="hide_debug_apps">Hide debug apps</string>
     <!-- Toolbar MenuItem text for showing debug apps, only visible on debug builds [CHAR_LIMIT=50] -->

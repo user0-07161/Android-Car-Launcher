@@ -104,7 +104,9 @@ public class HomeCardFragment extends Fragment implements HomeCardInterface.View
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mPresenter.onViewDestroyed();
+        if (mPresenter != null) {
+            mPresenter.onViewDestroyed();
+        }
         mSize = null;
     }
 
@@ -186,6 +188,8 @@ public class HomeCardFragment extends Fragment implements HomeCardInterface.View
         getDescriptiveTextOnlyLayoutView().setVisibility(View.VISIBLE);
         mDescriptiveTextOnlyTitle.setText(primaryText);
         mDescriptiveTextOnlySubtitle.setText(secondaryText);
+        mDescriptiveTextOnlySubtitle.setVisibility(
+                secondaryText == null ? View.GONE : View.VISIBLE);
         mDescriptiveTextOnlyOptionalImage.setImageDrawable(optionalImage);
         mDescriptiveTextOnlyOptionalImage.setVisibility(
                 optionalImage == null ? View.GONE : View.VISIBLE);
@@ -202,6 +206,8 @@ public class HomeCardFragment extends Fragment implements HomeCardInterface.View
         getDescriptiveTextWithControlsLayoutView().setVisibility(View.VISIBLE);
         mDescriptiveTextWithControlsTitle.setText(primaryText);
         mDescriptiveTextWithControlsSubtitle.setText(secondaryText);
+        mDescriptiveTextWithControlsSubtitle.setVisibility(
+                secondaryText == null ? View.GONE : View.VISIBLE);
         mDescriptiveTextWithControlsOptionalImage.setImageDrawable(optionalImage);
         mDescriptiveTextWithControlsOptionalImage.setVisibility(
                 optionalImage == null ? View.GONE : View.VISIBLE);

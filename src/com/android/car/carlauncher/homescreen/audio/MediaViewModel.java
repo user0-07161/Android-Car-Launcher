@@ -93,6 +93,7 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
                 });
         mSourceViewModel.getPrimaryMediaSource().observeForever(mMediaSourceObserver);
         mPlaybackViewModel.getMetadata().observeForever(mMetadataObserver);
+        mAudioPresenter.onModelUpdated(this);
     }
 
     @Override

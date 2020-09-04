@@ -23,6 +23,7 @@ import com.android.car.carlauncher.homescreen.CardPresenter;
 import com.android.car.carlauncher.homescreen.HomeCardFragment;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -50,7 +51,8 @@ public class AssistiveCard implements HomeCardModule {
         if (mAssistiveCardPresenter == null) {
             mAssistiveCardPresenter = new AssistiveCardPresenter();
             mAssistiveCardPresenter.setModels(
-                    Collections.unmodifiableList(Collections.singletonList(new ProjectionModel())));
+                    Collections.unmodifiableList(
+                            Arrays.asList(new ProjectionModel(), new FakeWeatherModel())));
         }
         return mAssistiveCardPresenter;
     }
