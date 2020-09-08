@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright (C) 2018 The Android Open Source Project
+    Copyright (C) 2019 The Android Open Source Project
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -55,14 +55,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="@dimen/contextual_screen_percentage"/>
+        app:layout_constraintGuide_percent="@dimen/maps_screen_percentage"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/divider_horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="@dimen/maps_screen_percentage"/>
+        app:layout_constraintGuide_percent="@dimen/contextual_screen_percentage"/>
 
     <View
         android:id="@+id/top_line"
@@ -74,8 +74,8 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
-        app:layout_constraintBottom_toTopOf="@+id/divider_horizontal"
-        app:layout_constraintEnd_toStartOf="@+id/end_edge"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
+        app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
         app:layout_constraintStart_toEndOf="@+id/start_edge"
         app:layout_constraintTop_toBottomOf="@+id/top_edge">
         <android.car.app.CarActivityView
@@ -89,10 +89,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
+        app:layout_constraintBottom_toTopOf="@+id/divider_horizontal"
         app:layout_constraintEnd_toStartOf="@+id/end_edge"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
-        app:layout_constraintTop_toBottomOf="@+id/divider_horizontal"/>
+        app:layout_constraintTop_toBottomOf="@+id/top_edge"/>
 
     <FrameLayout
         android:id="@+id/playback"
@@ -100,8 +100,8 @@
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
         app:layout_constraintBottom_toTopOf="@+id/bottom_edge"
-        app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
-        app:layout_constraintStart_toEndOf="@+id/start_edge"
+        app:layout_constraintEnd_toStartOf="@+id/end_edge"
+        app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/divider_horizontal"/>
     <View
         android:id="@+id/bottom_line"
