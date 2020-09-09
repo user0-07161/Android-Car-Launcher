@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.car.carlauncher.homescreen.assistive;
+package com.android.car.carlauncher.homescreen;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -40,7 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
-public class AssistiveFragmentTest {
+public class HomeCardFragmentTest {
 
     private static final String DESCRIPTIVE_TEXT_TITLE = "Test title text";
     private static final String DESCRIPTIVE_TEXT_SUBTITLE = "Test subtitle text";
@@ -65,7 +65,7 @@ public class AssistiveFragmentTest {
 
     @Test
     public void updateContentView_descriptiveTextWithFooter_displaysTapForMoreView() {
-        AssistiveFragment fragment = (AssistiveFragment) mActivityTestRule.getActivity()
+        HomeCardFragment fragment = (HomeCardFragment) mActivityTestRule.getActivity()
                 .getSupportFragmentManager().findFragmentById(R.id.top_card);
         fragment.updateHeaderView(CARD_HEADER);
         fragment.updateContentView(DESCRIPTIVE_TEXT_VIEW);
@@ -86,7 +86,7 @@ public class AssistiveFragmentTest {
 
     @Test
     public void updateContentView_descriptiveTextWithNoFooter_hidesTapForMoreView() {
-        AssistiveFragment fragment = (AssistiveFragment) mActivityTestRule.getActivity()
+        HomeCardFragment fragment = (HomeCardFragment) mActivityTestRule.getActivity()
                 .getSupportFragmentManager().findFragmentById(R.id.top_card);
         fragment.updateHeaderView(CARD_HEADER);
         fragment.updateContentView(DESCRIPTIVE_TEXT_VIEW_NO_FOOTER);
@@ -107,7 +107,7 @@ public class AssistiveFragmentTest {
 
     @Test
     public void updateContentView_textBlockWithFooter_displaysTapForMoreView() {
-        AssistiveFragment fragment = (AssistiveFragment) mActivityTestRule.getActivity()
+        HomeCardFragment fragment = (HomeCardFragment) mActivityTestRule.getActivity()
                 .getSupportFragmentManager().findFragmentById(R.id.top_card);
         fragment.updateHeaderView(CARD_HEADER);
         fragment.updateContentView(TEXT_BLOCK_VIEW);
@@ -124,7 +124,7 @@ public class AssistiveFragmentTest {
 
     @Test
     public void updateContentView_textBlockNoFooter_hidesTapForMoreView() {
-        AssistiveFragment fragment = (AssistiveFragment) mActivityTestRule.getActivity()
+        HomeCardFragment fragment = (HomeCardFragment) mActivityTestRule.getActivity()
                 .getSupportFragmentManager().findFragmentById(R.id.top_card);
         fragment.updateHeaderView(CARD_HEADER);
         fragment.updateContentView(TEXT_BLOCK_VIEW_NO_FOOTER);

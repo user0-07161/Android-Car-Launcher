@@ -31,6 +31,8 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.List;
+
 @RunWith(JUnit4.class)
 public class CardPresenterTest {
 
@@ -48,16 +50,20 @@ public class CardPresenterTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        mPresenter = new CardPresenter(mView) {
+        mPresenter = new CardPresenter() {
+            @Override
+            public void setModels(List<HomeCardInterface.Model> models) {
+            }
+
             @Override
             public void onViewCreated() {
             }
 
             @Override
             public void onViewDestroyed() {
-
             }
         };
+        mPresenter.setView(mView);
     }
 
     @Test

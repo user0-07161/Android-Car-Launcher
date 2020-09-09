@@ -25,7 +25,8 @@ public abstract class CardPresenter implements HomeCardInterface.Presenter {
 
     private HomeCardInterface.View mView;
 
-    public CardPresenter(HomeCardInterface.View view) {
+    @Override
+    public void setView(HomeCardInterface.View view) {
         mView = view;
     }
 

@@ -32,18 +32,24 @@ import android.os.UserManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowInsets;
-import android.widget.FrameLayout;
 
+import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
-import com.android.car.carlauncher.homescreen.assistive.AssistiveFragment;
-import com.android.car.carlauncher.homescreen.audio.AudioFragment;
-import com.android.car.media.common.PlaybackFragment;
+import com.android.car.carlauncher.homescreen.HomeCardModule;
+
+import java.util.Set;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link ActivityView} to host
- * maps content.
+ * maps content and uses a Model-View-Presenter structure to display content in cards.
+ *
+ * <p>Implementations of the Launcher that use the given layout of the main activity
+ * (car_launcher.xml) can customize the home screen cards by providing their own
+ * {@link HomeCardModule} for R.id.top_card or R.id.bottom_card. Otherwise, implementations that
+ * use their own layout should define their own activity rather than using this one.
  *
  * <p>Note: On some devices, the ActivityView may render with a width, height, and/or aspect
  * ratio that does not meet Android compatibility definitions. Developers should work with content
@@ -69,6 +75,7 @@ public class CarLauncher extends FragmentActivity {
     private DisplayManager mDisplayManager;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private boolean mIsUser0;
+    private Set<HomeCardModule> mHomeCardModules;
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
@@ -109,9 +116,12 @@ public class CarLauncher extends FragmentActivity {
 
     private final DisplayListener mDisplayListener = new DisplayListener() {
         @Override
-        public void onDisplayAdded(int displayId) {}
+        public void onDisplayAdded(int displayId) {
+        }
+
         @Override
-        public void onDisplayRemoved(int displayId) {}
+        public void onDisplayRemoved(int displayId) {
+        }
 
         @Override
         public void onDisplayChanged(int displayId) {
@@ -143,7 +153,7 @@ public class CarLauncher extends FragmentActivity {
         } else {
             setContentView(R.layout.car_launcher);
         }
-        initializeFragments();
+        initializeCards();
         mActivityView = findViewById(R.id.maps);
         if (mActivityView != null) {
             mActivityView.setCallback(mActivityViewCallback);
@@ -212,14 +222,36 @@ public class CarLauncher extends FragmentActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        initializeFragments();
+        initializeCards();
     }
 
-    private void initializeFragments() {
-        AudioFragment audioFragment = new AudioFragment();
-        AssistiveFragment assistiveFragment = new AssistiveFragment();
-        getSupportFragmentManager().beginTransaction().replace(R.id.top_card,
-                assistiveFragment).replace(R.id.bottom_card, audioFragment).commitNow();
+    private void initializeCards() {
+        if (mHomeCardModules == null) {
+            mHomeCardModules = new ArraySet<>();
+            for (String providerClassName : getResources().getStringArray(
+                    R.array.config_homeCardModuleClasses)) {
+                try {
+                    long reflectionStartTime = System.currentTimeMillis();
+                    HomeCardModule cardModule = (HomeCardModule) Class.forName(
+                            providerClassName).newInstance();
+                    cardModule.setViewModelProvider(new ViewModelProvider( /* owner= */this));
+                    mHomeCardModules.add(cardModule);
+                    if (DEBUG) {
+                        long reflectionTime = System.currentTimeMillis() - reflectionStartTime;
+                        Log.d(TAG, "Initialization of HomeCardModule class " + providerClassName
+                                + " took " + reflectionTime + " ms");
+                    }
+                } catch (IllegalAccessException | InstantiationException |
+                        ClassNotFoundException e) {
+                    Log.w(TAG, "Unable to create HomeCardProvider class " + providerClassName, e);
+                }
+            }
+        }
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        for (HomeCardModule cardModule : mHomeCardModules) {
+            transaction.replace(cardModule.getCardResId(), cardModule.getCardView());
+        }
+        transaction.commitNow();
     }
 
     /** Logs that the Activity is ready. Used for startup time diagnostics. */

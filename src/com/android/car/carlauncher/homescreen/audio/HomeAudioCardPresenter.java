@@ -16,7 +16,6 @@
 
 package com.android.car.carlauncher.homescreen.audio;
 
-import android.os.SystemClock;
 import android.view.View;
 
 import androidx.lifecycle.ViewModelProvider;
@@ -25,8 +24,6 @@ import com.android.car.carlauncher.homescreen.CardPresenter;
 import com.android.car.carlauncher.homescreen.HomeCardInterface;
 import com.android.car.media.common.PlaybackControlsActionBar;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,8 +38,9 @@ public class HomeAudioCardPresenter extends CardPresenter {
     private List<HomeCardInterface.Model> mModelList;
     private MediaViewModel mMediaViewModel;
 
-    public HomeAudioCardPresenter(HomeCardInterface.View view) {
-        super(view);
+    @Override
+    public void setModels(List<HomeCardInterface.Model> models) {
+        mModelList = models;
     }
 
     /**
@@ -51,9 +49,6 @@ public class HomeAudioCardPresenter extends CardPresenter {
     @Override
     public void onViewCreated() {
         mMediaViewModel = new ViewModelProvider(getFragment()).get(MediaViewModel.class);
-        mModelList = Collections.unmodifiableList(
-                Arrays.asList(mMediaViewModel, new InCallModel(getFragment().requireContext(),
-                        SystemClock.elapsedRealtimeClock())));
 
         for (HomeCardInterface.Model model : mModelList) {
             model.setPresenter(this);

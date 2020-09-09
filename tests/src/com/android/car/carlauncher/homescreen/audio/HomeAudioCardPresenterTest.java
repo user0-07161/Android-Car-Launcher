@@ -35,6 +35,8 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
+
 @RunWith(JUnit4.class)
 public class HomeAudioCardPresenterTest {
 
@@ -59,7 +61,8 @@ public class HomeAudioCardPresenterTest {
         MockitoAnnotations.initMocks(this);
         when(mModel.getCardHeader()).thenReturn(CARD_HEADER);
         when(mModel.getCardContent()).thenReturn(CARD_CONTENT);
-        mPresenter = new HomeAudioCardPresenter(mView);
+        mPresenter = new HomeAudioCardPresenter();
+        mPresenter.setView(mView);
     }
 
     @Test

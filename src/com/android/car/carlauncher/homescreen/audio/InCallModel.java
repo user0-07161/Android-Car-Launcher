@@ -54,8 +54,8 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     private static final String TAG = "InCallModel";
     private static final boolean DEBUG = false;
 
-    private final Context mContext;
-    private final TelecomManager mTelecomManager;
+    private Context mContext;
+    private TelecomManager mTelecomManager;
     private final Clock mElapsedTimeClock;
     private Call mCurrentCall;
     private boolean mMuteCallToggle = true;
@@ -112,9 +112,13 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
         }
     };
 
-    public InCallModel(Context context, Clock elapsedTimeClock) {
-        mContext = context;
+    public InCallModel(Clock elapsedTimeClock) {
         mElapsedTimeClock = elapsedTimeClock;
+    }
+
+    @Override
+    public void onCreate(Context context) {
+        mContext = context;
         mTelecomManager = context.getSystemService(TelecomManager.class);
         mOngoingCallSubtitle = context.getResources().getString(R.string.ongoing_call_text);
         initializeAudioControls();
@@ -128,10 +132,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
         } catch (PackageManager.NameNotFoundException e) {
             Log.w(TAG, "No default dialer package found", e);
         }
-    }
 
-    @Override
-    public void onCreate(Context context) {
         Intent intent = new Intent(context, InCallServiceImpl.class);
         intent.setAction(InCallServiceImpl.ACTION_LOCAL_BIND);
         context.getApplicationContext().bindService(intent, mInCallServiceConnection,
@@ -189,7 +190,9 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
      */
     @Override
     public void onCallAdded(Call call) {
-        call.registerCallback(mCallback);
+        if (call != null) {
+            call.registerCallback(mCallback);
+        }
     }
 
     /**

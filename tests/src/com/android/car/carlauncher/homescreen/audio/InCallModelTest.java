@@ -65,8 +65,9 @@ public class InCallModelTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         mContext = ApplicationProvider.getApplicationContext();
-        mInCallModel = new InCallModel(mContext, mClock);
+        mInCallModel = new InCallModel(mClock);
         mInCallModel.setPresenter(mPresenter);
+        mInCallModel.onCreate(mContext);
         mOngoingCallSecondaryText =
                 ApplicationProvider.getApplicationContext().getResources().getString(
                         R.string.ongoing_call_text);

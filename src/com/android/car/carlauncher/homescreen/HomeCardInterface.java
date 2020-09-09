@@ -23,6 +23,8 @@ import androidx.fragment.app.Fragment;
 import com.android.car.carlauncher.homescreen.ui.CardContent;
 import com.android.car.carlauncher.homescreen.ui.CardHeader;
 
+import java.util.List;
+
 /**
  * Defines the interfaces for a card on the home app.
  * The cards follow a Model-View-Presenter architectural design pattern to separate functionality
@@ -42,6 +44,11 @@ public interface HomeCardInterface {
      * content is handled by the presenter.
      */
     interface View {
+
+        /**
+         * Sets the {@link Presenter} that will manage this View.
+         */
+        void setPresenter(Presenter presenter);
 
         /**
          * Called by the Presenter to remove the entire card from view if there is no data to
@@ -72,6 +79,17 @@ public interface HomeCardInterface {
      * It accesses and formats the data from a Model and updates the View to display the data
      */
     interface Presenter {
+
+        /**
+         * Sets the {@link View}, which is the card's UI that the Presenter will update.
+         */
+        void setView(View view);
+
+
+        /**
+         * Sets the list of {@link Model} that the Presenter will use as sources of content.
+         */
+        void setModels(List<Model> models);
 
         /**
          * Called by the View when its view has been created.

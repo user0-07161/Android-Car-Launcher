@@ -21,22 +21,19 @@ import android.view.View;
 import com.android.car.carlauncher.homescreen.CardPresenter;
 import com.android.car.carlauncher.homescreen.HomeCardInterface;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * The {@link CardPresenter} for an assistive card.
- *
- * For the assistive card, the {@link AssistiveFragment} implements the View
  */
 public class AssistiveCardPresenter extends CardPresenter {
 
     private HomeCardInterface.Model mCurrentModel;
     private List<HomeCardInterface.Model> mModels;
 
-    public AssistiveCardPresenter(HomeCardInterface.View view) {
-        super(view);
+    @Override
+    public void setModels(List<HomeCardInterface.Model> models) {
+        mModels = models;
     }
 
     /**
@@ -44,8 +41,6 @@ public class AssistiveCardPresenter extends CardPresenter {
      */
     @Override
     public void onViewCreated() {
-        mModels = Collections.unmodifiableList(Collections.singletonList(new ProjectionModel()));
-
         for (HomeCardInterface.Model model : mModels) {
             model.setPresenter(this);
             model.onCreate(getFragment().requireContext());

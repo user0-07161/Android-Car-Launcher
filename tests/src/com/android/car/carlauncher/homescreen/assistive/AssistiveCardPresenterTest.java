@@ -59,7 +59,8 @@ public class AssistiveCardPresenterTest {
         MockitoAnnotations.initMocks(this);
         when(mModel.getCardHeader()).thenReturn(CARD_HEADER);
         when(mModel.getCardContent()).thenReturn(CARD_CONTENT);
-        mPresenter = new AssistiveCardPresenter(mView);
+        mPresenter = new AssistiveCardPresenter();
+        mPresenter.setView(mView);
     }
 
     @Test

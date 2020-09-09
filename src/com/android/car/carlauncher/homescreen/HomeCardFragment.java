@@ -47,7 +47,7 @@ import com.android.car.carlauncher.homescreen.ui.TextBlockView;
  * {@link DescriptiveTextView}: card_content_descriptive_text, card_content_tap_for_more_text
  * {@link TextBlockView}: card_content_text_block, card_content_tap_for_more_text
  */
-public abstract class HomeCardFragment extends Fragment implements HomeCardInterface.View {
+public class HomeCardFragment extends Fragment implements HomeCardInterface.View {
 
     private static final String TAG = "HomeFragment";
     private HomeCardInterface.Presenter mPresenter;
@@ -80,18 +80,9 @@ public abstract class HomeCardFragment extends Fragment implements HomeCardInter
     private ImageButton mControlBarCenterButton;
     private ImageButton mControlBarRightButton;
 
-    /**
-     * Creates the {@link HomeCardInterface.Presenter} that will manage this View
-     *
-     * Each type of card (audio vs assistive) will create a Presenter of its respective {@link
-     * com.android.car.carlauncher.homescreen.ui.CardContent.HomeCardContentType}.
-     */
-    public abstract HomeCardInterface.Presenter createPresenter();
-
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mPresenter = createPresenter();
+    public void setPresenter(HomeCardInterface.Presenter presenter) {
+        mPresenter = presenter;
     }
 
     @Override
@@ -100,10 +91,14 @@ public abstract class HomeCardFragment extends Fragment implements HomeCardInter
         mRootView = inflater.inflate(R.layout.card_fragment, container, false);
         mCardTitle = mRootView.findViewById(R.id.card_name);
         mCardIcon = mRootView.findViewById(R.id.card_icon);
+        return mRootView;
+    }
 
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         mPresenter.onViewCreated();
         mRootView.setOnClickListener(v -> mPresenter.onViewClicked(v));
-        return mRootView;
     }
 
     @Override

@@ -50,9 +50,9 @@ public class AudioFragment extends HomeCardFragment {
     private TextView mMediaSubtitle;
 
     @Override
-    public HomeCardInterface.Presenter createPresenter() {
-        mPresenter = new HomeAudioCardPresenter(this);
-        return mPresenter;
+    public void setPresenter(HomeCardInterface.Presenter presenter) {
+        super.setPresenter(presenter);
+        mPresenter = (HomeAudioCardPresenter) presenter;
     }
 
     @Override
