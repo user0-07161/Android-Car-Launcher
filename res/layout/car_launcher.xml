@@ -20,25 +20,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layoutDirection="ltr"
     tools:context=".CarLauncher">
 
     <FrameLayout
         android:id="@+id/top_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="@dimen/main_screen_widget_margin"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginRight="@dimen/main_screen_widget_margin"
+        android:layoutDirection="locale"
+        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/bottom_card"
+        app:layout_constraintRight_toLeftOf="@+id/bottom_card"
         app:layout_constraintBottom_toTopOf="@+id/maps_card"/>
 
     <FrameLayout
         android:id="@+id/bottom_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintStart_toEndOf="@+id/top_card"
+        android:layoutDirection="locale"
+        app:layout_constraintLeft_toRightOf="@+id/top_card"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/maps_card"/>
 
     <androidx.cardview.widget.CardView
@@ -47,10 +50,11 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="@dimen/main_screen_widget_margin"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layoutDirection="locale"
+        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/bottom_card"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintRight_toRightOf="parent">
         <android.car.app.CarActivityView
             android:id="@+id/maps"
             android:layout_width="match_parent"
