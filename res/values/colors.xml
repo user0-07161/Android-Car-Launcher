@@ -21,4 +21,5 @@
     <color name="tap_for_more_text_color">#DADCE0</color>
     <color name="dialer_button_icon_color">#FFFFFF</color>
     <color name="dialer_end_call_button_color">#EE675C</color>
+    <color name="minimized_progress_bar_background">#5CFFFFFF</color>
 </resources>
