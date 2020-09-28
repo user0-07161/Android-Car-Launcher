@@ -64,6 +64,9 @@
     <dimen name="card_name_margin_start">16dp</dimen>
 
     <!-- Card Content dimensions -->
+    <dimen name="media_top_margin">24dp</dimen>
+    <dimen name="descriptive_text_only_top_margin">32dp</dimen>
+    <dimen name="descriptive_text_with_controls_top_margin">24dp</dimen>
     <!-- Percent transparency of the scrim applied to the image used for the card's background as a float between 0 and 1, where 0 applies no darkening scrim-->
     <dimen name="card_background_scrim_alpha" format="float">0.72</dimen>
     <!--Percent by which to blur the image used for the card's background as a float between 0 and 1, where 0 is not blurred-->
@@ -82,8 +85,8 @@
     <dimen name="home_card_button_size">44dp</dimen>
     <dimen name="button_outline_thickness">4dp</dimen>
     <dimen name="button_tap_target_size">76dp</dimen>
-    <dimen name="button_trio_vertical_padding">24dp</dimen>
-    <dimen name="button_trio_horizontal_padding">40dp</dimen>
+    <dimen name="button_tap_target_icon_padding">8dp</dimen>
+    <dimen name="button_trio_margin">24dp</dimen>
 
     <!-- card_content_playback_controls dimensions -->
     <dimen name="playback_controls_margin">24dp</dimen>

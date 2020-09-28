@@ -67,9 +67,9 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     private CardHeader mCardHeader;
     private CardContent mCardContent;
     private CharSequence mOngoingCallSubtitle;
-    private DescriptiveTextWithControlsView.AudioControl mMuteButton;
-    private DescriptiveTextWithControlsView.AudioControl mEndCallButton;
-    private DescriptiveTextWithControlsView.AudioControl mDialpadButton;
+    private DescriptiveTextWithControlsView.Control mMuteButton;
+    private DescriptiveTextWithControlsView.Control mEndCallButton;
+    private DescriptiveTextWithControlsView.Control mDialpadButton;
 
     private final ServiceConnection mInCallServiceConnection = new ServiceConnection() {
         @Override
@@ -256,16 +256,16 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     }
 
     private void initializeAudioControls() {
-        mMuteButton = new DescriptiveTextWithControlsView.AudioControl(
+        mMuteButton = new DescriptiveTextWithControlsView.Control(
                 mContext.getDrawable(R.drawable.ic_mic_off),
                 v -> {
                     mInCallService.setMuted(mMuteCallToggle);
                     mMuteCallToggle = !mMuteCallToggle;
                 });
-        mEndCallButton = new DescriptiveTextWithControlsView.AudioControl(
+        mEndCallButton = new DescriptiveTextWithControlsView.Control(
                 mContext.getDrawable(R.drawable.ic_call_end_button),
                 v -> mCurrentCall.disconnect());
-        mDialpadButton = new DescriptiveTextWithControlsView.AudioControl(
+        mDialpadButton = new DescriptiveTextWithControlsView.Control(
                 mContext.getDrawable(R.drawable.ic_dialpad), this::onClick);
     }
 }

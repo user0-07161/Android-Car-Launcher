@@ -37,7 +37,6 @@
         android:singleLine="true"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:layout_marginStart="@dimen/card_content_image_margin"
-        android:layout_marginTop="@dimen/descriptive_text_margin_top"
         app:layout_goneMarginStart="0dp"
         app:layout_constraintStart_toEndOf="@+id/optional_image"
         app:layout_constraintEnd_toEndOf="parent"
