@@ -177,9 +177,11 @@ class AppLauncherUtils {
             boolean openMediaCenter,
             LauncherApps launcherApps,
             CarPackageManager carPackageManager,
-            PackageManager packageManager) {
+            PackageManager packageManager,
+            CarMediaManager carMediaManager) {
 
-        if (launcherApps == null || carPackageManager == null || packageManager == null) {
+        if (launcherApps == null || carPackageManager == null || packageManager == null
+                || carMediaManager == null) {
             return EMPTY_APPS_INFO;
         }
 
@@ -216,7 +218,7 @@ class AppLauncherUtils {
                             if (openMediaCenter) {
                                 AppLauncherUtils.launchApp(context, intent);
                             } else {
-                                selectMediaSourceAndFinish(context, componentName);
+                                selectMediaSourceAndFinish(context, componentName, carMediaManager);
                             }
                         },
                         context -> AppLauncherUtils.launchApp(context,
@@ -285,12 +287,10 @@ class AppLauncherUtils {
         }
     }
 
-    private static void selectMediaSourceAndFinish(Context context, ComponentName componentName) {
+    private static void selectMediaSourceAndFinish(Context context, ComponentName componentName,
+            CarMediaManager carMediaManager) {
         try {
-            Car carApi = Car.createCar(context);
-            CarMediaManager manager = (CarMediaManager) carApi
-                    .getCarManager(Car.CAR_MEDIA_SERVICE);
-            manager.setMediaSource(componentName);
+            carMediaManager.setMediaSource(componentName, CarMediaManager.MEDIA_SOURCE_MODE_BROWSE);
             if (context instanceof Activity) {
                 ((Activity) context).finish();
             }
