@@ -21,14 +21,15 @@
     android:layout_height="wrap_content"
     android:layout_width="match_parent"
     android:orientation="horizontal"
-    android:id="@+id/button_trio"
-    android:visibility="gone">
+    android:id="@+id/button_trio">
 
     <ImageButton
         android:id="@+id/button_left"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:layout_height="@dimen/button_tap_target_size"
-        android:layout_width="@dimen/button_tap_target_size"/>
+        android:layout_width="@dimen/button_tap_target_size"
+        android:padding="@dimen/button_tap_target_icon_padding"
+        android:scaleType="fitCenter"/>
 
     <Space
         android:layout_height="match_parent"
@@ -39,7 +40,9 @@
         android:id="@+id/button_center"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:layout_height="@dimen/button_tap_target_size"
-        android:layout_width="@dimen/button_tap_target_size"/>
+        android:layout_width="@dimen/button_tap_target_size"
+        android:padding="@dimen/button_tap_target_icon_padding"
+        android:scaleType="fitCenter"/>
 
     <Space
         android:layout_height="match_parent"
@@ -50,5 +53,7 @@
         android:id="@+id/button_right"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:layout_height="@dimen/button_tap_target_size"
-        android:layout_width="@dimen/button_tap_target_size"/>
+        android:layout_width="@dimen/button_tap_target_size"
+        android:padding="@dimen/button_tap_target_icon_padding"
+        android:scaleType="fitCenter"/>
 </LinearLayout>

@@ -63,13 +63,13 @@ public class AudioFragmentTest {
             mDescriptiveTextWithControlsView = new DescriptiveTextWithControlsView(BITMAP,
             AUDIO_VIEW_TITLE,
             AUDIO_VIEW_SUBTITLE);
-    private final DescriptiveTextWithControlsView.AudioControl mAudioControl =
-            new DescriptiveTextWithControlsView.AudioControl(BITMAP, v -> {
+    private final DescriptiveTextWithControlsView.Control mControl =
+            new DescriptiveTextWithControlsView.Control(BITMAP, v -> {
             });
     private final DescriptiveTextWithControlsView
             mDescriptiveTextWithControlsViewWithButtons = new DescriptiveTextWithControlsView(
-            BITMAP, AUDIO_VIEW_TITLE, AUDIO_VIEW_SUBTITLE, AUDIO_START_TIME, mAudioControl,
-            mAudioControl, mAudioControl);
+            BITMAP, AUDIO_VIEW_TITLE, AUDIO_VIEW_SUBTITLE, AUDIO_START_TIME, mControl,
+            mControl, mControl);
 
     @Rule
     public ActivityTestRule<CarLauncher> mActivityTestRule =
