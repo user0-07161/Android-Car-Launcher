@@ -35,7 +35,7 @@
             android:id="@+id/card_background_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitStart"/>
+            android:scaleType="centerCrop"/>
 
         <View
             android:id="@+id/card_background_scrim"
