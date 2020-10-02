@@ -29,9 +29,9 @@ public class DescriptiveTextWithControlsView extends CardContent {
     private CharSequence mTitle;
     private CharSequence mSubtitle;
 
-    private AudioControl mLeftControl;
-    private AudioControl mCenterControl;
-    private AudioControl mRightControl;
+    private Control mLeftControl;
+    private Control mCenterControl;
+    private Control mRightControl;
     private long mStartTime;
 
     public DescriptiveTextWithControlsView(Drawable image, CharSequence title,
@@ -42,8 +42,18 @@ public class DescriptiveTextWithControlsView extends CardContent {
     }
 
     public DescriptiveTextWithControlsView(Drawable image, CharSequence title,
-            CharSequence subtitle, long startTime, AudioControl leftControl,
-            AudioControl centerControl, AudioControl rightControl) {
+            CharSequence subtitle,Control leftControl, Control centerControl, Control rightControl) {
+        mImage = image;
+        mTitle = title;
+        mSubtitle = subtitle;
+        mLeftControl = leftControl;
+        mCenterControl = centerControl;
+        mRightControl = rightControl;
+    }
+
+    public DescriptiveTextWithControlsView(Drawable image, CharSequence title,
+            CharSequence subtitle, long startTime, Control leftControl,
+            Control centerControl, Control rightControl) {
         mImage = image;
         mTitle = title;
         mSubtitle = subtitle;
@@ -74,15 +84,15 @@ public class DescriptiveTextWithControlsView extends CardContent {
         return mStartTime;
     }
 
-    public AudioControl getLeftControl() {
+    public Control getLeftControl() {
         return mLeftControl;
     }
 
-    public AudioControl getCenterControl() {
+    public Control getCenterControl() {
         return mCenterControl;
     }
 
-    public AudioControl getRightControl() {
+    public Control getRightControl() {
         return mRightControl;
     }
 
@@ -91,12 +101,12 @@ public class DescriptiveTextWithControlsView extends CardContent {
      * used as the button's image and an {@link android.view.View.OnClickListener} that defines the
      * action when the button is clicked.
      */
-    public static class AudioControl {
+    public static class Control {
 
         private Drawable mIcon;
         private View.OnClickListener mOnClickListener;
 
-        public AudioControl(Drawable icon, View.OnClickListener listener) {
+        public Control(Drawable icon, View.OnClickListener listener) {
             mIcon = icon;
             mOnClickListener = listener;
         }
