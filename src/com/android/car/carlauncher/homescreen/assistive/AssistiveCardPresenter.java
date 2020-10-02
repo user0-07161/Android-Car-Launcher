@@ -73,7 +73,7 @@ public class AssistiveCardPresenter extends CardPresenter {
     @Override
     public void onModelUpdated(HomeCardInterface.Model model) {
         if (model.getCardHeader() == null) {
-            if (model.getClass() == mCurrentModel.getClass()) {
+            if (mCurrentModel != null && model.getClass() == mCurrentModel.getClass()) {
                 if (mModels != null) {
                     // Check if any other models have content to display
                     for (HomeCardInterface.Model candidate : mModels) {

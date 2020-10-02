@@ -188,8 +188,6 @@ public class HomeCardFragment extends Fragment implements HomeCardInterface.View
         getDescriptiveTextOnlyLayoutView().setVisibility(View.VISIBLE);
         mDescriptiveTextOnlyTitle.setText(primaryText);
         mDescriptiveTextOnlySubtitle.setText(secondaryText);
-        mDescriptiveTextOnlySubtitle.setVisibility(
-                secondaryText == null ? View.GONE : View.VISIBLE);
         mDescriptiveTextOnlyOptionalImage.setImageDrawable(optionalImage);
         mDescriptiveTextOnlyOptionalImage.setVisibility(
                 optionalImage == null ? View.GONE : View.VISIBLE);
@@ -200,34 +198,29 @@ public class HomeCardFragment extends Fragment implements HomeCardInterface.View
 
     protected final void updateDescriptiveTextWithControlsView(CharSequence primaryText,
             CharSequence secondaryText, Drawable optionalImage,
-            DescriptiveTextWithControlsView.AudioControl leftButton,
-            DescriptiveTextWithControlsView.AudioControl centerButton,
-            DescriptiveTextWithControlsView.AudioControl rightButton) {
+            DescriptiveTextWithControlsView.Control leftButton,
+            DescriptiveTextWithControlsView.Control centerButton,
+            DescriptiveTextWithControlsView.Control rightButton) {
         getDescriptiveTextWithControlsLayoutView().setVisibility(View.VISIBLE);
         mDescriptiveTextWithControlsTitle.setText(primaryText);
         mDescriptiveTextWithControlsSubtitle.setText(secondaryText);
-        mDescriptiveTextWithControlsSubtitle.setVisibility(
-                secondaryText == null ? View.GONE : View.VISIBLE);
         mDescriptiveTextWithControlsOptionalImage.setImageDrawable(optionalImage);
         mDescriptiveTextWithControlsOptionalImage.setVisibility(
                 optionalImage == null ? View.GONE : View.VISIBLE);
 
-        // If there is no center button provided with the content, show the media control bar
-        if (centerButton != null) {
-            mControlBarView.setVisibility(View.VISIBLE);
-            updateControlBarButton(leftButton, mControlBarLeftButton);
-            updateControlBarButton(centerButton, mControlBarCenterButton);
-            updateControlBarButton(rightButton, mControlBarRightButton);
-        } else {
-            mControlBarView.setVisibility(View.GONE);
-        }
+        updateControlBarButton(leftButton, mControlBarLeftButton);
+        updateControlBarButton(centerButton, mControlBarCenterButton);
+        updateControlBarButton(rightButton, mControlBarRightButton);
     }
 
-    private void updateControlBarButton(DescriptiveTextWithControlsView.AudioControl buttonContent,
+    private void updateControlBarButton(DescriptiveTextWithControlsView.Control buttonContent,
             ImageButton buttonView) {
         if (buttonContent != null) {
             buttonView.setImageDrawable(buttonContent.getIcon());
             buttonView.setOnClickListener(buttonContent.getOnClickListener());
+            buttonView.setVisibility(View.VISIBLE);
+        } else {
+            buttonView.setVisibility(View.GONE);
         }
     }
 
