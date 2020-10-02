@@ -19,6 +19,7 @@ package com.android.car.carlauncher.homescreen.audio;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Size;
 import android.view.View;
 import android.view.ViewStub;
 import android.widget.Chronometer;
@@ -114,10 +115,13 @@ public class AudioFragment extends HomeCardFragment {
 
     private void updateBackgroundImage(Drawable image) {
         if (image != null && getCardSize() != null) {
-            Bitmap imageBitmap = BitmapUtils.fromDrawable(image, getCardSize());
-            Bitmap blurredBackground = ImageUtils.blur(getContext(), imageBitmap, getCardSize(),
+            int maxDimen = Math.max(getCardSize().getWidth(), getCardSize().getHeight());
+            Size scaledSize = new Size(maxDimen, maxDimen);
+            Bitmap imageBitmap = BitmapUtils.fromDrawable(image, scaledSize);
+            Bitmap blurredBackground = ImageUtils.blur(getContext(), imageBitmap, scaledSize,
                     mBlurRadius);
-            getCardBackgroundImage().setImageBitmap(blurredBackground, /* showAnimation = */true);
+
+            getCardBackgroundImage().setImageBitmap(blurredBackground, /* showAnimation= */ true);
             getCardBackground().setVisibility(View.VISIBLE);
         }
     }
