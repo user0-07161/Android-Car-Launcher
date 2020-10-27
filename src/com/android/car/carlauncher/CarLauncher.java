@@ -20,7 +20,9 @@ import android.app.ActivityManager;
 import android.app.ActivityView;
 import android.car.app.CarActivityView;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
@@ -37,6 +39,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 
+import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
@@ -52,11 +55,15 @@ import java.util.Set;
  * ratio that does not meet Android compatibility definitions. Developers should work with content
  * owners to ensure content renders correctly when extending or emulating this class.
  *
- * <p>Note: Since the hosted maps Activity in ActivityView is currently in a virtual display, the
- * system considers the Activity to always be in front. Launching the maps Activity with a direct
- * Intent will not work. To start the maps Activity on the real display, send the Intent to the
- * Launcher with the {@link Intent#CATEGORY_APP_MAPS} category, and the launcher will start the
- * Activity on the real display.
+ * <p>Note: By default, ActivityView will host the default handler Activity for maps. Since the
+ * hosted Activity in ActivityView is in a virtual display, the system considers the Activity to
+ * always be in front. Launching the maps Activity with a direct Intent will not work.
+ * To start the maps Activity on the real display, send the Intent to the Launcher with the
+ * {@link Intent#CATEGORY_APP_MAPS} category, and the launcher will start the Activity on the real
+ * display. Alternatively, a maps application may provide a separate activity dedicated for hosting
+ * in ActivityView. Use {@link R.array.config_homeCardPreferredMapActivities} to create a mapping
+ * of applications to intents that will be used to launch the preferred Activity provided by the
+ * default handler application for maps.
  *
  * <p>Note: The state of the virtual display in the ActivityView is nondeterministic when
  * switching away from and back to the current user. To avoid a crash, this Activity will finish
@@ -198,7 +205,32 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private Intent getMapsIntent() {
-        return Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MAPS);
+        Intent defaultIntent =
+                Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MAPS);
+        PackageManager pm = getPackageManager();
+        ComponentName defaultActivity = defaultIntent.resolveActivity(pm);
+
+        for (String intentUri : getResources().getStringArray(
+                R.array.config_homeCardPreferredMapActivities)) {
+            Intent preferredIntent;
+            try {
+                preferredIntent = Intent.parseUri(intentUri, Intent.URI_ANDROID_APP_SCHEME);
+            } catch (URISyntaxException se) {
+                Log.w(TAG, "Invalid intent URI in config_homeCardPreferredMapActivities", se);
+                continue;
+            }
+
+            if (defaultActivity != null && !defaultActivity.getPackageName().equals(
+                    preferredIntent.getPackage())) {
+                continue;
+            }
+
+            if (preferredIntent.resolveActivityInfo(pm, /* flags= */ 0) != null) {
+                return preferredIntent;
+            }
+        }
+
+        return defaultIntent;
     }
 
     @Override
