@@ -360,6 +360,7 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
                 .setPadding(0, insets.getTop(), 0, insets.getBottom());
         FocusArea focusArea = requireViewById(R.id.focus_area);
         focusArea.setHighlightPadding(0, insets.getTop(), 0, insets.getBottom());
+        focusArea.setBoundsOffset(0, insets.getTop(), 0, insets.getBottom());
 
         requireViewById(android.R.id.content)
                 .setPadding(insets.getLeft(), 0, insets.getRight(), 0);
