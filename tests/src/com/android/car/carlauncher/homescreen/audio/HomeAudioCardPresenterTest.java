@@ -101,4 +101,13 @@ public class HomeAudioCardPresenterTest {
 
         verify(mView).hideCard();
     }
+
+    @Test
+    public void onModelUpdated_nullModelAndNullCurrentModel_updatesFragment() {
+        when(mModel.getCardHeader()).thenReturn(null);
+
+        mPresenter.onModelUpdated(mModel);
+
+        verify(mView, never()).hideCard();
+    }
 }
