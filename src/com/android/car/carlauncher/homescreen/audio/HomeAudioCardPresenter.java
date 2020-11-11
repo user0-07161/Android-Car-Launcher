@@ -87,7 +87,7 @@ public class HomeAudioCardPresenter extends CardPresenter {
     public void onModelUpdated(HomeCardInterface.Model model) {
         // Null card header indicates the model has no content to display
         if (model.getCardHeader() == null) {
-            if (model.getClass() == mCurrentModel.getClass()) {
+            if (mCurrentModel != null && model.getClass() == mCurrentModel.getClass()) {
                 // If the model currently on display is updating to empty content, check if there
                 // is media content to display. If there is no media content the super method is
                 // called with empty content, which hides the card.
