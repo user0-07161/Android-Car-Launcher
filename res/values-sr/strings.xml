@@ -29,4 +29,6 @@
     </plurals>
     <string name="hide_debug_apps" msgid="6128313544379622475">"Сакриј апликације за отклањање грешака"</string>
     <string name="show_debug_apps" msgid="4521073121286325786">"Прикажи апликације за отклањање грешака"</string>
+    <!-- no translation found for loading (2505477006871048181) -->
+    <skip />
 </resources>

@@ -28,4 +28,6 @@
     </plurals>
     <string name="hide_debug_apps" msgid="6128313544379622475">"အမှားရှာပြင်သည့်အက်ပ်များ ဖျောက်ထားရန်"</string>
     <string name="show_debug_apps" msgid="4521073121286325786">"အမှားရှာပြင်သည့်အက်ပ်များ ပြရန်"</string>
+    <!-- no translation found for loading (2505477006871048181) -->
+    <skip />
 </resources>

@@ -28,4 +28,6 @@
     </plurals>
     <string name="hide_debug_apps" msgid="6128313544379622475">"ડિબગ ઍપ છુપાવો"</string>
     <string name="show_debug_apps" msgid="4521073121286325786">"ડિબગ ઍપ બતાવો"</string>
+    <!-- no translation found for loading (2505477006871048181) -->
+    <skip />
 </resources>
