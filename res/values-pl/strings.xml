@@ -27,7 +27,7 @@
     <string name="ongoing_call_text" msgid="2394626676478708070">"Trwa połączenie"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Uruchom Androida Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Nie można uruchomić Androida Auto. Nie znaleziono żadnych działań."</string>
-    <plurals name="projection_devices" formatted="false" msgid="1122508046532746527">
+    <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="few"><xliff:g id="COUNT_1">%d</xliff:g> urządzenia</item>
       <item quantity="many"><xliff:g id="COUNT_1">%d</xliff:g> urządzeń</item>
       <item quantity="other"><xliff:g id="COUNT_1">%d</xliff:g> urządzenia</item>

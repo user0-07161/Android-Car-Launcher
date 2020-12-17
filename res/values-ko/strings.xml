@@ -27,7 +27,7 @@
     <string name="ongoing_call_text" msgid="2394626676478708070">"진행 중인 통화"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Android Auto 시작"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Android Auto를 시작할 수 없습니다. 활동이 없습니다."</string>
-    <plurals name="projection_devices" formatted="false" msgid="1122508046532746527">
+    <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="other">기기 <xliff:g id="COUNT_1">%d</xliff:g>대</item>
       <item quantity="one">기기 <xliff:g id="COUNT_0">%d</xliff:g>대</item>
     </plurals>
