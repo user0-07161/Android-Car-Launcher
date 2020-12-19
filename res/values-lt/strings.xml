@@ -27,7 +27,7 @@
     <string name="ongoing_call_text" msgid="2394626676478708070">"Vykstantis skambutis"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Paleisti „Android Auto“"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Nepavyko paleisti „Android Auto“. Nerasta jokios veiklos."</string>
-    <plurals name="projection_devices" formatted="false" msgid="1122508046532746527">
+    <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="one"><xliff:g id="COUNT_1">%d</xliff:g> įrenginys</item>
       <item quantity="few"><xliff:g id="COUNT_1">%d</xliff:g> įrenginiai</item>
       <item quantity="many"><xliff:g id="COUNT_1">%d</xliff:g> įrenginio</item>
