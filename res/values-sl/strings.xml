@@ -27,7 +27,7 @@
     <string name="ongoing_call_text" msgid="2394626676478708070">"Aktivni klic"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Zaženite storitev Android Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Ni mogoče zagnati Androida Auto. Najdena ni bila nobena dejavnost."</string>
-    <plurals name="projection_devices" formatted="false" msgid="1122508046532746527">
+    <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="one"><xliff:g id="COUNT_1">%d</xliff:g> naprava</item>
       <item quantity="two"><xliff:g id="COUNT_1">%d</xliff:g> napravi</item>
       <item quantity="few"><xliff:g id="COUNT_1">%d</xliff:g> naprave</item>

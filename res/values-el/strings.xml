@@ -27,7 +27,7 @@
     <string name="ongoing_call_text" msgid="2394626676478708070">"Κλήση σε εξέλιξη"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Εκκίνηση του Android Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Δεν είναι δυνατή η εκκίνηση τη εφαρμογής Android Auto. Δεν βρέθηκαν δραστηριότητες."</string>
-    <plurals name="projection_devices" formatted="false" msgid="1122508046532746527">
+    <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="other"><xliff:g id="COUNT_1">%d</xliff:g> συσκευές</item>
       <item quantity="one"><xliff:g id="COUNT_0">%d</xliff:g> συσκευή</item>
     </plurals>
