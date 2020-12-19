@@ -24,7 +24,6 @@
     <string name="greeting" msgid="7164414111783832396">"Bonjour <xliff:g id="USER">%s</xliff:g>"</string>
     <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="one"><xliff:g id="COUNT_1">%d</xliff:g> appareil</item>
-      <item quantity="many"><xliff:g id="COUNT_1">%d</xliff:g> appareils</item>
       <item quantity="other"><xliff:g id="COUNT_1">%d</xliff:g> appareils</item>
     </plurals>
     <string name="hide_debug_apps" msgid="6128313544379622475">"Masquer les applications de débogage"</string>
