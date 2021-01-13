@@ -41,6 +41,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.carlauncher.homescreen.HomeCardModule;
+import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.TaskView;
 
 import java.net.URISyntaxException;
@@ -124,10 +125,12 @@ public class CarLauncher extends FragmentActivity {
             setContentView(R.layout.car_launcher_multiwindow);
         } else {
             setContentView(R.layout.car_launcher);
-
-            ViewGroup mapsCard = findViewById(R.id.maps_card);
-            if (mapsCard != null) {
-                setUpTaskView(mapsCard);
+            // We don't want to show Map card unnecessarily for the headless user 0.
+            if (!UserHelperLite.isHeadlessSystemUser(getUserId())) {
+                ViewGroup mapsCard = findViewById(R.id.maps_card);
+                if (mapsCard != null) {
+                    setUpTaskView(mapsCard);
+                }
             }
         }
         initializeCards();

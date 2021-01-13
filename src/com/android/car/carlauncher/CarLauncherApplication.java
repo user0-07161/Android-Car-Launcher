@@ -16,13 +16,19 @@
 
 package com.android.car.carlauncher;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
+
 import static com.android.wm.shell.ShellTaskOrganizer.TASK_LISTENER_TYPE_FULLSCREEN;
 
 import android.annotation.UiContext;
+import android.app.ActivityTaskManager;
 import android.app.Application;
+import android.app.TaskInfo;
 import android.content.Context;
-import android.util.Log;
+import android.util.Slog;
+import android.window.TaskAppearedInfo;
 
+import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.FullscreenTaskListener;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
@@ -32,15 +38,21 @@ import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.common.TransactionPool;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class CarLauncherApplication extends Application {
+    private static final String TAG = "CarLauncher";
+    private static final boolean DBG = false;
+
     private TaskViewFactory mTaskViewFactory;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        initWmShell();
+        if (!UserHelperLite.isHeadlessSystemUser(getUserId())) {
+            initWmShell();
+        }
     }
 
     private void initWmShell() {
@@ -50,7 +62,8 @@ public class CarLauncherApplication extends Application {
                 new FullscreenTaskListener(
                         new SyncTransactionQueue(new TransactionPool(), mainExecutor));
         taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
-        taskOrganizer.registerOrganizer();
+        List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
+        cleanUpExistingTaskViewTasks(taskAppearedInfos);
 
         mTaskViewFactory = new TaskViewFactoryController(taskOrganizer, mainExecutor)
                 .getTaskViewFactory();
@@ -58,5 +71,17 @@ public class CarLauncherApplication extends Application {
 
     void createTaskView(@UiContext Context context, Consumer<TaskView> onCreate) {
         mTaskViewFactory.create(context, getMainExecutor(), onCreate);
+    }
+
+    private static void cleanUpExistingTaskViewTasks(List<TaskAppearedInfo> taskAppearedInfos) {
+        ActivityTaskManager atm = ActivityTaskManager.getInstance();
+        for (TaskAppearedInfo taskAppearedInfo : taskAppearedInfos) {
+            TaskInfo taskInfo = taskAppearedInfo.getTaskInfo();
+            // Only TaskView tasks have WINDOWING_MODE_MULTI_WINDOW.
+            if (taskInfo.getWindowingMode() == WINDOWING_MODE_MULTI_WINDOW) {
+                if (DBG) Slog.d(TAG, "Found the dangling task, removing: " + taskInfo.taskId);
+                atm.removeTask(taskInfo.taskId);
+            }
+        }
     }
 }
