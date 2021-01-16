@@ -16,21 +16,24 @@
 
 package com.android.car.carlauncher;
 
-import android.app.ActivityManager;
-import android.app.ActivityView;
-import android.car.app.CarActivityView;
+import static android.app.ActivityTaskManager.INVALID_TASK_ID;
+import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
+
+import android.app.ActivityOptions;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
-import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Display;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
@@ -38,12 +41,15 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.carlauncher.homescreen.HomeCardModule;
+import com.android.car.internal.common.UserHelperLite;
+import com.android.wm.shell.TaskView;
 
 import java.net.URISyntaxException;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
- * Basic Launcher for Android Automotive which demonstrates the use of {@link ActivityView} to host
+ * Basic Launcher for Android Automotive which demonstrates the use of {@link TaskView} to host
  * maps content and uses a Model-View-Presenter structure to display content in cards.
  *
  * <p>Implementations of the Launcher that use the given layout of the main activity
@@ -51,30 +57,18 @@ import java.util.Set;
  * {@link HomeCardModule} for R.id.top_card or R.id.bottom_card. Otherwise, implementations that
  * use their own layout should define their own activity rather than using this one.
  *
- * <p>Note: On some devices, the ActivityView may render with a width, height, and/or aspect
+ * <p>Note: On some devices, the TaskView may render with a width, height, and/or aspect
  * ratio that does not meet Android compatibility definitions. Developers should work with content
  * owners to ensure content renders correctly when extending or emulating this class.
- *
- * <p>Note: By default, ActivityView will host the default handler Activity for maps. Since the
- * hosted Activity in ActivityView is in a virtual display, the system considers the Activity to
- * always be in front. Launching the maps Activity with a direct Intent will not work.
- * To start the maps Activity on the real display, send the Intent to the Launcher with the
- * {@link Intent#CATEGORY_APP_MAPS} category, and the launcher will start the Activity on the real
- * display. Alternatively, a maps application may provide a separate activity dedicated for hosting
- * in ActivityView. Use {@link R.array.config_homeCardPreferredMapActivities} to create a mapping
- * of applications to intents that will be used to launch the preferred Activity provided by the
- * default handler application for maps.
- *
- * <p>Note: The state of the virtual display in the ActivityView is nondeterministic when
- * switching away from and back to the current user. To avoid a crash, this Activity will finish
- * when switching users.
  */
 public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
 
-    private CarActivityView mActivityView;
-    private boolean mActivityViewReady;
+    private TaskView mTaskView;
+    private boolean mTaskViewReady;
+    // Tracking this to check if the task in TaskView has crashed in the background.
+    private int mTaskViewTaskId = INVALID_TASK_ID;
     private boolean mIsStarted;
     private DisplayManager mDisplayManager;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
@@ -83,62 +77,47 @@ public class CarLauncher extends FragmentActivity {
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
 
-    private final ActivityView.StateCallback mActivityViewCallback =
-            new ActivityView.StateCallback() {
-                @Override
-                public void onActivityViewReady(ActivityView view) {
-                    if (DEBUG) Log.d(TAG, "onActivityViewReady(" + getUserId() + ")");
-                    mActivityViewReady = true;
-                    startMapsInActivityView();
-                    maybeLogReady();
-                }
-
-                @Override
-                public void onActivityViewDestroyed(ActivityView view) {
-                    if (DEBUG) Log.d(TAG, "onActivityViewDestroyed(" + getUserId() + ")");
-                    mActivityViewReady = false;
-                }
-
-                @Override
-                public void onTaskMovedToFront(int taskId) {
-                    if (DEBUG) {
-                        Log.d(TAG, "onTaskMovedToFront(" + getUserId() + "): started="
-                                + mIsStarted);
-                    }
-                    try {
-                        if (mIsStarted) {
-                            ActivityManager am =
-                                    (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-                            am.moveTaskToFront(CarLauncher.this.getTaskId(), /* flags= */ 0);
-                        }
-                    } catch (RuntimeException e) {
-                        Log.w(TAG, "Failed to move CarLauncher to front.");
-                    }
-                }
-            };
-
-    private final DisplayListener mDisplayListener = new DisplayListener() {
+    // The callback methods in {@code mTaskViewListener} are running under MainThread.
+    private final TaskView.Listener mTaskViewListener =  new TaskView.Listener() {
         @Override
-        public void onDisplayAdded(int displayId) {
+        public void onInitialized() {
+            if (DEBUG) Log.d(TAG, "onInitialized(" + getUserId() + ")");
+            mTaskViewReady = true;
+            startMapsInTaskView();
+            maybeLogReady();
         }
 
         @Override
-        public void onDisplayRemoved(int displayId) {
+        public void onReleased() {
+            if (DEBUG) Log.d(TAG, "onReleased(" + getUserId() + ")");
+            mTaskViewReady = false;
         }
 
         @Override
-        public void onDisplayChanged(int displayId) {
-            if (displayId != getDisplay().getDisplayId()) {
-                return;
+        public void onTaskCreated(int taskId, ComponentName name) {
+            if (DEBUG) Log.d(TAG, "onTaskCreated: taskId=" + taskId);
+            mTaskViewTaskId = taskId;
+        }
+
+        @Override
+        public void onTaskRemovalStarted(int taskId) {
+            if (DEBUG) Log.d(TAG, "onTaskRemovalStarted: taskId=" + taskId);
+            mTaskViewTaskId = INVALID_TASK_ID;
+            if (mIsStarted) {
+                startMapsInTaskView();
             }
-            // startMapsInActivityView() will check Display's State.
-            startMapsInActivityView();
         }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Setting as trusted overlay to let touches pass through.
+        getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
+        // To pass touches to the underneath task.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+
         // Don't show the maps panel in multi window mode.
         // NOTE: CTS tests for split screen are not compatible with activity views on the default
         // activity of the launcher
@@ -146,20 +125,27 @@ public class CarLauncher extends FragmentActivity {
             setContentView(R.layout.car_launcher_multiwindow);
         } else {
             setContentView(R.layout.car_launcher);
+            // We don't want to show Map card unnecessarily for the headless user 0.
+            if (!UserHelperLite.isHeadlessSystemUser(getUserId())) {
+                ViewGroup mapsCard = findViewById(R.id.maps_card);
+                if (mapsCard != null) {
+                    setUpTaskView(mapsCard);
+                }
+            }
         }
         initializeCards();
-        mActivityView = findViewById(R.id.maps);
-        if (mActivityView != null) {
-            mActivityView.setCallback(mActivityViewCallback);
-        }
-        mDisplayManager = getSystemService(DisplayManager.class);
-        mDisplayManager.registerDisplayListener(mDisplayListener, mMainHandler);
     }
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        startMapsInActivityView();
+    private void setUpTaskView(ViewGroup parent) {
+        CarLauncherApplication app = (CarLauncherApplication) getApplication();
+        app.createTaskView(this, new Consumer<TaskView>() {
+            @Override
+            public void accept(TaskView taskView) {
+                taskView.setListener(getMainExecutor(), mTaskViewListener);
+                parent.addView(taskView);
+                mTaskView = taskView;
+            }
+        });
     }
 
     @Override
@@ -167,6 +153,11 @@ public class CarLauncher extends FragmentActivity {
         super.onStart();
         mIsStarted = true;
         maybeLogReady();
+        if (mTaskViewReady && mTaskViewTaskId == INVALID_TASK_ID) {
+            // If the task in TaskView is crashed during CarLauncher is background,
+            // We'd like to restart it when CarLauncher becomes foreground.
+            startMapsInTaskView();
+        }
     }
 
     @Override
@@ -178,14 +169,14 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mDisplayManager.unregisterDisplayListener(mDisplayListener);
-        if (mActivityView != null && mActivityViewReady) {
-            mActivityView.release();
+        if (mTaskView != null && mTaskViewReady) {
+            mTaskView.release();
+            mTaskView = null;
         }
     }
 
-    private void startMapsInActivityView() {
-        if (mActivityView == null || !mActivityViewReady) {
+    private void startMapsInTaskView() {
+        if (mTaskView == null || !mTaskViewReady) {
             return;
         }
         // If we happen to be be resurfaced into a multi display mode we skip launching content
@@ -198,7 +189,11 @@ public class CarLauncher extends FragmentActivity {
             return;
         }
         try {
-            mActivityView.startActivity(getMapsIntent());
+            ActivityOptions options = ActivityOptions.makeCustomAnimation(this,
+                   /* enterResId= */ 0, /* exitResId= */ 0);
+            mTaskView.startActivity(
+                    PendingIntent.getActivity(this, /* requestCode= */ 0, getMapsIntent(),
+                            PendingIntent.FLAG_UPDATE_CURRENT), /* fillInIntent= */ null, options);
         } catch (ActivityNotFoundException e) {
             Log.w(TAG, "Maps activity not found", e);
         }
@@ -229,7 +224,6 @@ public class CarLauncher extends FragmentActivity {
                 return preferredIntent;
             }
         }
-
         return defaultIntent;
     }
 
@@ -271,10 +265,10 @@ public class CarLauncher extends FragmentActivity {
     /** Logs that the Activity is ready. Used for startup time diagnostics. */
     private void maybeLogReady() {
         if (DEBUG) {
-            Log.d(TAG, "maybeLogReady(" + getUserId() + "): activityReady=" + mActivityViewReady
+            Log.d(TAG, "maybeLogReady(" + getUserId() + "): activityReady=" + mTaskViewReady
                     + ", started=" + mIsStarted + ", alreadyLogged: " + mIsReadyLogged);
         }
-        if (mActivityViewReady && mIsStarted) {
+        if (mTaskViewReady && mIsStarted) {
             // We should report every time - the Android framework will take care of logging just
             // when it's effectively drawn for the first time, but....
             reportFullyDrawn();
