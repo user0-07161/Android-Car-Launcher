@@ -28,6 +28,7 @@ android_library {
       "car-media-common",
       "car-telephony-common",
       "car-ui-lib",
+      "WindowManager-Shell",
       ],
 
     libs: ["android.car"],
