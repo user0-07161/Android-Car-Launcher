@@ -37,6 +37,7 @@ import com.android.wm.shell.TaskViewFactoryController;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.common.TransactionPool;
+import com.android.wm.shell.startingsurface.StartingWindowController;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -62,6 +63,9 @@ public class CarLauncherApplication extends Application {
                 new FullscreenTaskListener(
                         new SyncTransactionQueue(new TransactionPool(), mainExecutor));
         taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
+        StartingWindowController startingController =
+                new StartingWindowController(this, mainExecutor);
+        taskOrganizer.initStartingSurface(startingController.asStartingSurface());
         List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
 
