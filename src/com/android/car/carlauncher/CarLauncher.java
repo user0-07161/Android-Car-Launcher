@@ -19,7 +19,6 @@ package com.android.car.carlauncher;
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
 
-import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
@@ -66,12 +65,11 @@ public class CarLauncher extends FragmentActivity {
     private static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
 
-    private ActivityManager mActivityManager;
     private TaskView mTaskView;
     private boolean mTaskViewReady;
     // Tracking this to check if the task in TaskView has crashed in the background.
     private int mTaskViewTaskId = INVALID_TASK_ID;
-    private boolean mIsResumed;
+    private boolean mIsStarted;
     private DisplayManager mDisplayManager;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private Set<HomeCardModule> mHomeCardModules;
@@ -105,7 +103,7 @@ public class CarLauncher extends FragmentActivity {
         public void onTaskRemovalStarted(int taskId) {
             if (DEBUG) Log.d(TAG, "onTaskRemovalStarted: taskId=" + taskId);
             mTaskViewTaskId = INVALID_TASK_ID;
-            if (mIsResumed) {
+            if (mIsStarted) {
                 startMapsInTaskView();
             }
         }
@@ -115,7 +113,6 @@ public class CarLauncher extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mActivityManager = getSystemService(ActivityManager.class);
         // Setting as trusted overlay to let touches pass through.
         getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
         // To pass touches to the underneath task.
@@ -152,25 +149,21 @@ public class CarLauncher extends FragmentActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        mIsResumed = true;
+    protected void onStart() {
+        super.onStart();
+        mIsStarted = true;
         maybeLogReady();
-        if (!mTaskViewReady) return;
-        if (mTaskViewTaskId == INVALID_TASK_ID) {
+        if (mTaskViewReady && mTaskViewTaskId == INVALID_TASK_ID) {
             // If the task in TaskView is crashed during CarLauncher is background,
             // We'd like to restart it when CarLauncher becomes foreground.
             startMapsInTaskView();
-        } else {
-            // The task in TaskView should be in top to make it visible.
-            mActivityManager.moveTaskToFront(mTaskViewTaskId, /* flags= */ 0);
         }
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        mIsResumed = false;
+    protected void onStop() {
+        super.onStop();
+        mIsStarted = false;
     }
 
     @Override
@@ -273,9 +266,9 @@ public class CarLauncher extends FragmentActivity {
     private void maybeLogReady() {
         if (DEBUG) {
             Log.d(TAG, "maybeLogReady(" + getUserId() + "): activityReady=" + mTaskViewReady
-                    + ", started=" + mIsResumed + ", alreadyLogged: " + mIsReadyLogged);
+                    + ", started=" + mIsStarted + ", alreadyLogged: " + mIsReadyLogged);
         }
-        if (mTaskViewReady && mIsResumed) {
+        if (mTaskViewReady && mIsStarted) {
             // We should report every time - the Android framework will take care of logging just
             // when it's effectively drawn for the first time, but....
             reportFullyDrawn();
