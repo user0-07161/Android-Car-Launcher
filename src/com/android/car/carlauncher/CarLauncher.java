@@ -27,8 +27,11 @@ import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.util.Log;
 import android.view.Display;
+import android.view.WindowInsets;
 import android.widget.FrameLayout;
 
 import androidx.fragment.app.FragmentActivity;
@@ -63,6 +66,7 @@ public class CarLauncher extends FragmentActivity {
     private boolean mIsStarted;
     private DisplayManager mDisplayManager;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+    private boolean mIsUser0;
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
@@ -120,6 +124,15 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // TODO (b/167412330): The following is the workaround for two 'Loading' screen: b/166670668
+        // Investigate if it is caused by the early end of boot-animation, if so, remove the
+        // following code after fixing it.
+        if (getUserId() == UserHandle.USER_SYSTEM && UserManager.isHeadlessSystemUserMode()) {
+            mIsUser0 = true;
+            setContentView(R.layout.car_launcher_user0);
+            getWindow().getInsetsController().hide(WindowInsets.Type.systemBars());
+            return;
+        }
         // Don't show the maps panel in multi window mode.
         // NOTE: CTS tests for split screen are not compatible with activity views on the default
         // activity of the launcher
@@ -154,12 +167,17 @@ public class CarLauncher extends FragmentActivity {
     protected void onStop() {
         super.onStop();
         mIsStarted = false;
+        if (mIsUser0) {
+            finish();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mDisplayManager.unregisterDisplayListener(mDisplayListener);
+        if (mDisplayManager != null) {
+            mDisplayManager.unregisterDisplayListener(mDisplayListener);
+        }
         if (mActivityView != null && mActivityViewReady) {
             mActivityView.release();
         }
