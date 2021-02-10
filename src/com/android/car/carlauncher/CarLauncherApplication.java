@@ -66,7 +66,7 @@ public class CarLauncherApplication extends Application {
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
 
         mTaskViewFactory = new TaskViewFactoryController(taskOrganizer, mainExecutor)
-                .getTaskViewFactory();
+                .asTaskViewFactory();
     }
 
     void createTaskView(@UiContext Context context, Consumer<TaskView> onCreate) {
