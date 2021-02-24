@@ -50,7 +50,9 @@ import com.android.internal.annotations.VisibleForTesting;
 public class MediaViewModel extends AndroidViewModel implements HomeCardInterface.Model {
 
     private HomeCardInterface.Presenter mAudioPresenter;
+    // MediaSourceViewModel is for the current or last played media app
     private MediaSourceViewModel mSourceViewModel;
+    // PlaybackViewModel has the media's metadata
     private PlaybackViewModel mPlaybackViewModel;
     private Context mContext;
 
@@ -67,10 +69,6 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
 
     public MediaViewModel(Application application) {
         super(application);
-        // MediaSourceViewModel is for the current or last played media app
-        mSourceViewModel = MediaSourceViewModel.get(application, MEDIA_SOURCE_MODE_PLAYBACK);
-        // PlaybackViewModel has the media's metadata
-        mPlaybackViewModel = PlaybackViewModel.get(application, MEDIA_SOURCE_MODE_PLAYBACK);
     }
 
     @VisibleForTesting
@@ -83,6 +81,15 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
 
     @Override
     public void onCreate(@NonNull Context context) {
+        if (mSourceViewModel == null) {
+            mSourceViewModel = MediaSourceViewModel.get(getApplication(),
+                    MEDIA_SOURCE_MODE_PLAYBACK);
+        }
+        if (mPlaybackViewModel == null) {
+            mPlaybackViewModel = PlaybackViewModel.get(getApplication(),
+                    MEDIA_SOURCE_MODE_PLAYBACK);
+        }
+
         mContext = context;
         int max = context.getResources().getInteger(R.integer.media_items_bitmap_max_size_px);
         Size maxArtSize = new Size(max, max);
