@@ -49,8 +49,8 @@
     <dimen name="recent_apps_row_height">@*android:dimen/car_list_divider_height</dimen>
     <dimen name="app_grid_touch_target_size">@*android:dimen/car_touch_target_size</dimen>
     <!-- Padding around the touch target (makes ripple look better) -->
-    <dimen name="app_touch_target_padding">@*android:dimen/car_padding_1</dimen>
-    <dimen name="app_touch_target_margin">@*android:dimen/car_padding_2</dimen>
+    <dimen name="app_touch_target_padding">@*android:dimen/car_padding_2</dimen>
+    <dimen name="app_touch_target_margin">@*android:dimen/car_padding_1</dimen>
     <dimen name="app_grid_row_margin">@*android:dimen/car_padding_4</dimen>
     <dimen name="app_icon_description_margin">@*android:dimen/car_padding_4</dimen>
     <dimen name="app_icon_ripple_radius">@*android:dimen/car_radius_2</dimen>

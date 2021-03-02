@@ -76,8 +76,4 @@
         <item>org.chromium.webview_shell</item>
     </string-array>
 
-    <!-- The message will be shown when CarLauncher is invoked for user0, because it's a transient
-         state for waiting for the actual user, we just say "Loading". Appended 3 dots
-         to differentiate with the framework message 'car_loading_profile' -->
-    <string name="loading">Loading...</string>
 </resources>
