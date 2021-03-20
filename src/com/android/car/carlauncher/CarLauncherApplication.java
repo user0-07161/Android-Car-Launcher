@@ -65,7 +65,7 @@ public class CarLauncherApplication extends Application {
         taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         StartingWindowController startingController =
                 new StartingWindowController(this, mainExecutor);
-        taskOrganizer.initStartingSurface(startingController.asStartingSurface());
+        taskOrganizer.initStartingWindow(startingController);
         List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
 
