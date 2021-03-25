@@ -106,7 +106,8 @@ public class InCallModelTest {
     @Test
     public void updateModelWithContact_noAvatarUri_setsContactNameAndInitialsIcon() {
         TelecomUtils.PhoneNumberInfo phoneInfo = new TelecomUtils.PhoneNumberInfo(PHONE_NUMBER,
-                DISPLAY_NAME, INITIALS, /* avatarUri = */ null, /* typeLabel = */ null);
+                DISPLAY_NAME, DISPLAY_NAME, INITIALS, /* avatarUri = */ null,
+                /* typeLabel = */ null, /*  lookupKey = */ null);
         mInCallModel.updateModelWithContact(phoneInfo);
 
         verify(mPresenter).onModelUpdated(mInCallModel);
@@ -121,7 +122,8 @@ public class InCallModelTest {
     public void updateModelWithContact_invalidAvatarUri_setsContactNameAndInitialsIcon() {
         Uri invalidUri = new Uri.Builder().path("invalid uri path").build();
         TelecomUtils.PhoneNumberInfo phoneInfo = new TelecomUtils.PhoneNumberInfo(PHONE_NUMBER,
-                DISPLAY_NAME, INITIALS, invalidUri, /* typeLabel = */ null);
+                DISPLAY_NAME, DISPLAY_NAME, INITIALS, invalidUri, /* typeLabel = */ null,
+                /* lookupKey = */ null);
         mInCallModel.updateModelWithContact(phoneInfo);
 
         verify(mPresenter).onModelUpdated(mInCallModel);
