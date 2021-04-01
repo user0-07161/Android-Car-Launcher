@@ -44,6 +44,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.TaskView;
+import com.android.wm.shell.common.HandlerExecutor;
 
 import java.net.URISyntaxException;
 import java.util.Set;
@@ -63,9 +64,10 @@ import java.util.function.Consumer;
  * owners to ensure content renders correctly when extending or emulating this class.
  */
 public class CarLauncher extends FragmentActivity {
-    private static final String TAG = "CarLauncher";
+    public static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
 
+    private TaskViewManager mTaskViewManager;
     private ActivityManager mActivityManager;
     private TaskView mTaskView;
     private boolean mTaskViewReady;
@@ -140,14 +142,12 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void setUpTaskView(ViewGroup parent) {
-        CarLauncherApplication app = (CarLauncherApplication) getApplication();
-        app.createTaskView(this, new Consumer<TaskView>() {
-            @Override
-            public void accept(TaskView taskView) {
-                taskView.setListener(getMainExecutor(), mTaskViewListener);
-                parent.addView(taskView);
-                mTaskView = taskView;
-            }
+        mTaskViewManager = new TaskViewManager(this,
+                new HandlerExecutor(getMainThreadHandler()));
+        mTaskViewManager.createTaskView(taskView -> {
+            taskView.setListener(getMainExecutor(), mTaskViewListener);
+            parent.addView(taskView);
+            mTaskView = taskView;
         });
     }
 
