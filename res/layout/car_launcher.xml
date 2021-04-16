@@ -23,7 +23,7 @@
     android:layoutDirection="ltr"
     tools:context=".CarLauncher">
 
-    <FrameLayout
+    <com.android.car.ui.FocusArea
         android:id="@+id/top_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -34,7 +34,7 @@
         app:layout_constraintRight_toLeftOf="@+id/bottom_card"
         app:layout_constraintBottom_toTopOf="@+id/maps_card"/>
 
-    <FrameLayout
+    <com.android.car.ui.FocusArea
         android:id="@+id/bottom_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
