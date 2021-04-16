@@ -33,6 +33,7 @@
              android:layout_width="match_parent"
              android:layout_marginStart="@dimen/button_trio_margin"
              android:layout_marginEnd="@dimen/button_trio_margin"
+             android:layout_marginBottom="@dimen/button_trio_margin"
              app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

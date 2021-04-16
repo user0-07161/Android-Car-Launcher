@@ -25,7 +25,7 @@
 
     <ImageButton
         android:id="@+id/button_left"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="@drawable/car_button_background"
         android:layout_height="@dimen/button_tap_target_size"
         android:layout_width="@dimen/button_tap_target_size"
         android:padding="@dimen/button_tap_target_icon_padding"
@@ -38,7 +38,7 @@
 
     <ImageButton
         android:id="@+id/button_center"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="@drawable/car_button_background"
         android:layout_height="@dimen/button_tap_target_size"
         android:layout_width="@dimen/button_tap_target_size"
         android:padding="@dimen/button_tap_target_icon_padding"
@@ -51,7 +51,7 @@
 
     <ImageButton
         android:id="@+id/button_right"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="@drawable/car_button_background"
         android:layout_height="@dimen/button_tap_target_size"
         android:layout_width="@dimen/button_tap_target_size"
         android:padding="@dimen/button_tap_target_icon_padding"
