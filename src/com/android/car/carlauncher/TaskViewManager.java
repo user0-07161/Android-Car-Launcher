@@ -37,6 +37,7 @@ import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.common.TransactionPool;
 import com.android.wm.shell.startingsurface.StartingWindowController;
+import com.android.wm.shell.startingsurface.phone.PhoneStartingWindowTypeAlgorithm;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -56,12 +57,13 @@ public final class TaskViewManager {
 
     private TaskViewFactory initWmShell() {
         ShellTaskOrganizer taskOrganizer = new ShellTaskOrganizer(mExecutor, mContext);
+        TransactionPool transactionPool = new TransactionPool();
         FullscreenTaskListener fullscreenTaskListener =
-                new FullscreenTaskListener(
-                        new SyncTransactionQueue(new TransactionPool(), mExecutor));
+                new FullscreenTaskListener(new SyncTransactionQueue(transactionPool, mExecutor));
         taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         StartingWindowController startingController =
-                new StartingWindowController(mContext, mExecutor);
+                new StartingWindowController(mContext, mExecutor,
+                        new PhoneStartingWindowTypeAlgorithm(), transactionPool);
         taskOrganizer.initStartingWindow(startingController);
         List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
