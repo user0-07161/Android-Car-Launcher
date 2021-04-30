@@ -72,6 +72,8 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="dimen" name="secondary_text_margin_top"/>
       <item type="dimen" name="tap_text_margin"/>
       <item type="dimen" name="text_block_top_margin"/>
+      <item type="dimen" name="total_screen_height"/>
+      <item type="dimen" name="total_screen_width"/>
       <item type="dimen" name="vertical_border_size"/>
       <item type="drawable" name="car_button_background"/>
       <item type="drawable" name="ic_apps_black"/>
