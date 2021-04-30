@@ -27,15 +27,14 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.hardware.display.DisplayManager;
+import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -45,10 +44,12 @@ import com.android.car.carlauncher.homescreen.HomeCardModule;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
+import com.android.wm.shell.common.ShellExecutor;
+import com.android.wm.shell.common.SyncTransactionQueue;
+import com.android.wm.shell.common.TransactionPool;
 
 import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link TaskView} to host
@@ -74,15 +75,15 @@ public class CarLauncher extends FragmentActivity {
     // Tracking this to check if the task in TaskView has crashed in the background.
     private int mTaskViewTaskId = INVALID_TASK_ID;
     private boolean mIsResumed;
-    private DisplayManager mDisplayManager;
-    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private Set<HomeCardModule> mHomeCardModules;
+    @Nullable
+    private CarDisplayAreaController mCarDisplayAreaController;
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
 
     // The callback methods in {@code mTaskViewListener} are running under MainThread.
-    private final TaskView.Listener mTaskViewListener =  new TaskView.Listener() {
+    private final TaskView.Listener mTaskViewListener = new TaskView.Listener() {
         @Override
         public void onInitialized() {
             if (DEBUG) Log.d(TAG, "onInitialized(" + getUserId() + ")");
@@ -116,18 +117,35 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mActivityManager = getSystemService(ActivityManager.class);
         // Setting as trusted overlay to let touches pass through.
         getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
         // To pass touches to the underneath task.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 
+        // Check if a custom policy builder is defined.
+        Resources resources = getResources();
+        int resourceId = resources
+                .getIdentifier("config_deviceSpecificDisplayAreaPolicyProvider",
+                        "string", "android");
+        String customPolicyName = null;
+        if (resourceId > 0) {
+            customPolicyName = resources.getString(resourceId);
+        }
+        boolean isCustomPolicyDefined = customPolicyName != null;
+
         // Don't show the maps panel in multi window mode.
         // NOTE: CTS tests for split screen are not compatible with activity views on the default
         // activity of the launcher
         if (isInMultiWindowMode() || isInPictureInPictureMode()) {
             setContentView(R.layout.car_launcher_multiwindow);
+        } else if (isCustomPolicyDefined) {
+            setContentView(R.layout.car_launcher);
+            ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
+            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
+            mCarDisplayAreaController.init(this, new SyncTransactionQueue(
+                    new TransactionPool(), executor),
+                    CarDisplayAreaOrganizer.getInstance(executor, this, getMapsIntent()));
         } else {
             setContentView(R.layout.car_launcher);
             // We don't want to show Map card unnecessarily for the headless user 0.
@@ -156,6 +174,12 @@ public class CarLauncher extends FragmentActivity {
         super.onResume();
         mIsResumed = true;
         maybeLogReady();
+
+        if (mCarDisplayAreaController != null) {
+            mCarDisplayAreaController.register();
+            return;
+        }
+
         if (!mTaskViewReady) return;
         if (mTaskViewTaskId == INVALID_TASK_ID) {
             // If the task in TaskView is crashed during CarLauncher is background,
@@ -170,6 +194,9 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        if (mCarDisplayAreaController != null) {
+            mCarDisplayAreaController.unregister();
+        }
         mIsResumed = false;
     }
 
@@ -197,7 +224,8 @@ public class CarLauncher extends FragmentActivity {
         }
         try {
             ActivityOptions options = ActivityOptions.makeCustomAnimation(this,
-                   /* enterResId= */ 0, /* exitResId= */ 0);
+                    /* enterResId= */ 0, /* exitResId= */ 0);
+
             mTaskView.startActivity(
                     PendingIntent.getActivity(this, /* requestCode= */ 0, getMapsIntent(),
                             PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
