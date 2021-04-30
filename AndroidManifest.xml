@@ -82,6 +82,10 @@
             android:exported="true"
             android:theme="@style/Theme.Launcher.AppGridActivity">
             <meta-data android:name="distractionOptimized" android:value="true"/>
+            <intent-filter>
+                <action android:name="com.android.car.carlauncher.ACTION_APP_GRID"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
         <service android:name=".homescreen.audio.telecom.InCallServiceImpl"
                  android:permission="android.permission.BIND_INCALL_SERVICE"
