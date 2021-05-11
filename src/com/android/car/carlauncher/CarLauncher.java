@@ -40,6 +40,8 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
+import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.TaskView;
@@ -68,7 +70,6 @@ public class CarLauncher extends FragmentActivity {
     public static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
 
-    private TaskViewManager mTaskViewManager;
     private ActivityManager mActivityManager;
     private TaskView mTaskView;
     private boolean mTaskViewReady;
@@ -117,6 +118,7 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         mActivityManager = getSystemService(ActivityManager.class);
         // Setting as trusted overlay to let touches pass through.
         getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
@@ -145,9 +147,10 @@ public class CarLauncher extends FragmentActivity {
             setContentView(R.layout.car_launcher);
             ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
             mCarDisplayAreaController = CarDisplayAreaController.getInstance();
-            mCarDisplayAreaController.init(this, new SyncTransactionQueue(
-                            new TransactionPool(), executor),
-                    CarDisplayAreaOrganizer.getInstance(executor, this, getMapsIntent()));
+            SyncTransactionQueue tx = new SyncTransactionQueue(
+                    new TransactionPool(), executor);
+            mCarDisplayAreaController.init(this, tx,
+                    CarDisplayAreaOrganizer.getInstance(executor, this, getMapsIntent(), tx));
         } else {
             setContentView(R.layout.car_launcher);
             // We don't want to show Map card unnecessarily for the headless user 0.
@@ -162,9 +165,9 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void setUpTaskView(ViewGroup parent) {
-        mTaskViewManager = new TaskViewManager(this,
+        TaskViewManager taskViewManager = new TaskViewManager(this,
                 new HandlerExecutor(getMainThreadHandler()));
-        mTaskViewManager.createTaskView(taskView -> {
+        taskViewManager.createTaskView(taskView -> {
             taskView.setListener(getMainExecutor(), mTaskViewListener);
             parent.addView(taskView);
             mTaskView = taskView;
@@ -178,7 +181,7 @@ public class CarLauncher extends FragmentActivity {
         maybeLogReady();
 
         if (mCarDisplayAreaController != null) {
-            mCarDisplayAreaController.register();
+            mCarDisplayAreaController.register(/* animate= */ false);
             return;
         }
 

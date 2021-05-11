@@ -38,4 +38,7 @@
         <item>android-app://com.example.nav#Intent;component=com.example.nav/.MapsCardActivity;end</item>
     -->
     </string-array>
+
+    <!-- Allow foreground DA to have rounded corner -->
+    <bool name="config_enableRoundedCornerForForegroundDisplayArea">false</bool>
 </resources>
