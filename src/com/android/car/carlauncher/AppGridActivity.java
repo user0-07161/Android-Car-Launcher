@@ -35,6 +35,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -50,6 +51,8 @@ import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
+import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
+import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
 import com.android.car.ui.FocusArea;
 import com.android.car.ui.baselayout.Insets;
 import com.android.car.ui.baselayout.InsetsChangedListener;
@@ -57,6 +60,10 @@ import com.android.car.ui.core.CarUi;
 import com.android.car.ui.toolbar.MenuItem;
 import com.android.car.ui.toolbar.Toolbar;
 import com.android.car.ui.toolbar.ToolbarController;
+import com.android.wm.shell.common.HandlerExecutor;
+import com.android.wm.shell.common.ShellExecutor;
+import com.android.wm.shell.common.SyncTransactionQueue;
+import com.android.wm.shell.common.TransactionPool;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,6 +93,18 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
     private CarPackageManager mCarPackageManager;
     private CarMediaManager mCarMediaManager;
     private Mode mMode;
+    private boolean mIsGridViewShown;
+    private CarDisplayAreaController mCarDisplayAreaController;
+
+    /**
+     * enum to define the state of display area possible.
+     * CONTROL_BAR state is when only control bar is visible.
+     * FULL state is when display area hosting default apps  cover the screen fully.
+     * DEFAULT state where maps are shown above DA for default apps.
+     */
+    public enum CAR_LAUNCHER_STATE {
+        CONTROL_BAR, DEFAULT, FULL
+    }
 
     private enum Mode {
         ALL_APPS(R.string.app_launcher_title_all_apps,
@@ -185,6 +204,32 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
         });
         gridView.setLayoutManager(gridLayoutManager);
         gridView.setAdapter(mGridAdapter);
+
+        // Check if a custom policy builder is defined.
+        // TODO: Register the listeners only once in AppGridActivity and not in CarLauncher.
+        // Currently the animations do not work with intent based request to start application.
+        // Long term it's not feasible to include this piece of code in all apps. We should find a
+        // way to handle this scenario.
+        Resources resources = getResources();
+        String customPolicyName = null;
+        try {
+            customPolicyName = resources
+                    .getString(
+                            com.android.internal
+                                    .R.string.config_deviceSpecificDisplayAreaPolicyProvider);
+        } catch (Resources.NotFoundException ex) {
+            Log.w(TAG, " custom policy provider not defined");
+        }
+        boolean isCustomPolicyDefined = customPolicyName != null;
+        if (isCustomPolicyDefined) {
+            ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
+            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
+            SyncTransactionQueue tx = new SyncTransactionQueue(
+                    new TransactionPool(), executor);
+            mCarDisplayAreaController.init(this, tx,
+                    CarDisplayAreaOrganizer.getInstance(executor, this, null, tx));
+            mCarDisplayAreaController.register(/* animate= */ true);
+        }
     }
 
     @Override
@@ -199,6 +244,9 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
         if (mCar != null && mCar.isConnected()) {
             mCar.disconnect();
             mCar = null;
+        }
+        if (mCarDisplayAreaController != null) {
+            mCarDisplayAreaController.unregister();
         }
         super.onDestroy();
     }
@@ -229,6 +277,15 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
         // Using onResume() to refresh most recently used apps because we want to refresh even if
         // the app being launched crashes/doesn't cover the entire screen.
         updateAppsLists();
+
+        mIsGridViewShown = !mIsGridViewShown;
+
+        // Animate the DA that contains default grid view.
+        if (mIsGridViewShown) {
+            mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.DEFAULT);
+        } else {
+            mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.CONTROL_BAR);
+        }
     }
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
@@ -265,7 +322,8 @@ public final class AppGridActivity extends Activity implements InsetsChangedList
 
     @Override
     protected void onStop() {
-        super.onPause();
+        super.onStop();
+
         // disconnect from app install/uninstall receiver
         if (mInstallUninstallReceiver != null) {
             unregisterReceiver(mInstallUninstallReceiver);
