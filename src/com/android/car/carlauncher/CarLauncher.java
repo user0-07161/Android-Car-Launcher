@@ -125,14 +125,16 @@ public class CarLauncher extends FragmentActivity {
 
         // Check if a custom policy builder is defined.
         Resources resources = getResources();
-        int resourceId = resources
-                .getIdentifier("config_deviceSpecificDisplayAreaPolicyProvider",
-                        "string", "android");
         String customPolicyName = null;
-        if (resourceId > 0) {
-            customPolicyName = resources.getString(resourceId);
+        try {
+            customPolicyName = resources
+                    .getString(
+                            com.android.internal
+                                    .R.string.config_deviceSpecificDisplayAreaPolicyProvider);
+        } catch (Resources.NotFoundException ex) {
+            Log.w(TAG, " custom policy provider not defined");
         }
-        boolean isCustomPolicyDefined = customPolicyName != null;
+        boolean isCustomPolicyDefined = customPolicyName != null && !customPolicyName.isEmpty();
 
         // Don't show the maps panel in multi window mode.
         // NOTE: CTS tests for split screen are not compatible with activity views on the default
@@ -144,7 +146,7 @@ public class CarLauncher extends FragmentActivity {
             ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
             mCarDisplayAreaController = CarDisplayAreaController.getInstance();
             mCarDisplayAreaController.init(this, new SyncTransactionQueue(
-                    new TransactionPool(), executor),
+                            new TransactionPool(), executor),
                     CarDisplayAreaOrganizer.getInstance(executor, this, getMapsIntent()));
         } else {
             setContentView(R.layout.car_launcher);
