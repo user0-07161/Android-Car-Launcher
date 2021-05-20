@@ -143,6 +143,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="layout" name="card_content_media"/>
       <item type="layout" name="card_content_text_block"/>
       <item type="layout" name="card_fragment"/>
+      <item type="layout" name="control_bar_container"/>
       <item type="layout" name="descriptive_text"/>
       <item type="layout" name="recent_apps_row"/>
       <item type="layout" name="tap_for_more_text"/>

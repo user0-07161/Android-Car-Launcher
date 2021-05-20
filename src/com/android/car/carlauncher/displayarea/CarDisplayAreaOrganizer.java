@@ -60,27 +60,37 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
      */
     public static final int BACKGROUND_TASK_CONTAINER = FEATURE_VENDOR_FIRST + 2;
 
+    private static final int FEATURE_TASKDISPLAYAREA_PARENT = FEATURE_VENDOR_FIRST + 3;
+
+    /**
+     * Control bar task container.
+     */
+    public static final int CONTROL_BAR_DISPLAY_AREA = FEATURE_VENDOR_FIRST + 4;
+
     private static CarDisplayAreaOrganizer sCarDisplayAreaOrganizer;
 
     private final Context mContext;
     private final Intent mMapsIntent;
     private final SyncTransactionQueue mTransactionQueue;
     private final Rect mBackgroundApplicationDisplayBounds = new Rect();
+    private final Intent mAudioControlIntent;
+    private boolean mIsShowingBackgroundDisplay;
+    private boolean mIsShowingControlBarDisplay;
     private final CarLauncherDisplayAreaAnimationController mAnimationController;
     private final Rect mLastVisualDisplayBounds = new Rect();
-    private final Rect mDefaultDisplayBounds = new Rect();
     private final int mEnterExitAnimationDurationMs;
     private final ArrayMap<WindowContainerToken, SurfaceControl> mDisplayAreaTokenMap =
             new ArrayMap();
 
-    private boolean mIsShowingBackgroundDisplay;
     private WindowContainerToken mBackgroundDisplayToken;
+    private WindowContainerToken mForegroundDisplayToken;
     private int mDpiDensity = -1;
-    private int mDefaultAppDisplayAreaHeight;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
+    private DisplayAreaAppearedInfo mForegroundApplicationDisplay;
+    private DisplayAreaAppearedInfo mControlBarDisplay;
     private boolean mIsRegistered = false;
 
-    private AppGridActivity.CAR_LAUNCHER_STATE mState;
+    private AppGridActivity.CAR_LAUNCHER_STATE mToState;
 
     @VisibleForTesting
     CarLauncherDisplayAreaAnimationCallback mDisplayAreaAnimationCallback =
@@ -99,7 +109,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                     if (mAnimationController.isAnimatorsConsumed()) {
                         WindowContainerTransaction wct = new WindowContainerTransaction();
 
-                        if (mState == AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT) {
+                        if (mToState == AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT) {
                             // Foreground DA opens to default height.
                             updateBackgroundDisplayBounds(wct);
                         }
@@ -118,28 +128,26 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
      * Gets the instance of {@link CarDisplayAreaOrganizer}.
      */
     public static CarDisplayAreaOrganizer getInstance(Executor executor,
-            Context context, Intent mapsIntent, SyncTransactionQueue tx) {
+            Context context, Intent mapsIntent, Intent audioControlIntent,
+            SyncTransactionQueue tx) {
         if (sCarDisplayAreaOrganizer == null) {
             sCarDisplayAreaOrganizer = new CarDisplayAreaOrganizer(executor,
-                    context, mapsIntent, tx);
+                    context, mapsIntent, audioControlIntent, tx);
         }
         return sCarDisplayAreaOrganizer;
     }
 
     private CarDisplayAreaOrganizer(Executor executor, Context context, Intent mapsIntent,
-            SyncTransactionQueue tx) {
+            Intent audioControlIntent, SyncTransactionQueue tx) {
         super(executor);
         mContext = context;
         mMapsIntent = mapsIntent;
+        mAudioControlIntent = audioControlIntent;
         mTransactionQueue = tx;
 
-        mDefaultAppDisplayAreaHeight = context.getResources()
-                .getDimensionPixelSize(R.dimen.default_app_display_area_height);
         mAnimationController = new CarLauncherDisplayAreaAnimationController(mContext);
         mEnterExitAnimationDurationMs = context.getResources().getInteger(
                 R.integer.enter_exit_animation_foreground_display_area_duration_ms);
-
-
     }
 
     int getDpiDensity() {
@@ -204,24 +212,26 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
      */
     void scheduleOffset(int fromPos, int toPos, Rect finalBackgroundBounds,
             DisplayAreaAppearedInfo backgroundApplicationDisplay,
-            AppGridActivity.CAR_LAUNCHER_STATE state) {
-        mState = state;
+            DisplayAreaAppearedInfo foregroundDisplay,
+            DisplayAreaAppearedInfo controlBarDisplay,
+            AppGridActivity.CAR_LAUNCHER_STATE toState) {
+        mToState = toState;
+        mBackgroundApplicationDisplay = backgroundApplicationDisplay;
+        mForegroundApplicationDisplay = foregroundDisplay;
+        mControlBarDisplay = controlBarDisplay;
         mDisplayAreaTokenMap.forEach(
                 (token, leash) -> {
                     if (token == mBackgroundDisplayToken) {
                         mBackgroundApplicationDisplayBounds.set(finalBackgroundBounds);
-                        mBackgroundApplicationDisplay = backgroundApplicationDisplay;
-                    } else {
+                    } else if (token == mForegroundDisplayToken) {
                         animateWindows(token, leash, fromPos, toPos,
                                 mEnterExitAnimationDurationMs);
                     }
-
                 });
 
-        if (mState == AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR) {
+        if (mToState == AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR) {
             WindowContainerTransaction wct = new WindowContainerTransaction();
             updateBackgroundDisplayBounds(wct);
-            applyTransaction(wct);
         }
     }
 
@@ -242,16 +252,20 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     @Override
     public void onDisplayAreaAppeared(@NonNull DisplayAreaInfo displayAreaInfo,
             @NonNull SurfaceControl leash) {
-        if (displayAreaInfo.featureId == BACKGROUND_TASK_CONTAINER
-                && !mIsShowingBackgroundDisplay) {
+        if (displayAreaInfo.featureId == BACKGROUND_TASK_CONTAINER) {
             mBackgroundDisplayToken = displayAreaInfo.token;
             startMapsInBackGroundDisplayArea(displayAreaInfo.token);
             mIsShowingBackgroundDisplay = true;
+        } else if (displayAreaInfo.featureId == CONTROL_BAR_DISPLAY_AREA) {
+            startControlBarInDisplayArea(displayAreaInfo.token);
+            mIsShowingControlBarDisplay = true;
+        } else if (displayAreaInfo.featureId == FOREGROUND_DISPLAY_AREA_ROOT) {
+            mForegroundDisplayToken = displayAreaInfo.token;
         }
         mDisplayAreaTokenMap.put(displayAreaInfo.token, leash);
     }
 
-    void startMapsInBackGroundDisplayArea(WindowContainerToken token) {
+    private void startMapsInBackGroundDisplayArea(WindowContainerToken token) {
         ActivityOptions options = ActivityOptions
                 .makeCustomAnimation(mContext,
                         /* enterResId= */ 0, /* exitResId= */ 0);
@@ -259,15 +273,24 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mContext.startActivity(mMapsIntent, options.toBundle());
     }
 
+    private void startControlBarInDisplayArea(WindowContainerToken token) {
+        ActivityOptions options = ActivityOptions
+                .makeCustomAnimation(mContext,
+                        /* enterResId= */ 0, /* exitResId= */ 0);
+        options.setLaunchTaskDisplayArea(token);
+        mContext.startActivity(mAudioControlIntent, options.toBundle());
+    }
+
     @Override
     public void onDisplayAreaVanished(@NonNull DisplayAreaInfo displayAreaInfo) {
         if (displayAreaInfo.featureId == BACKGROUND_TASK_CONTAINER) {
             mIsShowingBackgroundDisplay = false;
+        } else if (displayAreaInfo.featureId == CONTROL_BAR_DISPLAY_AREA) {
+            mIsShowingControlBarDisplay = false;
         }
         if (!mIsRegistered) {
             mDisplayAreaTokenMap.remove(displayAreaInfo.token);
         }
-
     }
 
     @Override

@@ -35,7 +35,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -52,7 +51,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
-import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
 import com.android.car.ui.FocusArea;
 import com.android.car.ui.baselayout.Insets;
 import com.android.car.ui.baselayout.InsetsChangedListener;
@@ -60,10 +58,6 @@ import com.android.car.ui.core.CarUi;
 import com.android.car.ui.toolbar.MenuItem;
 import com.android.car.ui.toolbar.Toolbar;
 import com.android.car.ui.toolbar.ToolbarController;
-import com.android.wm.shell.common.HandlerExecutor;
-import com.android.wm.shell.common.ShellExecutor;
-import com.android.wm.shell.common.SyncTransactionQueue;
-import com.android.wm.shell.common.TransactionPool;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,7 +87,8 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     private CarPackageManager mCarPackageManager;
     private CarMediaManager mCarMediaManager;
     private Mode mMode;
-    private boolean mIsGridViewShown;
+    // Track if grid view activity is visible in the foreground DA when custom policy is defined.
+    private boolean mIsGridViewVisibleInForegroundDisplayArea;
     private CarDisplayAreaController mCarDisplayAreaController;
 
     /**
@@ -162,6 +157,12 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Check if a custom policy builder is defined.
+        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
+        }
+
         mColumnNumber = getResources().getInteger(R.integer.car_app_selector_column_number);
         mPackageManager = getPackageManager();
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
@@ -204,32 +205,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         });
         gridView.setLayoutManager(gridLayoutManager);
         gridView.setAdapter(mGridAdapter);
-
-        // Check if a custom policy builder is defined.
-        // TODO: Register the listeners only once in AppGridActivity and not in CarLauncher.
-        // Currently the animations do not work with intent based request to start application.
-        // Long term it's not feasible to include this piece of code in all apps. We should find a
-        // way to handle this scenario.
-        Resources resources = getResources();
-        String customPolicyName = null;
-        try {
-            customPolicyName = resources
-                    .getString(
-                            com.android.internal
-                                    .R.string.config_deviceSpecificDisplayAreaPolicyProvider);
-        } catch (Resources.NotFoundException ex) {
-            Log.w(TAG, " custom policy provider not defined");
-        }
-        boolean isCustomPolicyDefined = customPolicyName != null;
-        if (isCustomPolicyDefined) {
-            ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
-            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
-            SyncTransactionQueue tx = new SyncTransactionQueue(
-                    new TransactionPool(), executor);
-            mCarDisplayAreaController.init(this, tx,
-                    CarDisplayAreaOrganizer.getInstance(executor, this, null, tx));
-            mCarDisplayAreaController.register(/* animate= */ true);
-        }
     }
 
     @Override
@@ -244,9 +219,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         if (mCar != null && mCar.isConnected()) {
             mCar.disconnect();
             mCar = null;
-        }
-        if (mCarDisplayAreaController != null) {
-            mCarDisplayAreaController.unregister();
         }
         super.onDestroy();
     }
@@ -274,17 +246,26 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     @Override
     protected void onResume() {
         super.onResume();
+
         // Using onResume() to refresh most recently used apps because we want to refresh even if
         // the app being launched crashes/doesn't cover the entire screen.
         updateAppsLists();
 
-        mIsGridViewShown = !mIsGridViewShown;
+        if (mCarDisplayAreaController == null) {
+            Log.w(TAG, "custom policy not defined");
+            return;
+        }
 
-        // Animate the DA that contains default grid view.
-        if (mIsGridViewShown) {
-            mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.DEFAULT);
+        // Animate the DA that contains default grid view. These animations should be triggered
+        // from within onResume(). This is because when the AppGridActivity is in foreground and
+        // the user clicks on the grid button at that time only onResume() is called and not
+        // onStop(). We need to close the DA in that case.
+        if (mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()) {
+            if (mIsGridViewVisibleInForegroundDisplayArea) {
+                mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.CONTROL_BAR);
+            }
         } else {
-            mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.CONTROL_BAR);
+            mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.DEFAULT);
         }
     }
 
@@ -318,12 +299,13 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
 
         // Connect to car service
         mCar.connect();
+        mIsGridViewVisibleInForegroundDisplayArea = true;
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-
+        mIsGridViewVisibleInForegroundDisplayArea = false;
         // disconnect from app install/uninstall receiver
         if (mInstallUninstallReceiver != null) {
             unregisterReceiver(mInstallUninstallReceiver);

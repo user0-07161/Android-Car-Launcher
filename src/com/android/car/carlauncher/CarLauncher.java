@@ -25,32 +25,23 @@ import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
-import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
-import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
-import com.android.wm.shell.common.ShellExecutor;
-import com.android.wm.shell.common.SyncTransactionQueue;
-import com.android.wm.shell.common.TransactionPool;
 
-import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
@@ -77,8 +68,6 @@ public class CarLauncher extends FragmentActivity {
     private int mTaskViewTaskId = INVALID_TASK_ID;
     private boolean mIsResumed;
     private Set<HomeCardModule> mHomeCardModules;
-    @Nullable
-    private CarDisplayAreaController mCarDisplayAreaController;
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
@@ -119,38 +108,24 @@ public class CarLauncher extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // If policy provider is defined then AppGridActivity should be launched.
+        // TODO: update this code flow. Maybe have some kind of configurable activity.
+        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            startActivity(new Intent(this, AppGridActivity.class));
+            return;
+        }
+
         mActivityManager = getSystemService(ActivityManager.class);
         // Setting as trusted overlay to let touches pass through.
         getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
         // To pass touches to the underneath task.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 
-        // Check if a custom policy builder is defined.
-        Resources resources = getResources();
-        String customPolicyName = null;
-        try {
-            customPolicyName = resources
-                    .getString(
-                            com.android.internal
-                                    .R.string.config_deviceSpecificDisplayAreaPolicyProvider);
-        } catch (Resources.NotFoundException ex) {
-            Log.w(TAG, " custom policy provider not defined");
-        }
-        boolean isCustomPolicyDefined = customPolicyName != null && !customPolicyName.isEmpty();
-
         // Don't show the maps panel in multi window mode.
         // NOTE: CTS tests for split screen are not compatible with activity views on the default
         // activity of the launcher
         if (isInMultiWindowMode() || isInPictureInPictureMode()) {
             setContentView(R.layout.car_launcher_multiwindow);
-        } else if (isCustomPolicyDefined) {
-            setContentView(R.layout.car_launcher);
-            ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
-            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
-            SyncTransactionQueue tx = new SyncTransactionQueue(
-                    new TransactionPool(), executor);
-            mCarDisplayAreaController.init(this, tx,
-                    CarDisplayAreaOrganizer.getInstance(executor, this, getMapsIntent(), tx));
         } else {
             setContentView(R.layout.car_launcher);
             // We don't want to show Map card unnecessarily for the headless user 0.
@@ -180,11 +155,6 @@ public class CarLauncher extends FragmentActivity {
         mIsResumed = true;
         maybeLogReady();
 
-        if (mCarDisplayAreaController != null) {
-            mCarDisplayAreaController.register(/* animate= */ false);
-            return;
-        }
-
         if (!mTaskViewReady) return;
         if (mTaskViewTaskId == INVALID_TASK_ID) {
             // If the task in TaskView is crashed during CarLauncher is background,
@@ -199,9 +169,6 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (mCarDisplayAreaController != null) {
-            mCarDisplayAreaController.unregister();
-        }
         mIsResumed = false;
     }
 
@@ -232,40 +199,13 @@ public class CarLauncher extends FragmentActivity {
                     /* enterResId= */ 0, /* exitResId= */ 0);
 
             mTaskView.startActivity(
-                    PendingIntent.getActivity(this, /* requestCode= */ 0, getMapsIntent(),
+                    PendingIntent.getActivity(this, /* requestCode= */ 0,
+                            CarLauncherUtils.getMapsIntent(this),
                             PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
                     /* fillInIntent= */ null, options, null /* launchBounds */);
         } catch (ActivityNotFoundException e) {
             Log.w(TAG, "Maps activity not found", e);
         }
-    }
-
-    private Intent getMapsIntent() {
-        Intent defaultIntent =
-                Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MAPS);
-        PackageManager pm = getPackageManager();
-        ComponentName defaultActivity = defaultIntent.resolveActivity(pm);
-
-        for (String intentUri : getResources().getStringArray(
-                R.array.config_homeCardPreferredMapActivities)) {
-            Intent preferredIntent;
-            try {
-                preferredIntent = Intent.parseUri(intentUri, Intent.URI_ANDROID_APP_SCHEME);
-            } catch (URISyntaxException se) {
-                Log.w(TAG, "Invalid intent URI in config_homeCardPreferredMapActivities", se);
-                continue;
-            }
-
-            if (defaultActivity != null && !defaultActivity.getPackageName().equals(
-                    preferredIntent.getPackage())) {
-                continue;
-            }
-
-            if (preferredIntent.resolveActivityInfo(pm, /* flags= */ 0) != null) {
-                return preferredIntent;
-            }
-        }
-        return defaultIntent;
     }
 
     @Override
