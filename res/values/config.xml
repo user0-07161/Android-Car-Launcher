@@ -39,4 +39,7 @@
     -->
     </string-array>
 
+    <!-- Allow foreground DA to have rounded corner -->
+    <bool name="config_enableRoundedCornerForForegroundDisplayArea">false</bool>
+
 </resources>
