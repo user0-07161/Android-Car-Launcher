@@ -96,8 +96,13 @@
 
     <!-- screen height of the device. This is used when custom policy is provided using
     config_deviceSpecificDisplayAreaPolicyProvider -->
-    <dimen name="total_screen_height">1425dp</dimen>
+    <dimen name="total_screen_height">1920dp</dimen>
     <!-- screen width of the device. This is used when custom policy is provided using
     config_deviceSpecificDisplayAreaPolicyProvider -->
-    <dimen name="total_screen_width">1068dp</dimen>
+    <dimen name="total_screen_width">1080dp</dimen>
+
+    <dimen name="control_bar_height">140dp</dimen>
+    <!-- This height is from the top of navbar not accounting for the control bar height. -->
+    <dimen name="default_app_display_area_height">1020dp</dimen>
+    <dimen name="full_app_display_area_height">1760dp</dimen>
 </resources>
