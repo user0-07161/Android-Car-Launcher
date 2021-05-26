@@ -32,11 +32,13 @@
         * Pick the default handler if no such item is in the list.
         * Pick the first item from the list if there is no default handler.
     -->
-    <string-array name="config_homeCardPreferredMapActivities" translatable="false" >
+    <string-array name="config_homeCardPreferredMapActivities" translatable="false">
     <!--
         <item>android-app://com.example.map#Intent;category=android.intent.category.GADGET;end</item>
         <item>android-app://com.example.nav#Intent;component=com.example.nav/.MapsCardActivity;end</item>
     -->
     </string-array>
 
+    <!-- Allow foreground DA to have rounded corner -->
+    <bool name="config_enableRoundedCornerForForegroundDisplayArea">false</bool>
 </resources>
