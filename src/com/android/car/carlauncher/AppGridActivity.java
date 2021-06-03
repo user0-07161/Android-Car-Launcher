@@ -220,7 +220,8 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         } catch (Resources.NotFoundException ex) {
             Log.w(TAG, " custom policy provider not defined");
         }
-        boolean isCustomPolicyDefined = customPolicyName != null;
+        boolean isCustomPolicyDefined = customPolicyName != null && !TextUtils.isEmpty(
+                customPolicyName);
         if (isCustomPolicyDefined) {
             ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
             mCarDisplayAreaController = CarDisplayAreaController.getInstance();
