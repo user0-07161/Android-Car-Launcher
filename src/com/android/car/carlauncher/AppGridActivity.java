@@ -267,6 +267,14 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         } else {
             mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.DEFAULT);
         }
+
+        // This flag needs to be set in onResume() although it gets reset in onStop(). This is
+        // because when the TDA is visible and some other activity is in foreground and then
+        // AppGrid icon on the nav bar is clicked. In that case onResume() is called after
+        // onStart() and we control all the animations in onResume. So we need to reset the flag
+        // after the animations are triggered. Also, when the AppGrid is in foreground and
+        // AppGrid icon is clicked then ONLY onResume is called.
+        mIsGridViewVisibleInForegroundDisplayArea = true;
     }
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
@@ -299,7 +307,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
 
         // Connect to car service
         mCar.connect();
-        mIsGridViewVisibleInForegroundDisplayArea = true;
     }
 
     @Override

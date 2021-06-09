@@ -58,8 +58,8 @@ public final class TaskViewManager {
     private TaskViewFactory initWmShell() {
         ShellTaskOrganizer taskOrganizer = new ShellTaskOrganizer(mExecutor, mContext);
         TransactionPool transactionPool = new TransactionPool();
-        FullscreenTaskListener fullscreenTaskListener =
-                new FullscreenTaskListener(new SyncTransactionQueue(transactionPool, mExecutor));
+        SyncTransactionQueue syncQueue = new SyncTransactionQueue(transactionPool, mExecutor);
+        FullscreenTaskListener fullscreenTaskListener = new FullscreenTaskListener(syncQueue);
         taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         StartingWindowController startingController =
                 new StartingWindowController(mContext, mExecutor,
@@ -68,7 +68,8 @@ public final class TaskViewManager {
         List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
 
-        return new TaskViewFactoryController(taskOrganizer, mExecutor).asTaskViewFactory();
+        return new TaskViewFactoryController(taskOrganizer, mExecutor, syncQueue)
+                .asTaskViewFactory();
     }
 
     void createTaskView(Consumer<TaskView> onCreate) {
