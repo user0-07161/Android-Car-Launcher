@@ -48,6 +48,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <!-- Allows input events to be monitored by CarDisplayAreaTouchHandler. -->
     <uses-permission android:name="android.permission.MONITOR_INPUT"/>
+    <!-- Needed to use TYPE_APPLICATION_OVERLAY window type to display title bar. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <!-- To connect to media browser services in other apps, media browser clients
     that target Android 11 need to add the following in their manifest -->
