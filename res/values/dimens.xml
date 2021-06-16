@@ -93,4 +93,11 @@
 
     <!-- card_content_tap_for_more dimensions -->
     <dimen name="tap_text_margin">24dp</dimen>
+
+    <!-- screen height of the device. This is used when custom policy is provided using
+    config_deviceSpecificDisplayAreaPolicyProvider -->
+    <dimen name="total_screen_height">1425dp</dimen>
+    <!-- screen width of the device. This is used when custom policy is provided using
+    config_deviceSpecificDisplayAreaPolicyProvider -->
+    <dimen name="total_screen_width">1068dp</dimen>
 </resources>
