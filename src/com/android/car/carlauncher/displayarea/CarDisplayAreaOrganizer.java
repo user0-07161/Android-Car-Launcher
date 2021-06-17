@@ -18,6 +18,10 @@ package com.android.car.carlauncher.displayarea;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.BACKGROUND_LAYER_INDEX;
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.CONTROL_BAR_LAYER_INDEX;
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.FOREGROUND_LAYER_INDEX;
+
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
@@ -291,6 +295,19 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         if (!mIsRegistered) {
             mDisplayAreaTokenMap.remove(displayAreaInfo.token);
         }
+    }
+
+    @Override
+    public void onDisplayAreaInfoChanged(DisplayAreaInfo displayAreaInfo) {
+        super.onDisplayAreaInfoChanged(displayAreaInfo);
+
+        SurfaceControl.Transaction tx =
+                new SurfaceControl.Transaction();
+        // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
+        tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
+        tx.setLayer(mForegroundApplicationDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
+        tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
+        tx.apply();
     }
 
     @Override
