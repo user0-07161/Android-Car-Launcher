@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
-import android.view.SurfaceControl;
 import android.window.DisplayAreaAppearedInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
@@ -189,13 +188,6 @@ public class CarDisplayAreaController {
         mForegroundApplicationsDisplay = foregroundDisplayAreaInfos.get(0);
         mBackgroundApplicationDisplay = backgroundDisplayAreaInfos.get(0);
         mControlBarDisplay = controlBarDisplayAreaInfos.get(0);
-        SurfaceControl.Transaction tx =
-                new SurfaceControl.Transaction();
-        // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
-        tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
-        tx.setLayer(mForegroundApplicationsDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
-        tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
-        tx.apply();
     }
 
     /** Un-Registers DA organizer. */
@@ -222,7 +214,8 @@ public class CarDisplayAreaController {
         switch (toState) {
             case CONTROL_BAR:
                 // Foreground DA closes.
-                fromPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight;
+                fromPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
+                        - mControlBarDisplayHeight;
                 toPos = mScreenHeightWithoutNavBar;
                 mBackgroundApplicationDisplayBounds.bottom =
                         mScreenHeightWithoutNavBar - mControlBarDisplayHeight;
@@ -239,7 +232,8 @@ public class CarDisplayAreaController {
                 // update the bounds to expand the foreground display area before starting
                 // animations.
                 fromPos = mScreenHeightWithoutNavBar;
-                toPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight;
+                toPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
+                        - mControlBarDisplayHeight;
                 mBackgroundApplicationDisplayBounds.bottom = toPos;
                 mOrganizer.scheduleOffset(fromPos, toPos, mBackgroundApplicationDisplayBounds,
                         mBackgroundApplicationDisplay, mForegroundApplicationsDisplay,
@@ -256,8 +250,9 @@ public class CarDisplayAreaController {
         Rect backgroundBounds = new Rect(0, 0, mTotalScreenWidth, controlBarTop);
         Rect controlBarBounds = new Rect(0, controlBarTop, mTotalScreenWidth,
                 mScreenHeightWithoutNavBar);
-        Rect foregroundBounds = new Rect(0, mScreenHeightWithoutNavBar - mDefaultDisplayHeight,
-                mTotalScreenWidth, mScreenHeightWithoutNavBar);
+        Rect foregroundBounds = new Rect(0,
+                mScreenHeightWithoutNavBar - mDefaultDisplayHeight - mControlBarDisplayHeight,
+                mTotalScreenWidth, mScreenHeightWithoutNavBar - mControlBarDisplayHeight);
 
         // Adjust the bounds based on the nav bar.
         // TODO: account for the case where nav bar is at the top.
