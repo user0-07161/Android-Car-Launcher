@@ -42,7 +42,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.car.carlauncher.AppGridActivity;
-import com.android.car.carlauncher.R;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 import java.util.List;
@@ -84,7 +83,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     private boolean mIsShowingControlBarDisplay;
     private final CarLauncherDisplayAreaAnimationController mAnimationController;
     private final Rect mLastVisualDisplayBounds = new Rect();
-    private final int mEnterExitAnimationDurationMs;
     private final ArrayMap<WindowContainerToken, SurfaceControl> mDisplayAreaTokenMap =
             new ArrayMap();
 
@@ -154,8 +152,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mTransactionQueue = tx;
 
         mAnimationController = new CarLauncherDisplayAreaAnimationController(mContext);
-        mEnterExitAnimationDurationMs = context.getResources().getInteger(
-                R.integer.enter_exit_animation_foreground_display_area_duration_ms);
     }
 
     int getDpiDensity() {
@@ -223,7 +219,8 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
             DisplayAreaAppearedInfo foregroundDisplay,
             DisplayAreaAppearedInfo titleBarDisplay,
             DisplayAreaAppearedInfo controlBarDisplay,
-            AppGridActivity.CAR_LAUNCHER_STATE toState) {
+            AppGridActivity.CAR_LAUNCHER_STATE toState,
+            int durationMs) {
         mToState = toState;
         mBackgroundApplicationDisplay = backgroundApplicationDisplay;
         mForegroundApplicationDisplay = foregroundDisplay;
@@ -234,8 +231,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                     if (token == mBackgroundDisplayToken) {
                         mBackgroundApplicationDisplayBounds.set(finalBackgroundBounds);
                     } else if (token == mForegroundDisplayToken) {
-                        animateWindows(token, leash, fromPos, toPos,
-                                mEnterExitAnimationDurationMs);
+                        animateWindows(token, leash, fromPos, toPos, durationMs);
                     }
                 });
 
