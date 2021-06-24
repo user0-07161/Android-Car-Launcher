@@ -18,6 +18,7 @@ package com.android.car.carlauncher.displayarea;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.os.Looper;
 import android.view.InputChannel;
@@ -39,10 +40,14 @@ public class CarDisplayAreaTouchHandler {
 
     private InputMonitor mInputMonitor;
     private InputEventReceiver mInputEventReceiver;
-    private OnClickDisplayAreaListener mOnTouchListener;
+    private OnClickDisplayAreaListener mOnClickDisplayAreaListener;
+    private OnDragDisplayAreaListener mOnTouchTitleBarListener;
     private boolean mIsEnabled;
     private float mStartX;
     private float mStartY;
+    private Rect mTitleBarBounds;
+    private boolean mIsTitleBarVisible;
+    private boolean mIsTitleBarDragged;
 
     public CarDisplayAreaTouchHandler(ShellExecutor mainExecutor) {
         mMainExecutor = mainExecutor;
@@ -59,8 +64,26 @@ public class CarDisplayAreaTouchHandler {
     /**
      * Register {@link OnClickDisplayAreaListener} to receive onClick() callback
      */
-    public void registerTouchEventListener(OnClickDisplayAreaListener listener) {
-        mOnTouchListener = listener;
+    public void registerOnClickListener(OnClickDisplayAreaListener listener) {
+        mOnClickDisplayAreaListener = listener;
+    }
+
+    /**
+     * Register {@link OnDragDisplayAreaListener} to receive onTouch() callbacks
+     */
+    public void registerTouchEventListener(OnDragDisplayAreaListener listener) {
+        mOnTouchTitleBarListener = listener;
+    }
+
+    /**
+     * Updated whether the titleBar is visible or not.
+     */
+    public void updateTitleBarVisibility(boolean isTitleBarVisible) {
+        mIsTitleBarVisible = isTitleBarVisible;
+    }
+
+    public void setTitleBarBounds(Rect titleBarBounds) {
+        mTitleBarBounds = titleBarBounds;
     }
 
     private void onMotionEvent(MotionEvent event) {
@@ -68,14 +91,27 @@ public class CarDisplayAreaTouchHandler {
             case MotionEvent.ACTION_DOWN:
                 mStartX = event.getX();
                 mStartY = event.getY();
+                if (mOnTouchTitleBarListener != null && mIsTitleBarVisible) {
+                    mOnTouchTitleBarListener.onStart(mStartX, mStartY);
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mIsTitleBarVisible && isTitleBarGrabbed() && mOnTouchTitleBarListener != null) {
+                    mOnTouchTitleBarListener.onMove(event.getX(), event.getY());
+                    mIsTitleBarDragged = true;
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 float endX = event.getX();
                 float endY = event.getY();
                 // TODO: use utility functions from gesture class.
                 if (isAClick(mStartX, endX, mStartY, endY)) {
-                    mOnTouchListener.onClick(endX, endY);
+                    mOnClickDisplayAreaListener.onClick(endX, endY);
                 }
+                if (mIsTitleBarDragged && mOnTouchTitleBarListener != null) {
+                    mOnTouchTitleBarListener.onFinish(event.getX(), event.getY());
+                }
+                mIsTitleBarDragged = false;
                 break;
         }
     }
@@ -84,6 +120,12 @@ public class CarDisplayAreaTouchHandler {
         float differenceX = Math.abs(startX - endX);
         float differenceY = Math.abs(startY - endY);
         return !(differenceX > CLICK_ACTION_THRESHOLD || differenceY > CLICK_ACTION_THRESHOLD);
+    }
+
+    private boolean isTitleBarGrabbed() {
+        return mStartX >= mTitleBarBounds.left && mStartX <= mTitleBarBounds.right
+                && mStartY >= mTitleBarBounds.top && mStartY <= mTitleBarBounds.bottom;
+
     }
 
     private void disposeInputChannel() {
@@ -139,5 +181,29 @@ public class CarDisplayAreaTouchHandler {
          * Called when a user clicks on the display area. Returns the co-ordinate of the click.
          */
         void onClick(float x, float y);
+    }
+
+    /**
+     * Callback invoked when a user touches anywhere on the display area.
+     */
+    interface OnDragDisplayAreaListener {
+
+        /**
+         * Called for ACTION_MOVE touch events on the title bar. Returns the co-ordinate of the
+         * touch. This is only called when the title bar is visible.
+         */
+        void onMove(float x, float y);
+
+        /**
+         * Called for ACTION_UP touch events on the title bar. Returns the co-ordinate of the
+         * touch. This is only called when the title bar is visible.
+         */
+        void onFinish(float x, float y);
+
+        /**
+         * Called for ACTION_DOWN touch events on the title bar. Returns the co-ordinate of the
+         * touch. This is only called when the title bar is visible.
+         */
+        void onStart(float x, float y);
     }
 }
