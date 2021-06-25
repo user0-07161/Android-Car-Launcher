@@ -29,7 +29,8 @@
         android:layout_height="@dimen/button_tap_target_size"
         android:layout_width="@dimen/button_tap_target_size"
         android:padding="@dimen/button_tap_target_icon_padding"
-        android:scaleType="fitCenter"/>
+        android:scaleType="centerInside"
+	android:adjustViewBounds="true"/>
 
     <Space
         android:layout_height="match_parent"
@@ -42,7 +43,8 @@
         android:layout_height="@dimen/button_tap_target_size"
         android:layout_width="@dimen/button_tap_target_size"
         android:padding="@dimen/button_tap_target_icon_padding"
-        android:scaleType="fitCenter"/>
+        android:scaleType="centerInside"
+	android:adjustViewBounds="true"/>	
 
     <Space
         android:layout_height="match_parent"
@@ -55,5 +57,6 @@
         android:layout_height="@dimen/button_tap_target_size"
         android:layout_width="@dimen/button_tap_target_size"
         android:padding="@dimen/button_tap_target_icon_padding"
-        android:scaleType="fitCenter"/>
+        android:scaleType="centerInside"
+	android:adjustViewBounds="true"/>
 </LinearLayout>
