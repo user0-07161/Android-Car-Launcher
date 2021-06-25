@@ -18,6 +18,7 @@ package com.android.car.carlauncher;
 
 import static com.android.car.carlauncher.AppLauncherUtils.APP_TYPE_LAUNCHABLES;
 import static com.android.car.carlauncher.AppLauncherUtils.APP_TYPE_MEDIA_SERVICES;
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FOREGROUND_DISPLAY_AREA_ROOT;
 
 import android.app.Activity;
 import android.app.usage.UsageStats;
@@ -158,11 +159,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check if a custom policy builder is defined.
-        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
-            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
-        }
-
         mColumnNumber = getResources().getInteger(R.integer.car_app_selector_column_number);
         mPackageManager = getPackageManager();
         mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
@@ -176,8 +172,15 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         updateMode();
 
         ToolbarController toolbar = CarUi.requireToolbar(this);
-        toolbar.setNavButtonMode(Toolbar.NavButtonMode.CLOSE);
-        toolbar.setState(Toolbar.State.SUBPAGE);
+
+        // Check if a custom policy builder is defined.
+        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
+            mCarDisplayAreaController.showTitleBar(FOREGROUND_DISPLAY_AREA_ROOT, this);
+        } else {
+            toolbar.setNavButtonMode(Toolbar.NavButtonMode.CLOSE);
+            toolbar.setState(Toolbar.State.SUBPAGE);
+        }
 
         if (Build.IS_DEBUGGABLE) {
             toolbar.setMenuItems(Collections.singletonList(MenuItem.builder(this)
