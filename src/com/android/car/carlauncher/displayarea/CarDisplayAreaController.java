@@ -19,6 +19,8 @@ package com.android.car.carlauncher.displayarea;
 import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
 import static android.window.DisplayAreaOrganizer.KEY_ROOT_DISPLAY_AREA_ID;
 
+import static com.android.car.carlauncher.AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR;
+import static com.android.car.carlauncher.AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.BACKGROUND_TASK_CONTAINER;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.CONTROL_BAR_DISPLAY_AREA;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FEATURE_TITLE_BAR;
@@ -82,6 +84,8 @@ public class CarDisplayAreaController {
     private DisplayAreaAppearedInfo mTitleBarDisplay;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
+    private int mTitleBarDragThreshold;
+    private int mEnterExitAnimationDurationMs;
     private int mDpiDensity;
     private int mTotalScreenWidth = -1;
     // height of DA hosting the control bar.
@@ -165,6 +169,10 @@ public class CarDisplayAreaController {
 
         mScreenHeightWithoutNavBar = totalScreenHeight - mNavBarBounds.height();
         mTitleBarHeight = resources.getDimensionPixelSize(R.dimen.title_bar_display_area_height);
+        mEnterExitAnimationDurationMs = applicationContext.getResources().getInteger(
+                R.integer.enter_exit_animation_foreground_display_area_duration_ms);
+        mTitleBarDragThreshold = applicationContext.getResources().getDimensionPixelSize(
+                R.dimen.title_bar_display_area_touch_drag_threshold);
         mForegroundDisplayTop = mScreenHeightWithoutNavBar - mDefaultDisplayHeight;
     }
 
@@ -187,7 +195,7 @@ public class CarDisplayAreaController {
                 R.id.close_foreground_display);
         closeForegroundDisplay.setOnClickListener(v -> {
             // Close the foreground display area.
-            startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
+            startAnimation(CONTROL_BAR);
         });
     }
 
@@ -270,7 +278,7 @@ public class CarDisplayAreaController {
         updateBounds(wct);
         mOrganizer.applyTransaction(wct);
 
-        mCarDisplayAreaTouchHandler.registerTouchEventListener((x, y) -> {
+        mCarDisplayAreaTouchHandler.registerOnClickListener((x, y) -> {
             // Check if the click is outside the bounds of default display. If so, close the
             // display area.
             if (mIsHostingDefaultApplicationDisplayAreaVisible
@@ -278,6 +286,40 @@ public class CarDisplayAreaController {
                 // TODO: closing logic goes here, something like: startAnimation(CONTROL_BAR);
             }
         });
+
+        mCarDisplayAreaTouchHandler.registerTouchEventListener(
+                new CarDisplayAreaTouchHandler.OnDragDisplayAreaListener() {
+
+                    float mCurrentPos = -1;
+                    @Override
+                    public void onStart(float x, float y) {
+                        mCurrentPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
+                                - mControlBarDisplayHeight;
+                    }
+
+                    @Override
+                    public void onMove(float x, float y) {
+                        if (y <= mScreenHeightWithoutNavBar - mDefaultDisplayHeight
+                                - mControlBarDisplayHeight) {
+                            return;
+                        }
+                        animateToControlBarState((int) mCurrentPos, (int) y, 0);
+                        mCurrentPos = y;
+                    }
+
+                    @Override
+                    public void onFinish(float x, float y) {
+                        if (y >= mTitleBarDragThreshold) {
+                            animateToControlBarState((int) y,
+                                    mScreenHeightWithoutNavBar + mTitleBarHeight, 0);
+                            mCarDisplayAreaTouchHandler.updateTitleBarVisibility(false);
+                        } else {
+                            animateToDefaultState((int) y,
+                                    mScreenHeightWithoutNavBar - mDefaultDisplayHeight
+                                            - mControlBarDisplayHeight, 0);
+                        }
+                    }
+                });
         mCarDisplayAreaTouchHandler.enable(true);
     }
 
@@ -341,13 +383,7 @@ public class CarDisplayAreaController {
                 fromPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
                         - mControlBarDisplayHeight;
                 toPos = mScreenHeightWithoutNavBar + mTitleBarHeight;
-                mBackgroundApplicationDisplayBounds.bottom =
-                        mScreenHeightWithoutNavBar - mControlBarDisplayHeight;
-                mOrganizer.scheduleOffset(fromPos, toPos, mBackgroundApplicationDisplayBounds,
-                        mBackgroundApplicationDisplay, mForegroundApplicationsDisplay,
-                        mTitleBarDisplay,
-                        mControlBarDisplay, toState);
-                mIsHostingDefaultApplicationDisplayAreaVisible = false;
+                animateToControlBarState(fromPos, toPos, mEnterExitAnimationDurationMs);
                 break;
             case FULL:
                 // TODO: Implement this.
@@ -359,13 +395,30 @@ public class CarDisplayAreaController {
                 fromPos = mScreenHeightWithoutNavBar + mTitleBarHeight;
                 toPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
                         - mControlBarDisplayHeight;
-                mBackgroundApplicationDisplayBounds.bottom = toPos - mTitleBarHeight;
-                mOrganizer.scheduleOffset(fromPos, toPos, mBackgroundApplicationDisplayBounds,
-                        mBackgroundApplicationDisplay, mForegroundApplicationsDisplay,
-                        mTitleBarDisplay,
-                        mControlBarDisplay, toState);
-                mIsHostingDefaultApplicationDisplayAreaVisible = true;
+                animateToDefaultState(fromPos, toPos, mEnterExitAnimationDurationMs);
         }
+    }
+
+    private void animateToControlBarState(int fromPos, int toPos, int durationMs) {
+        mBackgroundApplicationDisplayBounds.bottom =
+                mScreenHeightWithoutNavBar - mControlBarDisplayHeight;
+        animate(fromPos, toPos, CONTROL_BAR, durationMs);
+        mIsHostingDefaultApplicationDisplayAreaVisible = false;
+    }
+
+    private void animateToDefaultState(int fromPos, int toPos, int durationMs) {
+        mBackgroundApplicationDisplayBounds.bottom = toPos - mTitleBarHeight;
+        animate(fromPos, toPos, DEFAULT, durationMs);
+        mIsHostingDefaultApplicationDisplayAreaVisible = true;
+        mCarDisplayAreaTouchHandler.updateTitleBarVisibility(true);
+    }
+
+    private void animate(int fromPos, int toPos, AppGridActivity.CAR_LAUNCHER_STATE toState,
+            int durationMs) {
+        mOrganizer.scheduleOffset(fromPos, toPos, mBackgroundApplicationDisplayBounds,
+                mBackgroundApplicationDisplay, mForegroundApplicationsDisplay,
+                mTitleBarDisplay,
+                mControlBarDisplay, toState, durationMs);
     }
 
     /** Pre-calculates the default and background display bounds for different configs. */
@@ -406,6 +459,7 @@ public class CarDisplayAreaController {
         mControlBarDisplayBounds.set(controlBarBounds);
         mForegroundApplicationDisplayBounds.set(foregroundBounds);
         mTitleBarDisplayBounds.set(titleBarBounds);
+        mCarDisplayAreaTouchHandler.setTitleBarBounds(titleBarBounds);
     }
 
     /** Updates the default and background display bounds for the given config. */

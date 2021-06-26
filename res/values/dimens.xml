@@ -106,4 +106,5 @@
     <dimen name="default_app_display_area_height">870dp</dimen>
     <dimen name="full_app_display_area_height">1760dp</dimen>
     <dimen name="title_bar_display_area_height">106dp</dimen>
+    <dimen name="title_bar_display_area_touch_drag_threshold">1000dp</dimen>
 </resources>
