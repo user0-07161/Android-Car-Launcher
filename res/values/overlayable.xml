@@ -76,6 +76,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="dimen" name="secondary_text_margin_top"/>
       <item type="dimen" name="tap_text_margin"/>
       <item type="dimen" name="text_block_top_margin"/>
+      <item type="dimen" name="title_bar_display_area_height"/>
       <item type="dimen" name="total_screen_height"/>
       <item type="dimen" name="total_screen_width"/>
       <item type="dimen" name="vertical_border_size"/>
@@ -105,6 +106,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="id" name="card_icon"/>
       <item type="id" name="card_name"/>
       <item type="id" name="card_view"/>
+      <item type="id" name="close_foreground_display"/>
       <item type="id" name="descriptive_text_layout"/>
       <item type="id" name="descriptive_text_with_controls_layout"/>
       <item type="id" name="divider"/>
@@ -125,6 +127,8 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="id" name="tap_for_more_text"/>
       <item type="id" name="text_block"/>
       <item type="id" name="text_block_layout"/>
+      <item type="id" name="title"/>
+      <item type="id" name="title_bar"/>
       <item type="id" name="top_card"/>
       <item type="id" name="top_edge"/>
       <item type="id" name="top_line"/>
@@ -148,6 +152,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="layout" name="recent_apps_row"/>
       <item type="layout" name="tap_for_more_text"/>
       <item type="layout" name="text_block"/>
+      <item type="layout" name="title_bar_display_area_view"/>
       <item type="plurals" name="projection_devices"/>
       <item type="string" name="app_launcher_title_all_apps"/>
       <item type="string" name="app_launcher_title_media_only"/>
