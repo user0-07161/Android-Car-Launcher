@@ -71,6 +71,8 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
      */
     public static final int CONTROL_BAR_DISPLAY_AREA = FEATURE_VENDOR_FIRST + 4;
 
+    public static final int FEATURE_TITLE_BAR = FEATURE_VENDOR_FIRST + 5;
+
     private static CarDisplayAreaOrganizer sCarDisplayAreaOrganizer;
 
     private final Context mContext;
@@ -88,9 +90,11 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
 
     private WindowContainerToken mBackgroundDisplayToken;
     private WindowContainerToken mForegroundDisplayToken;
+    private WindowContainerToken mTitleBarDisplayToken;
     private int mDpiDensity = -1;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mForegroundApplicationDisplay;
+    private DisplayAreaAppearedInfo mTitleBarDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
     private boolean mIsRegistered = false;
 
@@ -217,12 +221,14 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     void scheduleOffset(int fromPos, int toPos, Rect finalBackgroundBounds,
             DisplayAreaAppearedInfo backgroundApplicationDisplay,
             DisplayAreaAppearedInfo foregroundDisplay,
+            DisplayAreaAppearedInfo titleBarDisplay,
             DisplayAreaAppearedInfo controlBarDisplay,
             AppGridActivity.CAR_LAUNCHER_STATE toState) {
         mToState = toState;
         mBackgroundApplicationDisplay = backgroundApplicationDisplay;
         mForegroundApplicationDisplay = foregroundDisplay;
         mControlBarDisplay = controlBarDisplay;
+        mTitleBarDisplay = titleBarDisplay;
         mDisplayAreaTokenMap.forEach(
                 (token, leash) -> {
                     if (token == mBackgroundDisplayToken) {
@@ -265,6 +271,8 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
             mIsShowingControlBarDisplay = true;
         } else if (displayAreaInfo.featureId == FOREGROUND_DISPLAY_AREA_ROOT) {
             mForegroundDisplayToken = displayAreaInfo.token;
+        } else if (displayAreaInfo.featureId == FEATURE_TITLE_BAR) {
+            mTitleBarDisplayToken = displayAreaInfo.token;
         }
         mDisplayAreaTokenMap.put(displayAreaInfo.token, leash);
     }
@@ -306,6 +314,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
         tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
         tx.setLayer(mForegroundApplicationDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
+        tx.setLayer(mTitleBarDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
         tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
         tx.apply();
     }
