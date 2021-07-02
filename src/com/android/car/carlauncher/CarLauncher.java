@@ -19,18 +19,16 @@ package com.android.car.carlauncher;
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
 
-import android.app.ActivityManager;
 import android.app.ActivityOptions;
+import android.app.ActivityTaskManager;
 import android.app.PendingIntent;
+import android.app.TaskStackListener;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
@@ -48,7 +46,6 @@ import com.android.wm.shell.common.HandlerExecutor;
 
 import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link TaskView} to host
@@ -68,14 +65,13 @@ public class CarLauncher extends FragmentActivity {
     private static final boolean DEBUG = false;
 
     private TaskViewManager mTaskViewManager;
-    private ActivityManager mActivityManager;
     private TaskView mTaskView;
     private boolean mTaskViewReady;
     // Tracking this to check if the task in TaskView has crashed in the background.
     private int mTaskViewTaskId = INVALID_TASK_ID;
     private boolean mIsResumed;
-    private DisplayManager mDisplayManager;
-    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+    private boolean mFocused;
+    private int mCarLauncherTaskId = INVALID_TASK_ID;
     private Set<HomeCardModule> mHomeCardModules;
 
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
@@ -107,7 +103,18 @@ public class CarLauncher extends FragmentActivity {
         public void onTaskRemovalStarted(int taskId) {
             if (DEBUG) Log.d(TAG, "onTaskRemovalStarted: taskId=" + taskId);
             mTaskViewTaskId = INVALID_TASK_ID;
-            if (mIsResumed) {
+        }
+    };
+
+    private final TaskStackListener mTaskStackListener = new TaskStackListener() {
+        @Override
+        public void onTaskFocusChanged(int taskId, boolean focused) {
+            mFocused = taskId == mCarLauncherTaskId && focused;
+            if (DEBUG) {
+                Log.d(TAG, "onTaskFocusChanged: mFocused=" + mFocused
+                        + ", mTaskViewTaskId=" + mTaskViewTaskId);
+            }
+            if (mFocused && mTaskViewTaskId == INVALID_TASK_ID) {
                 startMapsInTaskView();
             }
         }
@@ -117,7 +124,9 @@ public class CarLauncher extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mActivityManager = getSystemService(ActivityManager.class);
+        mCarLauncherTaskId = getTaskId();
+        ActivityTaskManager.getInstance().registerTaskStackListener(mTaskStackListener);
+
         // Setting as trusted overlay to let touches pass through.
         getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
         // To pass touches to the underneath task.
@@ -156,14 +165,13 @@ public class CarLauncher extends FragmentActivity {
         super.onResume();
         mIsResumed = true;
         maybeLogReady();
-        if (!mTaskViewReady) return;
-        if (mTaskViewTaskId == INVALID_TASK_ID) {
+        if (DEBUG) {
+            Log.d(TAG, "onResume: mFocused=" + mFocused + ", mTaskViewTaskId=" + mTaskViewTaskId);
+        }
+        if (mFocused && mTaskViewTaskId == INVALID_TASK_ID) {
             // If the task in TaskView is crashed during CarLauncher is background,
             // We'd like to restart it when CarLauncher becomes foreground.
             startMapsInTaskView();
-        } else {
-            // The task in TaskView should be in top to make it visible.
-            mActivityManager.moveTaskToFront(mTaskViewTaskId, /* flags= */ 0);
         }
     }
 
@@ -176,6 +184,7 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        ActivityTaskManager.getInstance().unregisterTaskStackListener(mTaskStackListener);
         if (mTaskView != null && mTaskViewReady) {
             mTaskView.release();
             mTaskView = null;
@@ -197,7 +206,10 @@ public class CarLauncher extends FragmentActivity {
         }
         try {
             ActivityOptions options = ActivityOptions.makeCustomAnimation(this,
-                   /* enterResId= */ 0, /* exitResId= */ 0);
+                    /* enterResId= */ 0, /* exitResId= */ 0);
+            // To show the Activity in TaskView, the Activity should be above the host task in
+            // ActivityStack. This option only effects the host Activity is in resumed.
+            options.setTaskAlwaysOnTop(true);
             mTaskView.startActivity(
                     PendingIntent.getActivity(this, /* requestCode= */ 0, getMapsIntent(),
                             PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
