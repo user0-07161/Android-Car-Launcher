@@ -48,7 +48,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.carlauncher.AppLauncherUtils.LauncherAppsInfo;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
@@ -56,6 +55,7 @@ import com.android.car.ui.FocusArea;
 import com.android.car.ui.baselayout.Insets;
 import com.android.car.ui.baselayout.InsetsChangedListener;
 import com.android.car.ui.core.CarUi;
+import com.android.car.ui.recyclerview.CarUiRecyclerView;
 import com.android.car.ui.toolbar.MenuItem;
 import com.android.car.ui.toolbar.Toolbar;
 import com.android.car.ui.toolbar.ToolbarController;
@@ -197,7 +197,7 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         }
 
         mGridAdapter = new AppGridAdapter(this);
-        RecyclerView gridView = requireViewById(R.id.apps_grid);
+        CarUiRecyclerView gridView = requireViewById(R.id.apps_grid);
 
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mColumnNumber);
         gridLayoutManager.setSpanSizeLookup(new SpanSizeLookup() {
