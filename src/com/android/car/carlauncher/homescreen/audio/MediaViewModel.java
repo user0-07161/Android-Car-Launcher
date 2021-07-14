@@ -211,7 +211,7 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
      */
     private boolean mediaSourceChanged() {
         MediaSource mediaSource = mSourceViewModel.getPrimaryMediaSource().getValue();
-        if (mediaSource == null && (mAppName != null | mAppIcon != null)) {
+        if (mediaSource == null && (mAppName != null || mAppIcon != null)) {
             return true;
         }
         if (mediaSource != null && (mAppName != mediaSource.getDisplayName()
