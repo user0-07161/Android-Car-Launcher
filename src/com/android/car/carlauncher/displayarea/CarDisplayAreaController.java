@@ -62,9 +62,9 @@ public class CarDisplayAreaController {
     private static final String TAG = "CarDisplayAreaController";
     // Layer index of how display areas should be placed. Keeping a gap of 100 if we want to
     // add some other display area layers in between in future.
-    static final int BACKGROUND_LAYER_INDEX = 0;
+    static final int BACKGROUND_LAYER_INDEX = 200;
     static final int FOREGROUND_LAYER_INDEX = 100;
-    static final int CONTROL_BAR_LAYER_INDEX = 200;
+    static final int CONTROL_BAR_LAYER_INDEX = 0;
     static final CarDisplayAreaController INSTANCE = new CarDisplayAreaController();
     private static final int TITLE_BAR_WINDOW_TYPE =
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
