@@ -39,6 +39,7 @@ import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.IWindowManager;
 import android.view.LayoutInflater;
+import android.view.SurfaceControl;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -291,6 +292,7 @@ public class CarDisplayAreaController {
                 new CarDisplayAreaTouchHandler.OnDragDisplayAreaListener() {
 
                     float mCurrentPos = -1;
+
                     @Override
                     public void onStart(float x, float y) {
                         mCurrentPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
@@ -354,6 +356,15 @@ public class CarDisplayAreaController {
         mTitleBarDisplay = titleBarDisplayAreaInfo.get(0);
         mBackgroundApplicationDisplay = backgroundDisplayAreaInfos.get(0);
         mControlBarDisplay = controlBarDisplayAreaInfos.get(0);
+
+        SurfaceControl.Transaction tx =
+                new SurfaceControl.Transaction();
+        // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
+        tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
+        tx.setLayer(mForegroundApplicationsDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
+        tx.setLayer(mTitleBarDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
+        tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
+        tx.apply();
     }
 
     /** Un-Registers DA organizer. */
