@@ -19,7 +19,6 @@ package com.android.car.carlauncher.displayarea;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.BACKGROUND_LAYER_INDEX;
-import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.CONTROL_BAR_LAYER_INDEX;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.FOREGROUND_LAYER_INDEX;
 
 import android.app.ActivityOptions;
@@ -105,6 +104,12 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 public void onAnimationStart(
                         CarLauncherDisplayAreaAnimationController
                                 .CarLauncherDisplayAreaTransitionAnimator animator) {
+                    SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+                    // Update the foreground panel layer index to animate on top of the
+                    // background DA.
+                    tx.setLayer(mForegroundApplicationDisplay.getLeash(),
+                            BACKGROUND_LAYER_INDEX + 1);
+                    tx.apply(true);
                 }
 
                 @Override
@@ -305,14 +310,9 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     public void onDisplayAreaInfoChanged(DisplayAreaInfo displayAreaInfo) {
         super.onDisplayAreaInfoChanged(displayAreaInfo);
 
-        SurfaceControl.Transaction tx =
-                new SurfaceControl.Transaction();
-        // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
-        tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
+        SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
         tx.setLayer(mForegroundApplicationDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
-        tx.setLayer(mTitleBarDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
-        tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
-        tx.apply();
+        tx.apply(true);
     }
 
     @Override
