@@ -33,6 +33,10 @@ import com.android.wm.shell.common.TransactionPool;
  */
 public class CarLauncherApplication extends Application {
 
+    private ShellExecutor mShellExecutor;
+    private SyncTransactionQueue mSyncTransactionQueue;
+    private TransactionPool mTransactionPool = new TransactionPool();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -41,18 +45,30 @@ public class CarLauncherApplication extends Application {
             return;
         }
         if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
-            ShellExecutor executor = new HandlerExecutor(getMainThreadHandler());
+            mShellExecutor = new HandlerExecutor(getMainThreadHandler());
             CarDisplayAreaController carDisplayAreaController =
                     CarDisplayAreaController.getInstance();
-            SyncTransactionQueue tx = new SyncTransactionQueue(
-                    new TransactionPool(), executor);
+            mSyncTransactionQueue = new SyncTransactionQueue(
+                    mTransactionPool, mShellExecutor);
             Intent controlBarIntent = new Intent(this, ControlBarActivity.class);
             controlBarIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            carDisplayAreaController.init(this, tx,
-                    CarDisplayAreaOrganizer.getInstance(executor, this,
+            carDisplayAreaController.init(this, mSyncTransactionQueue,
+                    CarDisplayAreaOrganizer.getInstance(mShellExecutor, this,
                             CarLauncherUtils.getMapsIntent(this),
-                            controlBarIntent, tx));
+                            controlBarIntent, mSyncTransactionQueue));
             carDisplayAreaController.register();
         }
+    }
+
+    ShellExecutor getShellExecutor() {
+        return mShellExecutor;
+    }
+
+    SyncTransactionQueue getSyncTransactionQueue() {
+        return mSyncTransactionQueue;
+    }
+
+    TransactionPool getTransactionPool() {
+        return mTransactionPool;
     }
 }

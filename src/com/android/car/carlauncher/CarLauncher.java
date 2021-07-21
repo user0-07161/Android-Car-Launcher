@@ -19,9 +19,12 @@ package com.android.car.carlauncher;
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
 
+import static com.android.wm.shell.ShellTaskOrganizer.TASK_LISTENER_TYPE_FULLSCREEN;
+
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
 import android.app.PendingIntent;
+import android.app.TaskInfo;
 import android.app.TaskStackListener;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -32,17 +35,25 @@ import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.window.TaskAppearedInfo;
 
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
+import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
+import com.android.car.carlauncher.displayarea.CarFullscreenTaskListener;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 import com.android.car.internal.common.UserHelperLite;
+import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
+import com.android.wm.shell.startingsurface.StartingWindowController;
+import com.android.wm.shell.startingsurface.phone.PhoneStartingWindowTypeAlgorithm;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -124,6 +135,30 @@ public class CarLauncher extends FragmentActivity {
         // If policy provider is defined then AppGridActivity should be launched.
         // TODO: update this code flow. Maybe have some kind of configurable activity.
         if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            CarLauncherApplication application = (CarLauncherApplication) getApplication();
+
+            ShellTaskOrganizer taskOrganizer = new ShellTaskOrganizer(
+                    application.getShellExecutor(), this);
+            CarFullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskListener(
+                    this, application.getSyncTransactionQueue(),
+                    CarDisplayAreaController.getInstance());
+            taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
+            StartingWindowController startingController =
+                    new StartingWindowController(this, application.getShellExecutor(),
+                            new PhoneStartingWindowTypeAlgorithm(),
+                            application.getTransactionPool());
+            taskOrganizer.initStartingWindow(startingController);
+            List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
+            try {
+                cleanUpExistingTaskViewTasks(taskAppearedInfos);
+            } catch (Exception ex) {
+                Log.w(TAG, "some of the tasks couldn't be cleaned up: ", ex);
+            }
+            CarDisplayAreaController carDisplayAreaController =
+                    CarDisplayAreaController.getInstance();
+            CarDisplayAreaOrganizer org = carDisplayAreaController.getOrganizer();
+            org.startControlBarInDisplayArea();
+            org.startMapsInBackGroundDisplayArea();
             startActivity(new Intent(this, AppGridActivity.class));
             return;
         }
@@ -152,6 +187,14 @@ public class CarLauncher extends FragmentActivity {
             }
         }
         initializeCards();
+    }
+
+    private static void cleanUpExistingTaskViewTasks(List<TaskAppearedInfo> taskAppearedInfos) {
+        ActivityTaskManager atm = ActivityTaskManager.getInstance();
+        for (TaskAppearedInfo taskAppearedInfo : taskAppearedInfos) {
+            TaskInfo taskInfo = taskAppearedInfo.getTaskInfo();
+            atm.removeTask(taskInfo.taskId);
+        }
     }
 
     private void setUpTaskView(ViewGroup parent) {
