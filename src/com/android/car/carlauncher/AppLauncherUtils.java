@@ -18,7 +18,6 @@ package com.android.car.carlauncher;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.car.Car;
@@ -39,6 +38,7 @@ import android.util.Log;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.lang.annotation.Retention;
 import java.util.ArrayList;
