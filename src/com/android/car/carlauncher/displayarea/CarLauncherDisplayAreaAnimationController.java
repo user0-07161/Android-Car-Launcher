@@ -292,7 +292,7 @@ public class CarLauncherDisplayAreaAnimationController {
     /**
      * An Interpolator for display area transition animation.
      */
-    public class CarLauncherDisplayAreaInterpolator extends BaseInterpolator {
+    public static class CarLauncherDisplayAreaInterpolator extends BaseInterpolator {
         @Override
         public float getInterpolation(float input) {
             return (float) (Math.pow(2, -10 * input) * Math.sin(((input - 4.0f) / 4.0f)

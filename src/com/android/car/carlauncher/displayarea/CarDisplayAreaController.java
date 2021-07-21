@@ -26,7 +26,6 @@ import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.CO
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FEATURE_TITLE_BAR;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FOREGROUND_DISPLAY_AREA_ROOT;
 
-import android.annotation.Nullable;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
@@ -49,6 +48,8 @@ import android.widget.ImageView;
 import android.window.DisplayAreaAppearedInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
+
+import androidx.annotation.Nullable;
 
 import com.android.car.carlauncher.AppGridActivity;
 import com.android.car.carlauncher.R;
