@@ -23,6 +23,7 @@ import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.C
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.FOREGROUND_LAYER_INDEX;
 
 import android.app.ActivityOptions;
+import android.car.Car;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -150,6 +151,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         super(executor);
         mContext = context;
         mMapsIntent = mapsIntent;
+        mMapsIntent.putExtra(Car.CAR_EXTRA_LAUNCH_PERSISTENT, Car.LAUNCH_PERSISTENT_ADD);
         mAudioControlIntent = audioControlIntent;
         mTransactionQueue = tx;
 
