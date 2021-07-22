@@ -19,7 +19,6 @@ package com.android.car.carlauncher.displayarea;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.BACKGROUND_LAYER_INDEX;
-import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.CONTROL_BAR_LAYER_INDEX;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.FOREGROUND_LAYER_INDEX;
 
 import android.app.ActivityOptions;
@@ -42,7 +41,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.car.carlauncher.AppGridActivity;
-import com.android.car.carlauncher.R;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 import java.util.List;
@@ -84,7 +82,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     private boolean mIsShowingControlBarDisplay;
     private final CarLauncherDisplayAreaAnimationController mAnimationController;
     private final Rect mLastVisualDisplayBounds = new Rect();
-    private final int mEnterExitAnimationDurationMs;
     private final ArrayMap<WindowContainerToken, SurfaceControl> mDisplayAreaTokenMap =
             new ArrayMap();
 
@@ -107,6 +104,12 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 public void onAnimationStart(
                         CarLauncherDisplayAreaAnimationController
                                 .CarLauncherDisplayAreaTransitionAnimator animator) {
+                    SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+                    // Update the foreground panel layer index to animate on top of the
+                    // background DA.
+                    tx.setLayer(mForegroundApplicationDisplay.getLeash(),
+                            BACKGROUND_LAYER_INDEX + 1);
+                    tx.apply(true);
                 }
 
                 @Override
@@ -154,8 +157,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mTransactionQueue = tx;
 
         mAnimationController = new CarLauncherDisplayAreaAnimationController(mContext);
-        mEnterExitAnimationDurationMs = context.getResources().getInteger(
-                R.integer.enter_exit_animation_foreground_display_area_duration_ms);
     }
 
     int getDpiDensity() {
@@ -223,7 +224,8 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
             DisplayAreaAppearedInfo foregroundDisplay,
             DisplayAreaAppearedInfo titleBarDisplay,
             DisplayAreaAppearedInfo controlBarDisplay,
-            AppGridActivity.CAR_LAUNCHER_STATE toState) {
+            AppGridActivity.CAR_LAUNCHER_STATE toState,
+            int durationMs) {
         mToState = toState;
         mBackgroundApplicationDisplay = backgroundApplicationDisplay;
         mForegroundApplicationDisplay = foregroundDisplay;
@@ -234,8 +236,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                     if (token == mBackgroundDisplayToken) {
                         mBackgroundApplicationDisplayBounds.set(finalBackgroundBounds);
                     } else if (token == mForegroundDisplayToken) {
-                        animateWindows(token, leash, fromPos, toPos,
-                                mEnterExitAnimationDurationMs);
+                        animateWindows(token, leash, fromPos, toPos, durationMs);
                     }
                 });
 
@@ -309,14 +310,9 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     public void onDisplayAreaInfoChanged(DisplayAreaInfo displayAreaInfo) {
         super.onDisplayAreaInfoChanged(displayAreaInfo);
 
-        SurfaceControl.Transaction tx =
-                new SurfaceControl.Transaction();
-        // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
-        tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
+        SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
         tx.setLayer(mForegroundApplicationDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
-        tx.setLayer(mTitleBarDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
-        tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
-        tx.apply();
+        tx.apply(true);
     }
 
     @Override
