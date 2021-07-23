@@ -327,6 +327,13 @@ public class CarDisplayAreaController {
         mCarDisplayAreaTouchHandler.enable(true);
     }
 
+    /**
+     * Return's the associated organizer.
+     */
+    public CarDisplayAreaOrganizer getOrganizer() {
+        return mOrganizer;
+    }
+
     /** Registers DA organizer. */
     private void registerOrganizer() {
         List<DisplayAreaAppearedInfo> foregroundDisplayAreaInfos =
@@ -423,15 +430,19 @@ public class CarDisplayAreaController {
         mBackgroundApplicationDisplayBounds.bottom = toPos - mTitleBarHeight;
         animate(fromPos, toPos, DEFAULT, durationMs);
         mIsHostingDefaultApplicationDisplayAreaVisible = true;
-        mCarDisplayAreaTouchHandler.updateTitleBarVisibility(true);
+        if (mCarDisplayAreaTouchHandler != null) {
+            mCarDisplayAreaTouchHandler.updateTitleBarVisibility(true);
+        }
     }
 
     private void animate(int fromPos, int toPos, AppGridActivity.CAR_LAUNCHER_STATE toState,
             int durationMs) {
-        mOrganizer.scheduleOffset(fromPos, toPos, mBackgroundApplicationDisplayBounds,
-                mBackgroundApplicationDisplay, mForegroundApplicationsDisplay,
-                mTitleBarDisplay,
-                mControlBarDisplay, toState, durationMs);
+        if (mOrganizer != null) {
+            mOrganizer.scheduleOffset(fromPos, toPos, mBackgroundApplicationDisplayBounds,
+                    mBackgroundApplicationDisplay, mForegroundApplicationsDisplay,
+                    mTitleBarDisplay,
+                    mControlBarDisplay, toState, durationMs);
+        }
     }
 
     /** Pre-calculates the default and background display bounds for different configs. */

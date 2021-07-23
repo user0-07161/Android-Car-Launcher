@@ -87,6 +87,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
 
     private WindowContainerToken mBackgroundDisplayToken;
     private WindowContainerToken mForegroundDisplayToken;
+    private WindowContainerToken mControbarDisplayToken;
     private WindowContainerToken mTitleBarDisplayToken;
     private int mDpiDensity = -1;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
@@ -265,10 +266,9 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
             @NonNull SurfaceControl leash) {
         if (displayAreaInfo.featureId == BACKGROUND_TASK_CONTAINER) {
             mBackgroundDisplayToken = displayAreaInfo.token;
-            startMapsInBackGroundDisplayArea(displayAreaInfo.token);
             mIsShowingBackgroundDisplay = true;
         } else if (displayAreaInfo.featureId == CONTROL_BAR_DISPLAY_AREA) {
-            startControlBarInDisplayArea(displayAreaInfo.token);
+            mControbarDisplayToken = displayAreaInfo.token;
             mIsShowingControlBarDisplay = true;
         } else if (displayAreaInfo.featureId == FOREGROUND_DISPLAY_AREA_ROOT) {
             mForegroundDisplayToken = displayAreaInfo.token;
@@ -278,19 +278,29 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mDisplayAreaTokenMap.put(displayAreaInfo.token, leash);
     }
 
-    private void startMapsInBackGroundDisplayArea(WindowContainerToken token) {
+    WindowContainerToken getBackgroundDisplayToken() {
+        return mBackgroundDisplayToken;
+    }
+
+    /**
+     * Launches the map in the background DA.
+     */
+    public void startMapsInBackGroundDisplayArea() {
         ActivityOptions options = ActivityOptions
                 .makeCustomAnimation(mContext,
                         /* enterResId= */ 0, /* exitResId= */ 0);
-        options.setLaunchTaskDisplayArea(token);
+        options.setLaunchTaskDisplayArea(mBackgroundDisplayToken);
         mContext.startActivity(mMapsIntent, options.toBundle());
     }
 
-    private void startControlBarInDisplayArea(WindowContainerToken token) {
+    /**
+     * Launches the control bar in the control bar DA.
+     */
+    public void startControlBarInDisplayArea() {
         ActivityOptions options = ActivityOptions
                 .makeCustomAnimation(mContext,
                         /* enterResId= */ 0, /* exitResId= */ 0);
-        options.setLaunchTaskDisplayArea(token);
+        options.setLaunchTaskDisplayArea(mControbarDisplayToken);
         mContext.startActivity(mAudioControlIntent, options.toBundle());
     }
 
