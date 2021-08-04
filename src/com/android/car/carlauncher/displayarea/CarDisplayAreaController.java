@@ -25,7 +25,11 @@ import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.BA
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.CONTROL_BAR_DISPLAY_AREA;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FEATURE_TITLE_BAR;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FOREGROUND_DISPLAY_AREA_ROOT;
+import static com.android.car.carlauncher.displayarea.CarFullscreenTaskListener.MAPS;
 
+import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
+import android.app.TaskStackListener;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
@@ -112,6 +116,20 @@ public class CarDisplayAreaController {
      */
     @Nullable
     private Context mTitleBarWindowContext;
+    private boolean mIsGridViewVisibleInForegroundDisplayArea;
+
+    private final TaskStackListener mOnActivityRestartAttemptListener = new TaskStackListener() {
+        @Override
+        public void onActivityRestartAttempt(ActivityManager.RunningTaskInfo task,
+                boolean homeTaskVisible,
+                boolean clearedTask, boolean wasVisible) throws RemoteException {
+            if (isHostingDefaultApplicationDisplayAreaVisible()
+                    && !mIsGridViewVisibleInForegroundDisplayArea && !(task.baseActivity != null
+                    && task.baseActivity.getPackageName().contains(MAPS))) {
+                startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
+            }
+        }
+    };
 
     /**
      * Gets the instance of {@link CarDisplayAreaController}
@@ -199,6 +217,13 @@ public class CarDisplayAreaController {
             // Close the foreground display area.
             startAnimation(CONTROL_BAR);
         });
+    }
+
+    /**
+     * Updates if the {@link AppGridActivity} is in foreground or not.
+     */
+    public void updateIsGridViewVisibleInForegroundDisplayArea(boolean isVisible) {
+        mIsGridViewVisibleInForegroundDisplayArea = isVisible;
     }
 
     private WindowManager getWindowManager(int rootDisplayAreaId, Context context) {
@@ -325,6 +350,9 @@ public class CarDisplayAreaController {
                     }
                 });
         mCarDisplayAreaTouchHandler.enable(true);
+
+        ActivityTaskManager.getInstance().registerTaskStackListener(
+                mOnActivityRestartAttemptListener);
     }
 
     /**
@@ -385,6 +413,8 @@ public class CarDisplayAreaController {
         mBackgroundApplicationDisplay = null;
         mControlBarDisplay = null;
         mCarDisplayAreaTouchHandler.enable(false);
+        ActivityTaskManager.getInstance()
+                .unregisterTaskStackListener(mOnActivityRestartAttemptListener);
     }
 
     /**
