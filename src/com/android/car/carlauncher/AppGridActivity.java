@@ -278,6 +278,7 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         // after the animations are triggered. Also, when the AppGrid is in foreground and
         // AppGrid icon is clicked then ONLY onResume is called.
         mIsGridViewVisibleInForegroundDisplayArea = true;
+        mCarDisplayAreaController.updateIsGridViewVisibleInForegroundDisplayArea(true);
     }
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
@@ -316,6 +317,7 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     protected void onStop() {
         super.onStop();
         mIsGridViewVisibleInForegroundDisplayArea = false;
+        mCarDisplayAreaController.updateIsGridViewVisibleInForegroundDisplayArea(false);
         // disconnect from app install/uninstall receiver
         if (mInstallUninstallReceiver != null) {
             unregisterReceiver(mInstallUninstallReceiver);
