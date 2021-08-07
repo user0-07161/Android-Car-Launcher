@@ -32,7 +32,7 @@ import com.android.wm.shell.common.SyncTransactionQueue;
  */
 public class CarFullscreenTaskListener extends FullscreenTaskListener {
     // TODO: update the regex to cover all such packages.
-    private static final String MAPS = "maps";
+    static final String MAPS = "maps";
 
     private final CarDisplayAreaController mCarDisplayAreaController;
     private final Context mContext;
