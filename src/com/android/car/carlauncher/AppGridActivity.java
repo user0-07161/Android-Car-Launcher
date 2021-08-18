@@ -316,8 +316,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     @Override
     protected void onStop() {
         super.onStop();
-        mIsGridViewVisibleInForegroundDisplayArea = false;
-        mCarDisplayAreaController.updateIsGridViewVisibleInForegroundDisplayArea(false);
         // disconnect from app install/uninstall receiver
         if (mInstallUninstallReceiver != null) {
             unregisterReceiver(mInstallUninstallReceiver);
@@ -334,6 +332,15 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         if (mCar != null) {
             mCar.disconnect();
         }
+
+        // When the custom policy is not provided for a build target the controller will be null.
+        // The code after this check is specific to usage when the policy is defined.
+        if (mCarDisplayAreaController == null) {
+            return;
+        }
+
+        mIsGridViewVisibleInForegroundDisplayArea = false;
+        mCarDisplayAreaController.updateIsGridViewVisibleInForegroundDisplayArea(false);
     }
 
     /**
