@@ -94,12 +94,14 @@ public class CarDisplayAreaTouchHandler {
                 if (mOnTouchTitleBarListener != null && mIsTitleBarVisible) {
                     mOnTouchTitleBarListener.onStart(mStartX, mStartY);
                 }
+                mIsTitleBarDragged = false;
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mIsTitleBarVisible && isTitleBarGrabbed() && mOnTouchTitleBarListener != null) {
                     mOnTouchTitleBarListener.onMove(event.getX(), event.getY());
                     mIsTitleBarDragged = true;
                 }
+
                 break;
             case MotionEvent.ACTION_UP:
                 float endX = event.getX();
@@ -113,6 +115,8 @@ public class CarDisplayAreaTouchHandler {
                 }
                 mIsTitleBarDragged = false;
                 break;
+            default:
+                mIsTitleBarDragged = false;
         }
     }
 
@@ -125,7 +129,6 @@ public class CarDisplayAreaTouchHandler {
     private boolean isTitleBarGrabbed() {
         return mStartX >= mTitleBarBounds.left && mStartX <= mTitleBarBounds.right
                 && mStartY >= mTitleBarBounds.top && mStartY <= mTitleBarBounds.bottom;
-
     }
 
     private void disposeInputChannel() {
