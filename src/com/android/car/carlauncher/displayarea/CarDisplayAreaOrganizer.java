@@ -96,6 +96,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     private DisplayAreaAppearedInfo mTitleBarDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
     private boolean mIsRegistered = false;
+    private boolean mIsDisplayAreaAnimating = false;
 
     private AppGridActivity.CAR_LAUNCHER_STATE mToState;
 
@@ -106,6 +107,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 public void onAnimationStart(
                         CarLauncherDisplayAreaAnimationController
                                 .CarLauncherDisplayAreaTransitionAnimator animator) {
+                    mIsDisplayAreaAnimating = true;
                     SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
                     // Update the foreground panel layer index to animate on top of the
                     // background DA.
@@ -118,6 +120,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 public void onAnimationEnd(SurfaceControl.Transaction tx,
                         CarLauncherDisplayAreaAnimationController
                                 .CarLauncherDisplayAreaTransitionAnimator animator) {
+                    mIsDisplayAreaAnimating = false;
                     mAnimationController.removeAnimator(animator.getToken());
                     if (mAnimationController.isAnimatorsConsumed()) {
                         WindowContainerTransaction wct = new WindowContainerTransaction();
@@ -133,6 +136,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 public void onAnimationCancel(
                         CarLauncherDisplayAreaAnimationController
                                 .CarLauncherDisplayAreaTransitionAnimator animator) {
+                    mIsDisplayAreaAnimating = false;
                     mAnimationController.removeAnimator(animator.getToken());
                 }
             };
@@ -173,6 +177,10 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mDpiDensity = displayResources.getConfiguration().densityDpi;
 
         return mDpiDensity;
+    }
+
+    boolean isDisplayAreaAnimating() {
+        return mIsDisplayAreaAnimating;
     }
 
     private void updateBackgroundDisplayBounds(WindowContainerTransaction wct) {
