@@ -57,7 +57,6 @@ import androidx.annotation.Nullable;
 
 import com.android.car.carlauncher.AppGridActivity;
 import com.android.car.carlauncher.R;
-import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 import java.util.List;
@@ -142,7 +141,8 @@ public class CarDisplayAreaController {
      * Initializes the controller
      */
     public void init(Context applicationContext, SyncTransactionQueue syncQueue,
-            CarDisplayAreaOrganizer organizer) {
+            CarDisplayAreaOrganizer organizer,
+            CarDisplayAreaTouchHandler carDisplayAreaTouchHandler) {
         mApplicationContext = applicationContext;
         mSyncQueue = syncQueue;
         mOrganizer = organizer;
@@ -156,8 +156,7 @@ public class CarDisplayAreaController {
                 R.dimen.full_app_display_area_height);
         mDefaultDisplayHeight = applicationContext.getResources().getDimensionPixelSize(
                 R.dimen.default_app_display_area_height);
-        mCarDisplayAreaTouchHandler = new CarDisplayAreaTouchHandler(
-                new HandlerExecutor(applicationContext.getMainThreadHandler()));
+        mCarDisplayAreaTouchHandler = carDisplayAreaTouchHandler;
 
         // Get bottom nav bar height.
         Resources resources = applicationContext.getResources();
@@ -289,6 +288,10 @@ public class CarDisplayAreaController {
      */
     public boolean isHostingDefaultApplicationDisplayAreaVisible() {
         return mIsHostingDefaultApplicationDisplayAreaVisible;
+    }
+
+    boolean isDisplayAreaAnimating() {
+        return mOrganizer != null && mOrganizer.isDisplayAreaAnimating();
     }
 
     /** Registers the DA organizer. */
@@ -434,6 +437,7 @@ public class CarDisplayAreaController {
                         - mControlBarDisplayHeight;
                 toPos = mScreenHeightWithoutNavBar + mTitleBarHeight;
                 animateToControlBarState(fromPos, toPos, mEnterExitAnimationDurationMs);
+                mCarDisplayAreaTouchHandler.updateTitleBarVisibility(false);
                 break;
             case FULL:
                 // TODO: Implement this.
