@@ -21,6 +21,7 @@ import android.content.Intent;
 
 import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
+import com.android.car.carlauncher.displayarea.CarDisplayAreaTouchHandler;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.ShellExecutor;
@@ -52,10 +53,12 @@ public class CarLauncherApplication extends Application {
                     mTransactionPool, mShellExecutor);
             Intent controlBarIntent = new Intent(this, ControlBarActivity.class);
             controlBarIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            CarDisplayAreaTouchHandler handler = new CarDisplayAreaTouchHandler(
+                    new HandlerExecutor(getMainThreadHandler()));
             carDisplayAreaController.init(this, mSyncTransactionQueue,
                     CarDisplayAreaOrganizer.getInstance(mShellExecutor, this,
                             CarLauncherUtils.getMapsIntent(this),
-                            controlBarIntent, mSyncTransactionQueue));
+                            controlBarIntent, mSyncTransactionQueue), handler);
             carDisplayAreaController.register();
         }
     }
