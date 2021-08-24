@@ -34,6 +34,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Process;
 import android.service.media.MediaBrowserService;
 import android.text.TextUtils;
+import android.util.ArraySet;
 import android.util.Log;
 
 import androidx.annotation.IntDef;
@@ -188,9 +189,10 @@ class AppLauncherUtils {
         List<LauncherActivityInfo> availableActivities =
                 launcherApps.getActivityList(null, Process.myUserHandle());
 
-        Map<ComponentName, AppMetaData> launchablesMap = new HashMap<>(
-                mediaServices.size() + availableActivities.size());
+        int launchablesSize = mediaServices.size() + availableActivities.size();
+        Map<ComponentName, AppMetaData> launchablesMap = new HashMap<>(launchablesSize);
         Map<ComponentName, ResolveInfo> mediaServicesMap = new HashMap<>(mediaServices.size());
+        Set<String> mEnabledPackages = new ArraySet<>(launchablesSize);
 
         // Process media services
         if ((appTypes & APP_TYPE_MEDIA_SERVICES) != 0) {
@@ -199,6 +201,7 @@ class AppLauncherUtils {
                 String className = info.serviceInfo.name;
                 ComponentName componentName = new ComponentName(packageName, className);
                 mediaServicesMap.put(componentName, info);
+                mEnabledPackages.add(packageName);
                 if (shouldAddToLaunchables(componentName, appsToHide, customMediaComponents,
                         appTypes, APP_TYPE_MEDIA_SERVICES)) {
                     final boolean isDistractionOptimized = true;
@@ -237,6 +240,7 @@ class AppLauncherUtils {
             for (LauncherActivityInfo info : availableActivities) {
                 ComponentName componentName = info.getComponentName();
                 String packageName = componentName.getPackageName();
+                mEnabledPackages.add(packageName);
                 if (shouldAddToLaunchables(componentName, appsToHide, customMediaComponents,
                         appTypes, APP_TYPE_LAUNCHABLES)) {
                     boolean isDistractionOptimized =
@@ -258,9 +262,84 @@ class AppLauncherUtils {
                     launchablesMap.put(componentName, appMetaData);
                 }
             }
+
+            List<ResolveInfo> disabledActivities = getDisabledActivities(
+                    packageManager, mEnabledPackages);
+
+            for (ResolveInfo info : disabledActivities) {
+                String packageName = info.activityInfo.packageName;
+                String className = info.activityInfo.name;
+                ComponentName componentName = new ComponentName(packageName, className);
+                if (!shouldAddToLaunchables(componentName, appsToHide, customMediaComponents,
+                        appTypes, APP_TYPE_LAUNCHABLES)) {
+                    continue;
+                }
+                boolean isDistractionOptimized =
+                        isActivityDistractionOptimized(carPackageManager, packageName, className);
+
+                Intent intent = new Intent(Intent.ACTION_MAIN)
+                        .setComponent(componentName)
+                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                AppMetaData appMetaData = new AppMetaData(
+                        info.activityInfo.loadLabel(packageManager),
+                        componentName,
+                        info.activityInfo.loadIcon(packageManager),
+                        isDistractionOptimized,
+                        context -> {
+                            packageManager.setApplicationEnabledSetting(packageName,
+                                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0);
+                            /* Fetch the current enabled setting to make sure the setting is synced
+                             * before launching the activity. Otherwise, the activity may not
+                             * launch.
+                             */
+                            if (packageManager.getApplicationEnabledSetting(packageName)
+                                    != PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+                                throw new IllegalStateException(
+                                        "Failed to enable the disabled package [" + packageName
+                                                + "]");
+                            }
+                            Log.i(TAG, "Successfully enabled package [" + packageName + "]");
+                            AppLauncherUtils.launchApp(context, intent);
+                        },
+                        null);
+                launchablesMap.put(componentName, appMetaData);
+            }
         }
 
         return new LauncherAppsInfo(launchablesMap, mediaServicesMap);
+    }
+
+    private static List<ResolveInfo> getDisabledActivities(
+            PackageManager packageManager, Set<String> enabledPackages) {
+        List<ResolveInfo> allActivities = packageManager.queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
+                PackageManager.GET_RESOLVED_FILTER
+                        | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS);
+
+        List<ResolveInfo> disabledActivities = new ArrayList<>();
+        for (int i = 0; i < allActivities.size(); ++i) {
+            ResolveInfo info = allActivities.get(i);
+            try {
+                if (!enabledPackages.contains(info.activityInfo.packageName)
+                        && packageManager.getApplicationEnabledSetting(
+                                info.activityInfo.packageName)
+                        == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+                    disabledActivities.add(info);
+                }
+            } catch (RuntimeException e) {
+                if (e instanceof IllegalArgumentException) {
+                    /* Don't throw exception when the package is missing, which happens when a
+                     * package is being uninstalled and the internal datastructures are being
+                     * updated.
+                     */
+                    continue;
+                }
+                throw e;
+            }
+        }
+        return disabledActivities;
     }
 
     private static boolean shouldAddToLaunchables(@NonNull ComponentName componentName,
