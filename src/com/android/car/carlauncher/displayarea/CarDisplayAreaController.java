@@ -48,7 +48,6 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
-import android.widget.ImageView;
 import android.window.DisplayAreaAppearedInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
@@ -209,13 +208,6 @@ public class CarDisplayAreaController {
         // Show the confirmation.
         WindowManager.LayoutParams lp = getTitleBarWindowLayoutParams();
         getWindowManager(rootDisplayAreaId, context).addView(mTitleBarView, lp);
-
-        ImageView closeForegroundDisplay = mTitleBarView.findViewById(
-                R.id.close_foreground_display);
-        closeForegroundDisplay.setOnClickListener(v -> {
-            // Close the foreground display area.
-            startAnimation(CONTROL_BAR);
-        });
     }
 
     /**

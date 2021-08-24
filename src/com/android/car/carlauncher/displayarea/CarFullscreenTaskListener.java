@@ -20,6 +20,7 @@ import static android.window.DisplayAreaOrganizer.FEATURE_DEFAULT_TASK_CONTAINER
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
+import android.car.media.CarMediaIntents;
 import android.content.Context;
 import android.view.SurfaceControl;
 
@@ -71,7 +72,10 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
         super.onTaskInfoChanged(taskInfo);
         if (taskInfo.displayAreaFeatureId == FEATURE_DEFAULT_TASK_CONTAINER) {
             if (!mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()
-                    && !mCarDisplayAreaController.isDisplayAreaAnimating()) {
+                    && !mCarDisplayAreaController.isDisplayAreaAnimating()
+                    && !(taskInfo.baseIntent != null
+                    && taskInfo.baseIntent.getAction().equals(
+                    CarMediaIntents.ACTION_MEDIA_TEMPLATE))) {
                 mCarDisplayAreaController.startAnimation(
                         AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
             }
