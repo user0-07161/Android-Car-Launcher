@@ -270,6 +270,9 @@ public class CarLauncher extends FragmentActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            return;
+        }
         initializeCards();
     }
 
