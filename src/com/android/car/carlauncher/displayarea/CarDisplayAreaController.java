@@ -16,6 +16,8 @@
 
 package com.android.car.carlauncher.displayarea;
 
+import static android.window.DisplayAreaOrganizer.FEATURE_IME_PLACEHOLDER;
+import static android.window.DisplayAreaOrganizer.FEATURE_ROOT;
 import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
 import static android.window.DisplayAreaOrganizer.KEY_ROOT_DISPLAY_AREA_ID;
 
@@ -88,6 +90,7 @@ public class CarDisplayAreaController {
     private DisplayAreaAppearedInfo mTitleBarDisplay;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
+    private DisplayAreaAppearedInfo mImeContainerDisplayArea;
     private int mTitleBarDragThreshold;
     private int mEnterExitAnimationDurationMs;
     private int mDpiDensity;
@@ -383,6 +386,14 @@ public class CarDisplayAreaController {
             throw new IllegalStateException("Can't find display to launch audio control");
         }
 
+        // Get the IME display area attached to the root hierarchy.
+        List<DisplayAreaAppearedInfo> imeDisplayAreaInfos =
+                mOrganizer.registerOrganizer(FEATURE_IME_PLACEHOLDER);
+        for (DisplayAreaAppearedInfo info : imeDisplayAreaInfos) {
+            if (info.getDisplayAreaInfo().rootDisplayAreaId == FEATURE_ROOT) {
+                mImeContainerDisplayArea = info;
+            }
+        }
         // As we have only 1 display defined for each display area feature get the 0th index.
         mForegroundApplicationsDisplay = foregroundDisplayAreaInfos.get(0);
         mTitleBarDisplay = titleBarDisplayAreaInfo.get(0);
@@ -407,6 +418,7 @@ public class CarDisplayAreaController {
         mTitleBarDisplay = null;
         mBackgroundApplicationDisplay = null;
         mControlBarDisplay = null;
+        mImeContainerDisplayArea = null;
         mCarDisplayAreaTouchHandler.enable(false);
         ActivityTaskManager.getInstance()
                 .unregisterTaskStackListener(mOnActivityRestartAttemptListener);
@@ -521,6 +533,8 @@ public class CarDisplayAreaController {
 
         WindowContainerToken foregroundDisplayToken =
                 mForegroundApplicationsDisplay.getDisplayAreaInfo().token;
+        WindowContainerToken imeRootDisplayToken =
+                mImeContainerDisplayArea.getDisplayAreaInfo().token;
         WindowContainerToken titleBarDisplayToken =
                 mTitleBarDisplay.getDisplayAreaInfo().token;
         WindowContainerToken backgroundDisplayToken =
@@ -561,6 +575,12 @@ public class CarDisplayAreaController {
                 backgroundDisplayHeightDp);
         wct.setSmallestScreenWidthDp(backgroundDisplayToken, backgroundDisplayWidthDp);
 
+        // Change the bounds of the IME attached to the root display to be same as the background DA
+        wct.setBounds(imeRootDisplayToken, backgroundApplicationDisplayBound);
+        wct.setScreenSizeDp(imeRootDisplayToken, backgroundDisplayWidthDp,
+                backgroundDisplayHeightDp);
+        wct.setSmallestScreenWidthDp(imeRootDisplayToken, backgroundDisplayWidthDp);
+
         int controlBarDisplayWidthDp =
                 controlBarDisplayBound.width() * DisplayMetrics.DENSITY_DEFAULT
                         / mDpiDensity;
@@ -579,6 +599,9 @@ public class CarDisplayAreaController {
             t.setPosition(mTitleBarDisplay.getLeash(),
                     titleBarDisplayBounds.left, -mTitleBarHeight);
             t.setPosition(mBackgroundApplicationDisplay.getLeash(),
+                    backgroundApplicationDisplayBound.left,
+                    backgroundApplicationDisplayBound.top);
+            t.setPosition(mImeContainerDisplayArea.getLeash(),
                     backgroundApplicationDisplayBound.left,
                     backgroundApplicationDisplayBound.top);
             t.setPosition(mControlBarDisplay.getLeash(),
