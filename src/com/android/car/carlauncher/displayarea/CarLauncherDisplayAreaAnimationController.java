@@ -20,6 +20,7 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.util.ArrayMap;
 import android.view.SurfaceControl;
 import android.view.animation.BaseInterpolator;
@@ -49,13 +50,14 @@ public class CarLauncherDisplayAreaAnimationController {
     private final ArrayMap<WindowContainerToken,
             CarLauncherDisplayAreaTransitionAnimator>
             mAnimatorMap = new ArrayMap<>();
-
+    private Handler mHandlerForAnimation;
     /**
      * Constructor of CarLauncherDisplayAreaAnimationController
      */
     public CarLauncherDisplayAreaAnimationController(Context context) {
         mSurfaceTransactionHelper = new CarLauncherDisplayAreaTransactionHelper(context);
         mInterpolator = new CarLauncherDisplayAreaInterpolator();
+        mHandlerForAnimation = context.getMainThreadHandler();
     }
 
     @SuppressWarnings("unchecked")
@@ -70,7 +72,9 @@ public class CarLauncherDisplayAreaAnimationController {
         } else if (animator.isRunning()) {
             animator.updateEndValue(endPos);
         } else {
-            animator.cancel();
+            mHandlerForAnimation.post(() -> {
+                animator.cancel();
+            });
             mAnimatorMap.put(token, setupDisplayAreaTransitionAnimator(
                     CarLauncherDisplayAreaTransitionAnimator.ofYOffset(
                             token, leash, startPos, endPos, displayBounds)));

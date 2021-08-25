@@ -88,9 +88,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
     private CarPackageManager mCarPackageManager;
     private CarMediaManager mCarMediaManager;
     private Mode mMode;
-    // Track if grid view activity is visible in the foreground DA when custom policy is defined.
-    private boolean mIsGridViewVisibleInForegroundDisplayArea;
-    private CarDisplayAreaController mCarDisplayAreaController;
 
     /**
      * enum to define the state of display area possible.
@@ -175,8 +172,9 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
 
         // Check if a custom policy builder is defined.
         if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
-            mCarDisplayAreaController = CarDisplayAreaController.getInstance();
-            mCarDisplayAreaController.showTitleBar(FOREGROUND_DISPLAY_AREA_ROOT, this);
+            CarDisplayAreaController carDisplayAreaController =
+                    CarDisplayAreaController.getInstance();
+            carDisplayAreaController.showTitleBar(FOREGROUND_DISPLAY_AREA_ROOT, this);
         } else {
             toolbar.setNavButtonMode(Toolbar.NavButtonMode.CLOSE);
             toolbar.setState(Toolbar.State.SUBPAGE);
@@ -253,32 +251,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         // Using onResume() to refresh most recently used apps because we want to refresh even if
         // the app being launched crashes/doesn't cover the entire screen.
         updateAppsLists();
-
-        if (mCarDisplayAreaController == null) {
-            Log.w(TAG, "custom policy not defined");
-            return;
-        }
-
-        // Animate the DA that contains default grid view. These animations should be triggered
-        // from within onResume(). This is because when the AppGridActivity is in foreground and
-        // the user clicks on the grid button at that time only onResume() is called and not
-        // onStop(). We need to close the DA in that case.
-        if (mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()) {
-            if (mIsGridViewVisibleInForegroundDisplayArea) {
-                mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.CONTROL_BAR);
-            }
-        } else {
-            mCarDisplayAreaController.startAnimation(CAR_LAUNCHER_STATE.DEFAULT);
-        }
-
-        // This flag needs to be set in onResume() although it gets reset in onStop(). This is
-        // because when the TDA is visible and some other activity is in foreground and then
-        // AppGrid icon on the nav bar is clicked. In that case onResume() is called after
-        // onStart() and we control all the animations in onResume. So we need to reset the flag
-        // after the animations are triggered. Also, when the AppGrid is in foreground and
-        // AppGrid icon is clicked then ONLY onResume is called.
-        mIsGridViewVisibleInForegroundDisplayArea = true;
-        mCarDisplayAreaController.updateIsGridViewVisibleInForegroundDisplayArea(true);
     }
 
     /** Updates the list of all apps, and the list of the most recently used ones. */
@@ -332,15 +304,6 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
         if (mCar != null) {
             mCar.disconnect();
         }
-
-        // When the custom policy is not provided for a build target the controller will be null.
-        // The code after this check is specific to usage when the policy is defined.
-        if (mCarDisplayAreaController == null) {
-            return;
-        }
-
-        mIsGridViewVisibleInForegroundDisplayArea = false;
-        mCarDisplayAreaController.updateIsGridViewVisibleInForegroundDisplayArea(false);
     }
 
     /**
