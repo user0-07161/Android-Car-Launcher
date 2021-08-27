@@ -82,6 +82,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="dimen" name="total_screen_width"/>
       <item type="dimen" name="vertical_border_size"/>
       <item type="drawable" name="car_button_background"/>
+      <item type="drawable" name="default_audio_background"/>
       <item type="drawable" name="ic_apps_black"/>
       <item type="drawable" name="ic_arrow_back_black"/>
       <item type="drawable" name="ic_call_end"/>
