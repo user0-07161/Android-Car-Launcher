@@ -22,6 +22,8 @@
     <uses-permission android:name="android.car.permission.ACCESS_CAR_PROJECTION_STATUS"/>
     <!-- System permission to host maps activity -->
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING"/>
+    <!-- Needed to change component enabled state when user opens disabled apps. -->
+    <uses-permission android:name="android.permission.CHANGE_COMPONENT_ENABLED_STATE"/>
     <!-- Permission for the InCallController to bind the InCallService -->
     <uses-permission android:name="android.permission.CONTROL_INCALL_EXPERIENCE"/>
     <!-- System permission to send events to hosted maps activity -->
