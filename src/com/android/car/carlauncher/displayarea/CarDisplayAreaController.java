@@ -32,6 +32,7 @@ import static com.android.car.carlauncher.displayarea.CarFullscreenTaskListener.
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
 import android.app.TaskStackListener;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
@@ -57,6 +58,7 @@ import android.window.WindowContainerTransaction;
 import androidx.annotation.Nullable;
 
 import com.android.car.carlauncher.AppGridActivity;
+import com.android.car.carlauncher.ControlBarActivity;
 import com.android.car.carlauncher.R;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
@@ -91,6 +93,8 @@ public class CarDisplayAreaController {
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
     private DisplayAreaAppearedInfo mImeContainerDisplayArea;
+    private String mAppGridActivityComponent;
+    private String mControlBarActivityComponent;
     private int mTitleBarDragThreshold;
     private int mEnterExitAnimationDurationMs;
     private int mDpiDensity;
@@ -122,13 +126,18 @@ public class CarDisplayAreaController {
     private final TaskStackListener mOnActivityRestartAttemptListener = new TaskStackListener() {
         @Override
         public void onActivityRestartAttempt(ActivityManager.RunningTaskInfo task,
-                boolean homeTaskVisible,
-                boolean clearedTask, boolean wasVisible) throws RemoteException {
-            if (isHostingDefaultApplicationDisplayAreaVisible()
-                    && !mIsGridViewVisibleInForegroundDisplayArea && !(task.baseActivity != null
-                    && task.baseActivity.getPackageName().contains(MAPS))) {
-                startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
-            }
+                boolean homeTaskVisible, boolean clearedTask, boolean wasVisible) {
+            updateForegroundDaVisibility(task.topActivity);
+        }
+
+        @Override
+        public void onTaskCreated(int taskId, ComponentName componentName) {
+            updateForegroundDaVisibility(componentName);
+        }
+
+        @Override
+        public void onTaskDescriptionChanged(ActivityManager.RunningTaskInfo taskInfo) {
+            updateForegroundDaVisibility(taskInfo.topActivity);
         }
     };
 
@@ -159,6 +168,10 @@ public class CarDisplayAreaController {
         mDefaultDisplayHeight = applicationContext.getResources().getDimensionPixelSize(
                 R.dimen.default_app_display_area_height);
         mCarDisplayAreaTouchHandler = carDisplayAreaTouchHandler;
+        mAppGridActivityComponent = new ComponentName(applicationContext,
+                AppGridActivity.class).flattenToShortString();
+        mControlBarActivityComponent = new ComponentName(applicationContext,
+                ControlBarActivity.class).flattenToShortString();
 
         // Get bottom nav bar height.
         Resources resources = applicationContext.getResources();
@@ -211,13 +224,6 @@ public class CarDisplayAreaController {
         // Show the confirmation.
         WindowManager.LayoutParams lp = getTitleBarWindowLayoutParams();
         getWindowManager(rootDisplayAreaId, context).addView(mTitleBarView, lp);
-    }
-
-    /**
-     * Updates if the {@link AppGridActivity} is in foreground or not.
-     */
-    public void updateIsGridViewVisibleInForegroundDisplayArea(boolean isVisible) {
-        mIsGridViewVisibleInForegroundDisplayArea = isVisible;
     }
 
     private WindowManager getWindowManager(int rootDisplayAreaId, Context context) {
@@ -358,6 +364,30 @@ public class CarDisplayAreaController {
      */
     public CarDisplayAreaOrganizer getOrganizer() {
         return mOrganizer;
+    }
+
+    private void updateForegroundDaVisibility(ComponentName componentName) {
+        if (componentName == null) {
+            return;
+        }
+        if (isHostingDefaultApplicationDisplayAreaVisible()
+                && !(componentName.getPackageName().contains(MAPS))) {
+            if (mIsGridViewVisibleInForegroundDisplayArea
+                    && componentName.flattenToShortString().equals(
+                    mAppGridActivityComponent)) {
+                startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
+            }
+        } else {
+            startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
+        }
+
+        if (componentName.getPackageName().contains(MAPS)
+                || componentName.flattenToShortString().equals(
+                mControlBarActivityComponent)) {
+            return;
+        }
+        mIsGridViewVisibleInForegroundDisplayArea = componentName.flattenToShortString().equals(
+                mAppGridActivityComponent);
     }
 
     /** Registers DA organizer. */
