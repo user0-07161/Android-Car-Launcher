@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
+import android.os.Handler;
 import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -82,6 +83,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     private boolean mIsShowingBackgroundDisplay;
     private boolean mIsShowingControlBarDisplay;
     private final CarLauncherDisplayAreaAnimationController mAnimationController;
+    private final Handler mHandlerForAnimation;
     private final Rect mLastVisualDisplayBounds = new Rect();
     private final ArrayMap<WindowContainerToken, SurfaceControl> mDisplayAreaTokenMap =
             new ArrayMap();
@@ -164,6 +166,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mTransactionQueue = tx;
 
         mAnimationController = new CarLauncherDisplayAreaAnimationController(mContext);
+        mHandlerForAnimation = mContext.getMainThreadHandler();
     }
 
     int getDpiDensity() {
@@ -265,9 +268,11 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                         mLastVisualDisplayBounds);
 
         if (animator != null) {
-            animator.addDisplayAreaAnimationCallback(mDisplayAreaAnimationCallback)
-                    .setDuration(durationMs)
-                    .start();
+            mHandlerForAnimation.post(() -> {
+                animator.addDisplayAreaAnimationCallback(mDisplayAreaAnimationCallback)
+                        .setDuration(durationMs)
+                        .start();
+            });
         }
     }
 
