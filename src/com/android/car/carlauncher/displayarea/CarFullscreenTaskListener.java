@@ -72,10 +72,9 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
         super.onTaskInfoChanged(taskInfo);
         if (taskInfo.displayAreaFeatureId == FEATURE_DEFAULT_TASK_CONTAINER) {
             if (!mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()
-                    && !mCarDisplayAreaController.isDisplayAreaAnimating()
-                    && !(taskInfo.baseIntent != null
-                    && taskInfo.baseIntent.getAction().equals(
-                    CarMediaIntents.ACTION_MEDIA_TEMPLATE))) {
+                    && !mCarDisplayAreaController.isDisplayAreaAnimating() && !(
+                    taskInfo.baseIntent != null && CarMediaIntents.ACTION_MEDIA_TEMPLATE.equals(
+                            taskInfo.baseIntent.getAction()))) {
                 mCarDisplayAreaController.startAnimation(
                         AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
             }
