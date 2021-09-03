@@ -70,6 +70,9 @@ import java.util.List;
  */
 public class CarDisplayAreaController {
     private static final String TAG = "CarDisplayAreaController";
+    // TODO(b/198783542): Make this configurable.
+    private static final String LOCATION_SETTINGS_ACTIVITY = "LocationSettingsCheckerAutoActivity";
+    private static final String GRANT_PERMISSION_ACTIVITY = "GrantPermissionsActivity";
     // Layer index of how display areas should be placed. Keeping a gap of 100 if we want to
     // add some other display area layers in between in future.
     static final int BACKGROUND_LAYER_INDEX = 200;
@@ -370,20 +373,21 @@ public class CarDisplayAreaController {
         if (componentName == null) {
             return;
         }
-        if (isHostingDefaultApplicationDisplayAreaVisible()
-                && !(componentName.getPackageName().contains(MAPS))) {
+
+        String packageName = componentName.getPackageName();
+        boolean isMaps = packageName.contains(MAPS);
+        if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
             if (mIsGridViewVisibleInForegroundDisplayArea
                     && componentName.flattenToShortString().equals(
                     mAppGridActivityComponent)) {
                 startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
             }
-        } else {
+        } else if (!(isMaps || componentName.getClassName().contains(LOCATION_SETTINGS_ACTIVITY)
+                || componentName.getClassName().contains(GRANT_PERMISSION_ACTIVITY))) {
             startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
         }
 
-        if (componentName.getPackageName().contains(MAPS)
-                || componentName.flattenToShortString().equals(
-                mControlBarActivityComponent)) {
+        if (isMaps || componentName.flattenToShortString().equals(mControlBarActivityComponent)) {
             return;
         }
         mIsGridViewVisibleInForegroundDisplayArea = componentName.flattenToShortString().equals(
