@@ -57,7 +57,7 @@ import com.android.car.ui.baselayout.InsetsChangedListener;
 import com.android.car.ui.core.CarUi;
 import com.android.car.ui.recyclerview.CarUiRecyclerView;
 import com.android.car.ui.toolbar.MenuItem;
-import com.android.car.ui.toolbar.Toolbar;
+import com.android.car.ui.toolbar.NavButtonMode;
 import com.android.car.ui.toolbar.ToolbarController;
 
 import java.util.ArrayList;
@@ -176,8 +176,7 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
                     CarDisplayAreaController.getInstance();
             carDisplayAreaController.showTitleBar(FOREGROUND_DISPLAY_AREA_ROOT, this);
         } else {
-            toolbar.setNavButtonMode(Toolbar.NavButtonMode.CLOSE);
-            toolbar.setState(Toolbar.State.SUBPAGE);
+            toolbar.setNavButtonMode(NavButtonMode.CLOSE);
         }
 
         if (Build.IS_DEBUGGABLE) {
