@@ -62,6 +62,7 @@ import com.android.car.carlauncher.ControlBarActivity;
 import com.android.car.carlauncher.R;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -96,8 +97,8 @@ public class CarDisplayAreaController {
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
     private DisplayAreaAppearedInfo mImeContainerDisplayArea;
-    private String mAppGridActivityComponent;
     private String mControlBarActivityComponent;
+    private HashMap<String, Boolean> mForegroundDAComponentsVisibilityMap;
     private int mTitleBarDragThreshold;
     private int mEnterExitAnimationDurationMs;
     private int mDpiDensity;
@@ -171,8 +172,6 @@ public class CarDisplayAreaController {
         mDefaultDisplayHeight = applicationContext.getResources().getDimensionPixelSize(
                 R.dimen.default_app_display_area_height);
         mCarDisplayAreaTouchHandler = carDisplayAreaTouchHandler;
-        mAppGridActivityComponent = new ComponentName(applicationContext,
-                AppGridActivity.class).flattenToShortString();
         mControlBarActivityComponent = new ComponentName(applicationContext,
                 ControlBarActivity.class).flattenToShortString();
 
@@ -211,6 +210,12 @@ public class CarDisplayAreaController {
         mTitleBarDragThreshold = applicationContext.getResources().getDimensionPixelSize(
                 R.dimen.title_bar_display_area_touch_drag_threshold);
         mForegroundDisplayTop = mScreenHeightWithoutNavBar - mDefaultDisplayHeight;
+
+        mForegroundDAComponentsVisibilityMap = new HashMap<>();
+        for (String component : mApplicationContext.getResources().getStringArray(
+                R.array.config_foregroundDAComponents)) {
+            mForegroundDAComponentsVisibilityMap.put(component, false);
+        }
     }
 
     private CarDisplayAreaController() {
@@ -377,9 +382,10 @@ public class CarDisplayAreaController {
         String packageName = componentName.getPackageName();
         boolean isMaps = packageName.contains(MAPS);
         if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
-            if (mIsGridViewVisibleInForegroundDisplayArea
-                    && componentName.flattenToShortString().equals(
-                    mAppGridActivityComponent)) {
+            if (mForegroundDAComponentsVisibilityMap.containsKey(
+                    componentName.flattenToShortString())
+                    && mForegroundDAComponentsVisibilityMap.get(
+                    componentName.flattenToShortString())) {
                 startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
             }
         } else if (!(isMaps || componentName.getClassName().contains(LOCATION_SETTINGS_ACTIVITY)
@@ -390,8 +396,8 @@ public class CarDisplayAreaController {
         if (isMaps || componentName.flattenToShortString().equals(mControlBarActivityComponent)) {
             return;
         }
-        mIsGridViewVisibleInForegroundDisplayArea = componentName.flattenToShortString().equals(
-                mAppGridActivityComponent);
+        mForegroundDAComponentsVisibilityMap.replaceAll(
+                (n, v) -> componentName.flattenToShortString().equals(n));
     }
 
     /** Registers DA organizer. */
