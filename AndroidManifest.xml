@@ -86,7 +86,6 @@
         </activity>
         <activity
             android:name=".ControlBarActivity"
-            android:configChanges="uiMode|mcc|mnc"
             android:launchMode="singleInstance"
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
