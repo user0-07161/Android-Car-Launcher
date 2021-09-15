@@ -26,6 +26,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="color" name="dialer_button_icon_color"/>
       <item type="color" name="dialer_end_call_button_color"/>
       <item type="color" name="icon_tint"/>
+      <item type="color" name="media_button_tint"/>
       <item type="color" name="minimized_progress_bar_background"/>
       <item type="color" name="recent_apps_line_divider_color"/>
       <item type="color" name="tap_for_more_text_color"/>
@@ -53,6 +54,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="dimen" name="card_width"/>
       <item type="dimen" name="contextual_screen_percentage"/>
       <item type="dimen" name="control_bar_height"/>
+      <item type="dimen" name="control_bar_padding"/>
       <item type="dimen" name="default_app_display_area_height"/>
       <item type="dimen" name="descriptive_text_margin_top"/>
       <item type="dimen" name="descriptive_text_only_top_margin"/>
