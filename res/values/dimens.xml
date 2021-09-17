@@ -102,6 +102,7 @@
     <dimen name="total_screen_width">1080dp</dimen>
 
     <dimen name="control_bar_height">140dp</dimen>
+    <dimen name="control_bar_padding">10dp</dimen>
     <!-- This height is from the top of navbar not accounting for the control bar height. -->
     <dimen name="default_app_display_area_height">870dp</dimen>
     <dimen name="full_app_display_area_height">1760dp</dimen>
