@@ -23,7 +23,6 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.util.ArrayMap;
 import android.view.SurfaceControl;
-import android.view.animation.BaseInterpolator;
 import android.window.WindowContainerToken;
 
 import androidx.annotation.NonNull;
@@ -45,18 +44,17 @@ public class CarLauncherDisplayAreaAnimationController {
     public static final int TRANSITION_DIRECTION_TRIGGER = 1;
     public static final int TRANSITION_DIRECTION_EXIT = 2;
 
-    private final CarLauncherDisplayAreaInterpolator mInterpolator;
     private final CarLauncherDisplayAreaTransactionHelper mSurfaceTransactionHelper;
     private final ArrayMap<WindowContainerToken,
             CarLauncherDisplayAreaTransitionAnimator>
             mAnimatorMap = new ArrayMap<>();
     private Handler mHandlerForAnimation;
+
     /**
      * Constructor of CarLauncherDisplayAreaAnimationController
      */
     public CarLauncherDisplayAreaAnimationController(Context context) {
         mSurfaceTransactionHelper = new CarLauncherDisplayAreaTransactionHelper(context);
-        mInterpolator = new CarLauncherDisplayAreaInterpolator();
         mHandlerForAnimation = context.getMainThreadHandler();
     }
 
@@ -101,7 +99,7 @@ public class CarLauncherDisplayAreaAnimationController {
     CarLauncherDisplayAreaTransitionAnimator setupDisplayAreaTransitionAnimator(
             CarLauncherDisplayAreaTransitionAnimator animator) {
         animator.setSurfaceTransactionHelper(mSurfaceTransactionHelper);
-        animator.setInterpolator(mInterpolator);
+        animator.setInterpolator(new CarCubicBezierInterpolator(0.5f, 0, 0, 1));
         animator.setFloatValues(FRACTION_START, FRACTION_END);
         return animator;
     }
@@ -109,19 +107,17 @@ public class CarLauncherDisplayAreaAnimationController {
     /**
      * Animator for display area transition animation which supports both alpha and bounds
      * animation.
-     *
-     * @param <T> Type of property to animate, either offset (float)
      */
-    public abstract static class CarLauncherDisplayAreaTransitionAnimator<T> extends
+    public abstract static class CarLauncherDisplayAreaTransitionAnimator extends
             ValueAnimator implements
             ValueAnimator.AnimatorUpdateListener,
             ValueAnimator.AnimatorListener {
 
         private final SurfaceControl mLeash;
         private final WindowContainerToken mToken;
-        private T mStartValue;
-        private T mEndValue;
-        private T mCurrentValue;
+        private float mStartValue;
+        private float mEndValue;
+        private float mCurrentValue;
 
         private final List<CarLauncherDisplayAreaAnimationCallback>
                 mDisplayAreaAnimationCallbacks =
@@ -134,7 +130,7 @@ public class CarLauncherDisplayAreaAnimationController {
 
         private CarLauncherDisplayAreaTransitionAnimator(WindowContainerToken token,
                 SurfaceControl leash,
-                T startValue, T endValue) {
+                float startValue, float endValue) {
             mLeash = leash;
             mToken = token;
             mStartValue = startValue;
@@ -161,6 +157,7 @@ public class CarLauncherDisplayAreaAnimationController {
             mDisplayAreaAnimationCallbacks.forEach(
                     callback -> callback.onAnimationEnd(tx, this)
             );
+            mDisplayAreaAnimationCallbacks.clear();
         }
 
         @Override
@@ -169,6 +166,7 @@ public class CarLauncherDisplayAreaAnimationController {
             mDisplayAreaAnimationCallbacks.forEach(
                     callback -> callback.onAnimationCancel(this)
             );
+            mDisplayAreaAnimationCallbacks.clear();
         }
 
         @Override
@@ -180,7 +178,7 @@ public class CarLauncherDisplayAreaAnimationController {
             SurfaceControl.Transaction tx = newSurfaceControlTransaction();
             applySurfaceControlTransaction(mLeash, tx, animation.getAnimatedFraction());
             mDisplayAreaAnimationCallbacks.forEach(
-                    callback -> callback.onAnimationUpdate(0f, (float) mCurrentValue)
+                    callback -> callback.onAnimationUpdate(0f, mCurrentValue)
             );
         }
 
@@ -201,7 +199,7 @@ public class CarLauncherDisplayAreaAnimationController {
             mSurfaceTransactionHelper = helper;
         }
 
-        CarLauncherDisplayAreaTransitionAnimator<T> addDisplayAreaAnimationCallback(
+        CarLauncherDisplayAreaTransitionAnimator addDisplayAreaAnimationCallback(
                 CarLauncherDisplayAreaAnimationCallback callback) {
             mDisplayAreaAnimationCallbacks.add(callback);
             return this;
@@ -212,35 +210,30 @@ public class CarLauncherDisplayAreaAnimationController {
         }
 
         float getDestinationOffset() {
-            return ((float) mEndValue - (float) mStartValue);
+            return (mEndValue - mStartValue);
         }
 
         int getTransitionDirection() {
             return mTransitionDirection;
         }
 
-        CarLauncherDisplayAreaTransitionAnimator<T> setTransitionDirection(
-                int direction) {
-            mTransitionDirection = direction;
-            return this;
-        }
 
-        T getStartValue() {
+        float getStartValue() {
             return mStartValue;
         }
 
-        T getEndValue() {
+        float getEndValue() {
             return mEndValue;
         }
 
-        void setCurrentValue(T value) {
+        void setCurrentValue(float value) {
             mCurrentValue = value;
         }
 
         /**
          * Updates the {@link #mEndValue}.
          */
-        void updateEndValue(T endValue) {
+        void updateEndValue(float endValue) {
             mEndValue = endValue;
         }
 
@@ -249,17 +242,17 @@ public class CarLauncherDisplayAreaAnimationController {
         }
 
         @VisibleForTesting
-        static CarLauncherDisplayAreaTransitionAnimator<Float> ofYOffset(
+        static CarLauncherDisplayAreaTransitionAnimator ofYOffset(
                 WindowContainerToken token,
                 SurfaceControl leash, float startValue, float endValue, Rect displayBounds) {
 
-            return new CarLauncherDisplayAreaTransitionAnimator<Float>(
+            return new CarLauncherDisplayAreaTransitionAnimator(
                     token, leash, startValue, endValue) {
 
                 private final Rect mTmpRect = new Rect(displayBounds);
 
                 private float getCastedFractionValue(float start, float end, float fraction) {
-                    return (start * (1 - fraction) + end * fraction + .5f);
+                    return ((end - start) * fraction) + start;
                 }
 
                 @Override
@@ -290,17 +283,6 @@ public class CarLauncherDisplayAreaAnimationController {
                     tx.apply();
                 }
             };
-        }
-    }
-
-    /**
-     * An Interpolator for display area transition animation.
-     */
-    public static class CarLauncherDisplayAreaInterpolator extends BaseInterpolator {
-        @Override
-        public float getInterpolation(float input) {
-            return (float) (Math.pow(2, -10 * input) * Math.sin(((input - 4.0f) / 4.0f)
-                    * (2.0f * Math.PI) / 4.0f) + 1);
         }
     }
 
