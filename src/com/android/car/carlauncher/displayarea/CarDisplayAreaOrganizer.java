@@ -109,6 +109,10 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 public void onAnimationStart(
                         CarLauncherDisplayAreaAnimationController
                                 .CarLauncherDisplayAreaTransitionAnimator animator) {
+
+                    if (mIsDisplayAreaAnimating) {
+                        return;
+                    }
                     mIsDisplayAreaAnimating = true;
                     SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
                     // Update the foreground panel layer index to animate on top of the
