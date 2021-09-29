@@ -20,7 +20,6 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Rect;
-import android.os.Handler;
 import android.util.ArrayMap;
 import android.view.SurfaceControl;
 import android.window.WindowContainerToken;
@@ -48,14 +47,12 @@ public class CarLauncherDisplayAreaAnimationController {
     private final ArrayMap<WindowContainerToken,
             CarLauncherDisplayAreaTransitionAnimator>
             mAnimatorMap = new ArrayMap<>();
-    private Handler mHandlerForAnimation;
 
     /**
      * Constructor of CarLauncherDisplayAreaAnimationController
      */
     public CarLauncherDisplayAreaAnimationController(Context context) {
         mSurfaceTransactionHelper = new CarLauncherDisplayAreaTransactionHelper(context);
-        mHandlerForAnimation = context.getMainThreadHandler();
     }
 
     @SuppressWarnings("unchecked")
@@ -70,9 +67,7 @@ public class CarLauncherDisplayAreaAnimationController {
         } else if (animator.isRunning()) {
             animator.updateEndValue(endPos);
         } else {
-            mHandlerForAnimation.post(() -> {
-                animator.cancel();
-            });
+            animator.cancel();
             mAnimatorMap.put(token, setupDisplayAreaTransitionAnimator(
                     CarLauncherDisplayAreaTransitionAnimator.ofYOffset(
                             token, leash, startPos, endPos, displayBounds)));
@@ -176,10 +171,10 @@ public class CarLauncherDisplayAreaAnimationController {
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
             SurfaceControl.Transaction tx = newSurfaceControlTransaction();
-            applySurfaceControlTransaction(mLeash, tx, animation.getAnimatedFraction());
             mDisplayAreaAnimationCallbacks.forEach(
                     callback -> callback.onAnimationUpdate(0f, mCurrentValue)
             );
+            applySurfaceControlTransaction(mLeash, tx, animation.getAnimatedFraction());
         }
 
         void onStartTransaction(SurfaceControl leash, SurfaceControl.Transaction tx) {
