@@ -57,4 +57,8 @@
     -->
     <string-array name="config_ignoreOpeningForegroundDA" translatable="false">
     </string-array>
+
+    <!-- The ComponentName of Assistant VoicePlate Activity, the Activity will be placed in
+        VoicePlate TDA. -->
+    <string name="config_assistantVoicePlateActivity" translatable="false"></string>
 </resources>
