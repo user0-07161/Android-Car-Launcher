@@ -93,6 +93,8 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="drawable" name="ic_clear_black"/>
       <item type="drawable" name="ic_dialpad"/>
       <item type="drawable" name="ic_mic_off"/>
+      <item type="drawable" name="ic_mic_on"/>
+      <item type="drawable" name="ic_mute_activatable"/>
       <item type="drawable" name="ic_search_black"/>
       <item type="id" name="app_icon"/>
       <item type="id" name="app_item"/>
