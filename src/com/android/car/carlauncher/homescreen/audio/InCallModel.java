@@ -264,9 +264,10 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
 
     private void initializeAudioControls() {
         mMuteButton = new DescriptiveTextWithControlsView.Control(
-                mContext.getDrawable(R.drawable.ic_mic_off),
+                mContext.getDrawable(R.drawable.ic_mute_activatable),
                 v -> {
                     mInCallService.setMuted(mMuteCallToggle);
+                    v.setSelected(mMuteCallToggle);
                     mMuteCallToggle = !mMuteCallToggle;
                 });
         mEndCallButton = new DescriptiveTextWithControlsView.Control(
