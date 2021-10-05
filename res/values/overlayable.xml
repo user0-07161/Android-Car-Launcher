@@ -19,6 +19,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="array" name="config_foregroundDAComponents"/>
       <item type="array" name="config_homeCardModuleClasses"/>
       <item type="array" name="config_homeCardPreferredMapActivities"/>
+      <item type="array" name="config_ignoreOpeningForegroundDA"/>
       <item type="array" name="hidden_apps"/>
       <item type="bool" name="config_enableRoundedCornerForForegroundDisplayArea"/>
       <item type="color" name="card_background_scrim"/>
