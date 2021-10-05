@@ -24,8 +24,10 @@ import android.content.Context;
 import android.view.SurfaceControl;
 
 import com.android.car.carlauncher.AppGridActivity;
-import com.android.wm.shell.FullscreenTaskListener;
 import com.android.wm.shell.common.SyncTransactionQueue;
+import com.android.wm.shell.fullscreen.FullscreenTaskListener;
+
+import java.util.Optional;
 
 /**
  * Organizes tasks presented in display area using {@link CarDisplayAreaOrganizer}.
@@ -39,7 +41,7 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
 
     public CarFullscreenTaskListener(Context context, SyncTransactionQueue syncQueue,
             CarDisplayAreaController carDisplayAreaController) {
-        super(syncQueue);
+        super(syncQueue, Optional.empty());
         mContext = context;
         mCarDisplayAreaController = carDisplayAreaController;
     }
