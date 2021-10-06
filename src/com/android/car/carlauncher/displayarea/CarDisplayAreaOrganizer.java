@@ -101,6 +101,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     private boolean mIsDisplayAreaAnimating = false;
 
     private AppGridActivity.CAR_LAUNCHER_STATE mToState;
+    DisplayAreaAnimationRunnable mDisplayAreaAnimationRunnable = null;
 
     @VisibleForTesting
     CarLauncherDisplayAreaAnimationCallback mDisplayAreaAnimationCallback =
@@ -268,12 +269,52 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                 mAnimationController.getAnimator(token, leash, fromPos, toPos,
                         mLastVisualDisplayBounds);
 
+
         if (animator != null) {
-            mHandlerForAnimation.post(() -> {
-                animator.addDisplayAreaAnimationCallback(mDisplayAreaAnimationCallback)
-                        .setDuration(durationMs)
-                        .start();
-            });
+            if (mDisplayAreaAnimationRunnable != null) {
+                mDisplayAreaAnimationRunnable.stopAnimation();
+                mHandlerForAnimation.removeCallbacks(mDisplayAreaAnimationRunnable);
+            }
+            mDisplayAreaAnimationRunnable = new DisplayAreaAnimationRunnable(animator, durationMs);
+            mHandlerForAnimation.post(mDisplayAreaAnimationRunnable);
+        }
+    }
+
+    /**
+     * A custom runnable with a flag to stop running the code within the {@link #run()} method when
+     * the runnable is in the message queue. In such cases calling
+     * {@link #removeCallbacksAndMessages(null)} won't work it only stops pending messages
+     * (Runnables) not currently running runnable.
+     */
+    private class DisplayAreaAnimationRunnable implements Runnable {
+        private boolean mStopAnimation = false;
+        private final CarLauncherDisplayAreaAnimationController
+                .CarLauncherDisplayAreaTransitionAnimator mAnimator;
+        private final int mDurationMs;
+
+        DisplayAreaAnimationRunnable(
+                CarLauncherDisplayAreaAnimationController
+                        .CarLauncherDisplayAreaTransitionAnimator animator,
+                int durationMs) {
+            mAnimator = animator;
+            mDurationMs = durationMs;
+        }
+
+        @Override
+        public void run() {
+            if (mStopAnimation) {
+                return;
+            }
+
+            mAnimator.addDisplayAreaAnimationCallback(mDisplayAreaAnimationCallback)
+                    .setDuration(mDurationMs)
+                    .start();
+        }
+
+        public void stopAnimation() {
+            // we don't call animator.cancel() here because if there is only one animation call
+            // such as just to open the DA then it will get canceled here.
+            mStopAnimation = true;
         }
     }
 
