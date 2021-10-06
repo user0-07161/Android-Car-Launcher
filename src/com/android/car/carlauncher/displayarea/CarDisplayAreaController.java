@@ -41,6 +41,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.IWindowManager;
@@ -99,6 +100,7 @@ public class CarDisplayAreaController {
     private DisplayAreaAppearedInfo mImeContainerDisplayArea;
     private String mControlBarActivityComponent;
     private HashMap<String, Boolean> mForegroundDAComponentsVisibilityMap;
+    private ArraySet<ComponentName> mIgnoreOpeningForegroundDAComponentsSet;
     private int mTitleBarDragThreshold;
     private int mEnterExitAnimationDurationMs;
     private int mDpiDensity;
@@ -216,9 +218,22 @@ public class CarDisplayAreaController {
                 R.array.config_foregroundDAComponents)) {
             mForegroundDAComponentsVisibilityMap.put(component, false);
         }
+
+        String[] ignoreOpeningForegroundDACmp = mApplicationContext.getResources().getStringArray(
+                R.array.config_ignoreOpeningForegroundDA);
+        mIgnoreOpeningForegroundDAComponentsSet = new ArraySet<>();
+        for (String component : ignoreOpeningForegroundDACmp) {
+            ComponentName componentName = ComponentName.unflattenFromString(component);
+            mIgnoreOpeningForegroundDAComponentsSet.add(componentName);
+        }
     }
 
     private CarDisplayAreaController() {
+    }
+
+    boolean shouldIgnoreOpeningForegroundDA(ActivityManager.RunningTaskInfo taskInfo) {
+        return taskInfo.baseIntent != null && mIgnoreOpeningForegroundDAComponentsSet.contains(
+                taskInfo.baseIntent.getComponent());
     }
 
     /**
@@ -381,6 +396,8 @@ public class CarDisplayAreaController {
 
         String packageName = componentName.getPackageName();
         boolean isMaps = packageName.contains(MAPS);
+        boolean ignoreOpeningForegroundDA = mIgnoreOpeningForegroundDAComponentsSet.contains(
+                componentName);
         if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
             if (mForegroundDAComponentsVisibilityMap.containsKey(
                     componentName.flattenToShortString())
@@ -388,12 +405,14 @@ public class CarDisplayAreaController {
                     componentName.flattenToShortString())) {
                 startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
             }
-        } else if (!(isMaps || componentName.getClassName().contains(LOCATION_SETTINGS_ACTIVITY)
+        } else if (!(isMaps || ignoreOpeningForegroundDA || componentName.getClassName().contains(
+                LOCATION_SETTINGS_ACTIVITY)
                 || componentName.getClassName().contains(GRANT_PERMISSION_ACTIVITY))) {
             startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
         }
 
-        if (isMaps || componentName.flattenToShortString().equals(mControlBarActivityComponent)) {
+        if (isMaps || ignoreOpeningForegroundDA || componentName.flattenToShortString().equals(
+                mControlBarActivityComponent)) {
             return;
         }
         mForegroundDAComponentsVisibilityMap.replaceAll(
