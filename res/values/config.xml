@@ -50,4 +50,11 @@
     <string-array name="config_foregroundDAComponents" translatable="false">
         <item>com.android.car.carlauncher/.AppGridActivity</item>
     </string-array>
+
+    <!--
+        A list of the component names (flattened to short string) that should not open the
+        foreground DA.
+    -->
+    <string-array name="config_ignoreOpeningForegroundDA" translatable="false">
+    </string-array>
 </resources>
