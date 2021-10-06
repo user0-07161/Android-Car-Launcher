@@ -21,12 +21,20 @@
     <string name="app_launcher_title_all_apps" msgid="3215107396036838217">"Sve aplikacije"</string>
     <string name="app_launcher_title_media_only" msgid="4400886555907422816">"Aplikacije za medijske sadržaje"</string>
     <string name="driving_toast_text" msgid="149483091947120092">"Aplikacija <xliff:g id="APP_NAME">%1$s</xliff:g> ne može se koristiti tijekom vožnje."</string>
-    <string name="greeting" msgid="7164414111783832396">"Pozdrav, <xliff:g id="USER">%s</xliff:g>"</string>
+    <string name="tap_for_more_info_text" msgid="2043549383814415585">"Dodirnite karticu za više informacija"</string>
+    <string name="tap_to_launch_text" msgid="6910695705119260847">"Dodirnite karticu za pokretanje"</string>
+    <string name="ongoing_call_duration_text_separator" msgid="6019453854809413561">" • "</string>
+    <string name="ongoing_call_text" msgid="2394626676478708070">"Poziv u tijeku"</string>
+    <string name="projected_launch_text" msgid="5809132353957907500">"Pokrenite Android Auto"</string>
+    <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Pokretanje Android Auta nije uspjelo. Nije pronađena nijedna aktivnost."</string>
     <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
       <item quantity="one"><xliff:g id="COUNT_1">%d</xliff:g> uređaj</item>
       <item quantity="few"><xliff:g id="COUNT_1">%d</xliff:g> uređaja</item>
       <item quantity="other"><xliff:g id="COUNT_1">%d</xliff:g> uređaja</item>
     </plurals>
+    <string name="weather_app_name" msgid="8048146303519139993">"Vrijeme"</string>
+    <string name="fake_weather_main_text" msgid="8117240999340284429">"--° uglavnom sunčano"</string>
+    <string name="fake_weather_footer_text" msgid="4570172025869749926">"Mountain View • V: --° N: --°"</string>
     <string name="hide_debug_apps" msgid="6128313544379622475">"Sakrij aplikacije za otklanjanje pogrešaka"</string>
     <string name="show_debug_apps" msgid="4521073121286325786">"Prikaži aplikacije za otklanjanje pogrešaka"</string>
 </resources>
