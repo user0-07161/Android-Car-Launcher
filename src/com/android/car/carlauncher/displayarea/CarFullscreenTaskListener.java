@@ -62,8 +62,6 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
             if (mCarDisplayAreaController.getOrganizer() != null) {
                 ActivityOptions options = ActivityOptions
                         .makeCustomAnimation(mContext, /* enterResId= */ 0, /* exitResId= */ 0);
-                options.setLaunchTaskDisplayArea(
-                        mCarDisplayAreaController.getOrganizer().getBackgroundDisplayToken());
                 mContext.startActivity(taskInfo.baseIntent, options.toBundle());
             }
         }

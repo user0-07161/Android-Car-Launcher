@@ -20,6 +20,8 @@
 
     <!-- System permission to access the CarProjectionManager for projection status-->
     <uses-permission android:name="android.car.permission.ACCESS_CAR_PROJECTION_STATUS"/>
+    <!-- Permission to assign Activity to TDA -->
+    <uses-permission android:name="android.car.permission.CONTROL_CAR_APP_LAUNCH"/>
     <!-- System permission to host maps activity -->
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING"/>
     <!-- Needed to change component enabled state when user opens disabled apps. -->
