@@ -33,7 +33,7 @@ import java.util.Optional;
  * Organizes tasks presented in display area using {@link CarDisplayAreaOrganizer}.
  */
 public class CarFullscreenTaskListener extends FullscreenTaskListener {
-    // TODO: update the regex to cover all such packages.
+    // TODO(b/202182129): Introduce more robust way to resolve the intents.
     static final String MAPS = "maps";
 
     private final CarDisplayAreaController mCarDisplayAreaController;
@@ -49,7 +49,8 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
     @Override
     public void onTaskAppeared(ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash) {
         super.onTaskAppeared(taskInfo, leash);
-        if (taskInfo.displayAreaFeatureId == FEATURE_DEFAULT_TASK_CONTAINER) {
+        if (taskInfo.displayAreaFeatureId == FEATURE_DEFAULT_TASK_CONTAINER
+                && !mCarDisplayAreaController.shouldIgnoreOpeningForegroundDA(taskInfo)) {
             if (!mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()) {
                 mCarDisplayAreaController.startAnimation(
                         AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);

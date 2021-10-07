@@ -28,7 +28,6 @@ import android.app.TaskInfo;
 import android.app.TaskStackListener;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -159,7 +158,6 @@ public class CarLauncher extends FragmentActivity {
             CarDisplayAreaOrganizer org = carDisplayAreaController.getOrganizer();
             org.startControlBarInDisplayArea();
             org.startMapsInBackGroundDisplayArea();
-            startActivity(new Intent(this, AppGridActivity.class));
             return;
         }
 
