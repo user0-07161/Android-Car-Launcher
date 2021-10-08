@@ -34,6 +34,7 @@ import android.app.ActivityTaskManager;
 import android.app.TaskStackListener;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -41,6 +42,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -75,6 +77,12 @@ public class CarDisplayAreaController {
     // TODO(b/198783542): Make this configurable.
     private static final String LOCATION_SETTINGS_ACTIVITY = "LocationSettingsCheckerAutoActivity";
     private static final String GRANT_PERMISSION_ACTIVITY = "GrantPermissionsActivity";
+    // TODO(b/194334719): Remove when display area logic is moved into systemui
+    private static final String DISPLAY_AREA_VISIBILITY_CHANGED =
+            "com.android.car.carlauncher.displayarea.DISPLAY_AREA_VISIBILITY_CHANGED";
+    private static final String INTENT_EXTRA_IS_DISPLAY_AREA_VISIBLE =
+            "EXTRA_IS_DISPLAY_AREA_VISIBLE";
+
     // Layer index of how display areas should be placed. Keeping a gap of 100 if we want to
     // add some other display area layers in between in future.
     static final int BACKGROUND_LAYER_INDEX = 200;
@@ -369,6 +377,11 @@ public class CarDisplayAreaController {
                             animateToControlBarState((int) y,
                                     mScreenHeightWithoutNavBar + mTitleBarHeight, 0);
                             mCarDisplayAreaTouchHandler.updateTitleBarVisibility(false);
+                            // Notify the system bar button in sysui that the display area has
+                            // been swiped closed
+                            Intent intent = new Intent(DISPLAY_AREA_VISIBILITY_CHANGED);
+                            intent.putExtra(INTENT_EXTRA_IS_DISPLAY_AREA_VISIBLE, false);
+                            mApplicationContext.sendBroadcastAsUser(intent, UserHandle.ALL);
                         } else {
                             animateToDefaultState((int) y,
                                     mScreenHeightWithoutNavBar - mDefaultDisplayHeight
@@ -493,6 +506,7 @@ public class CarDisplayAreaController {
         // TODO: currently the animations are only bottom/up. Make it more generic animations here.
         int fromPos = 0;
         int toPos = 0;
+        Intent intent = new Intent(DISPLAY_AREA_VISIBILITY_CHANGED);
         switch (toState) {
             case CONTROL_BAR:
                 // Foreground DA closes.
@@ -501,6 +515,7 @@ public class CarDisplayAreaController {
                 toPos = mScreenHeightWithoutNavBar + mTitleBarHeight;
                 animateToControlBarState(fromPos, toPos, mEnterExitAnimationDurationMs);
                 mCarDisplayAreaTouchHandler.updateTitleBarVisibility(false);
+                intent.putExtra(INTENT_EXTRA_IS_DISPLAY_AREA_VISIBLE, false);
                 break;
             case FULL:
                 // TODO: Implement this.
@@ -512,8 +527,10 @@ public class CarDisplayAreaController {
                 fromPos = mScreenHeightWithoutNavBar + mTitleBarHeight;
                 toPos = mScreenHeightWithoutNavBar - mDefaultDisplayHeight
                         - mControlBarDisplayHeight;
+                intent.putExtra(INTENT_EXTRA_IS_DISPLAY_AREA_VISIBLE, true);
                 animateToDefaultState(fromPos, toPos, mEnterExitAnimationDurationMs);
         }
+        mApplicationContext.sendBroadcastAsUser(intent, UserHandle.ALL);
     }
 
     private void animateToControlBarState(int fromPos, int toPos, int durationMs) {
