@@ -18,11 +18,14 @@ package com.android.car.carlauncher.displayarea;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static com.android.car.carlauncher.CarLauncher.TAG;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.BACKGROUND_LAYER_INDEX;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.FOREGROUND_LAYER_INDEX;
 
 import android.app.ActivityOptions;
 import android.car.Car;
+import android.car.app.CarActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -31,6 +34,7 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.util.ArrayMap;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.SurfaceControl;
 import android.window.DisplayAreaAppearedInfo;
@@ -43,10 +47,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.car.carlauncher.AppGridActivity;
+import com.android.car.carlauncher.R;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 import java.util.List;
 import java.util.concurrent.Executor;
+
+import javax.annotation.Nullable;
 
 /**
  * Organizer for controlling the policies defined in
@@ -72,6 +79,10 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     public static final int CONTROL_BAR_DISPLAY_AREA = FEATURE_VENDOR_FIRST + 4;
 
     public static final int FEATURE_TITLE_BAR = FEATURE_VENDOR_FIRST + 5;
+
+    private static final int FEATURE_VOICE_PLATE = FEATURE_VENDOR_FIRST + 7;
+    @Nullable
+    private final ComponentName mAssistantVoicePlateActivityName;
 
     private static CarDisplayAreaOrganizer sCarDisplayAreaOrganizer;
 
@@ -163,12 +174,47 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         super(executor);
         mContext = context;
         mMapsIntent = mapsIntent;
-        mMapsIntent.putExtra(Car.CAR_EXTRA_LAUNCH_PERSISTENT, Car.LAUNCH_PERSISTENT_ADD);
         mAudioControlIntent = audioControlIntent;
         mTransactionQueue = tx;
+        // TODO(b/201712747): Gets the Assistant Activity by resolving the indirect Intent.
+        mAssistantVoicePlateActivityName = ComponentName.unflattenFromString(
+                context.getResources().getString(R.string.config_assistantVoicePlateActivity));
 
         mAnimationController = new CarLauncherDisplayAreaAnimationController(mContext);
         mHandlerForAnimation = mContext.getMainThreadHandler();
+
+        Car.createCar(context, /* handler= */ null, Car.CAR_WAIT_TIMEOUT_WAIT_FOREVER,
+                mCarServiceLifecycleListener);
+    }
+
+    private final Car.CarServiceLifecycleListener mCarServiceLifecycleListener =
+            new Car.CarServiceLifecycleListener() {
+                @Override
+                public void onLifecycleChanged(@NonNull Car car, boolean ready) {
+                    if (ready) {
+                        CarActivityManager carAm = (CarActivityManager) car.getCarManager(
+                                Car.CAR_ACTIVITY_SERVICE);
+                        setPersistentActivity(carAm, mMapsIntent.getComponent(),
+                                BACKGROUND_TASK_CONTAINER, "Background");
+                        // The following code will be enabled after FEATURE_VOICE_PLATE is landed.
+                        //setPersistentActivity(carAm, mAssistantVoicePlateActivityName,
+                        //        FEATURE_VOICE_PLATE, "VoicePlate");
+                    }
+                }
+            };
+
+    private static void setPersistentActivity(CarActivityManager am,
+            @Nullable ComponentName activity, int featureId, String featureName) {
+        if (activity == null) {
+            Log.e(TAG, "Empty activity for " + featureName + " (" + featureId + ")");
+            return;
+        }
+        int ret = am.setPersistentActivity(activity, DEFAULT_DISPLAY, featureId);
+        if (ret != CarActivityManager.RESULT_SUCCESS) {
+            Log.e(TAG, "Failed to set PersistentActivity: activity=" + activity
+                    + ", ret=" + ret);
+            return;
+        }
     }
 
     int getDpiDensity() {
@@ -335,10 +381,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         mDisplayAreaTokenMap.put(displayAreaInfo.token, leash);
     }
 
-    WindowContainerToken getBackgroundDisplayToken() {
-        return mBackgroundDisplayToken;
-    }
-
     /**
      * Launches the map in the background DA.
      */
@@ -346,7 +388,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         ActivityOptions options = ActivityOptions
                 .makeCustomAnimation(mContext,
                         /* enterResId= */ 0, /* exitResId= */ 0);
-        options.setLaunchTaskDisplayArea(mBackgroundDisplayToken);
         mContext.startActivity(mMapsIntent, options.toBundle());
     }
 

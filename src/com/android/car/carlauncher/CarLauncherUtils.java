@@ -41,6 +41,7 @@ public class CarLauncherUtils {
         defaultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PackageManager pm = context.getPackageManager();
         ComponentName defaultActivity = defaultIntent.resolveActivity(pm);
+        defaultIntent.setComponent(defaultActivity);
 
         for (String intentUri : context.getResources().getStringArray(
                 R.array.config_homeCardPreferredMapActivities)) {
