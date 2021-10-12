@@ -20,7 +20,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layoutDirection="ltr"
     tools:context=".CarLauncher">
 
     <androidx.constraintlayout.widget.Guideline
@@ -64,7 +63,7 @@
         app:layout_constraintTop_toTopOf="parent"/>
 
     <FrameLayout
-        android:id="@+id/contextual"
+        android:id="@+id/top_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
@@ -75,7 +74,7 @@
         app:layout_constraintTop_toBottomOf="@+id/top_edge"/>
 
     <FrameLayout
-        android:id="@+id/playback"
+        android:id="@+id/bottom_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/main_screen_widget_margin"
