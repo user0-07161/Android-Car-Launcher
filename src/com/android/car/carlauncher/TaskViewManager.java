@@ -28,7 +28,6 @@ import android.content.Context;
 import android.util.Slog;
 import android.window.TaskAppearedInfo;
 
-import com.android.launcher3.icons.IconProvider;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.TaskViewFactory;
@@ -66,8 +65,7 @@ public final class TaskViewManager {
         taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         StartingWindowController startingController =
                 new StartingWindowController(mContext, mExecutor,
-                        new PhoneStartingWindowTypeAlgorithm(), new IconProvider(mContext),
-                        transactionPool);
+                        new PhoneStartingWindowTypeAlgorithm(), transactionPool);
         taskOrganizer.initStartingWindow(startingController);
         List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
