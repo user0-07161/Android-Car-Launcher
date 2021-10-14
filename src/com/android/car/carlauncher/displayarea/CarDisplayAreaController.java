@@ -26,6 +26,7 @@ import static com.android.car.carlauncher.AppGridActivity.CAR_LAUNCHER_STATE.DEF
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.BACKGROUND_TASK_CONTAINER;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.CONTROL_BAR_DISPLAY_AREA;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FEATURE_TITLE_BAR;
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FEATURE_VOICE_PLATE;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FOREGROUND_DISPLAY_AREA_ROOT;
 import static com.android.car.carlauncher.displayarea.CarFullscreenTaskListener.MAPS;
 
@@ -79,6 +80,7 @@ public class CarDisplayAreaController {
     // add some other display area layers in between in future.
     static final int BACKGROUND_LAYER_INDEX = 200;
     static final int FOREGROUND_LAYER_INDEX = 100;
+    static final int VOICE_PLATE_LAYER_SHOWN_INDEX = 500;
     static final int CONTROL_BAR_LAYER_INDEX = 0;
     static final CarDisplayAreaController INSTANCE = new CarDisplayAreaController();
     private static final int TITLE_BAR_WINDOW_TYPE =
@@ -87,6 +89,7 @@ public class CarDisplayAreaController {
     private final Rect mControlBarDisplayBounds = new Rect();
     private final Rect mForegroundApplicationDisplayBounds = new Rect();
     private final Rect mTitleBarDisplayBounds = new Rect();
+    private final Rect mVoicePlateDisplayBounds = new Rect();
     private final Rect mBackgroundApplicationDisplayBounds = new Rect();
     private final Rect mNavBarBounds = new Rect();
     private final IBinder mWindowToken = new Binder();
@@ -95,6 +98,7 @@ public class CarDisplayAreaController {
     private CarDisplayAreaOrganizer mOrganizer;
     private DisplayAreaAppearedInfo mForegroundApplicationsDisplay;
     private DisplayAreaAppearedInfo mTitleBarDisplay;
+    private DisplayAreaAppearedInfo mVoicePlateDisplay;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mControlBarDisplay;
     private DisplayAreaAppearedInfo mImeContainerDisplayArea;
@@ -128,6 +132,7 @@ public class CarDisplayAreaController {
     @Nullable
     private Context mTitleBarWindowContext;
     private boolean mIsGridViewVisibleInForegroundDisplayArea;
+    private ComponentName mAssistantVoicePlateActivityName;
 
     private final TaskStackListener mOnActivityRestartAttemptListener = new TaskStackListener() {
         @Override
@@ -176,6 +181,9 @@ public class CarDisplayAreaController {
         mCarDisplayAreaTouchHandler = carDisplayAreaTouchHandler;
         mControlBarActivityComponent = new ComponentName(applicationContext,
                 ControlBarActivity.class).flattenToShortString();
+        mAssistantVoicePlateActivityName = ComponentName.unflattenFromString(
+                applicationContext.getResources().getString(
+                        R.string.config_assistantVoicePlateActivity));
 
         // Get bottom nav bar height.
         Resources resources = applicationContext.getResources();
@@ -398,6 +406,12 @@ public class CarDisplayAreaController {
         boolean isMaps = packageName.contains(MAPS);
         boolean ignoreOpeningForegroundDA = mIgnoreOpeningForegroundDAComponentsSet.contains(
                 componentName);
+        // Voice plate will be shown as the top most layer. Also, we don't want to change the
+        // state of the DA's when voice plate is shown.
+        boolean isVoicePlate = componentName.equals(mAssistantVoicePlateActivityName);
+        if (isVoicePlate) {
+            return;
+        }
         if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
             if (mForegroundDAComponentsVisibilityMap.containsKey(
                     componentName.flattenToShortString())
@@ -419,6 +433,16 @@ public class CarDisplayAreaController {
                 (n, v) -> componentName.flattenToShortString().equals(n));
     }
 
+    void showVoicePlateDisplayArea() {
+        SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+        tx.show(mVoicePlateDisplay.getLeash());
+    }
+
+    void resetVoicePlateDisplayArea() {
+        SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+        tx.hide(mVoicePlateDisplay.getLeash());
+    }
+
     /** Registers DA organizer. */
     private void registerOrganizer() {
         List<DisplayAreaAppearedInfo> foregroundDisplayAreaInfos =
@@ -431,6 +455,12 @@ public class CarDisplayAreaController {
                 mOrganizer.registerOrganizer(FEATURE_TITLE_BAR);
         if (titleBarDisplayAreaInfo.size() != 1) {
             throw new IllegalStateException("Can't find display to launch title bar");
+        }
+
+        List<DisplayAreaAppearedInfo> voicePlateDisplayAreaInfo =
+                mOrganizer.registerOrganizer(FEATURE_VOICE_PLATE);
+        if (voicePlateDisplayAreaInfo.size() != 1) {
+            throw new IllegalStateException("Can't find display to launch voice plate");
         }
 
         List<DisplayAreaAppearedInfo> backgroundDisplayAreaInfos =
@@ -456,17 +486,19 @@ public class CarDisplayAreaController {
         // As we have only 1 display defined for each display area feature get the 0th index.
         mForegroundApplicationsDisplay = foregroundDisplayAreaInfos.get(0);
         mTitleBarDisplay = titleBarDisplayAreaInfo.get(0);
+        mVoicePlateDisplay = voicePlateDisplayAreaInfo.get(0);
         mBackgroundApplicationDisplay = backgroundDisplayAreaInfos.get(0);
         mControlBarDisplay = controlBarDisplayAreaInfos.get(0);
 
-        SurfaceControl.Transaction tx =
-                new SurfaceControl.Transaction();
+        SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
         // TODO(b/188102153): replace to set mForegroundApplicationsDisplay to top.
         tx.setLayer(mBackgroundApplicationDisplay.getLeash(), BACKGROUND_LAYER_INDEX);
         tx.setLayer(mForegroundApplicationsDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
         tx.setLayer(mTitleBarDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
+        tx.setLayer(mVoicePlateDisplay.getLeash(), VOICE_PLATE_LAYER_SHOWN_INDEX);
         tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
         tx.apply();
+        tx.hide(mVoicePlateDisplay.getLeash());
     }
 
     /** Un-Registers DA organizer. */
@@ -555,6 +587,8 @@ public class CarDisplayAreaController {
         Rect foregroundBounds = new Rect(0,
                 foregroundTop, mTotalScreenWidth,
                 mScreenHeightWithoutNavBar - mControlBarDisplayHeight);
+        Rect voicePlateBounds = new Rect(0, 0, mTotalScreenWidth,
+                mScreenHeightWithoutNavBar - mControlBarDisplayHeight);
         Rect titleBarBounds = new Rect(0,
                 foregroundTop - mTitleBarHeight, mTotalScreenWidth, foregroundTop);
 
@@ -580,6 +614,7 @@ public class CarDisplayAreaController {
         mControlBarDisplayBounds.set(controlBarBounds);
         mForegroundApplicationDisplayBounds.set(foregroundBounds);
         mTitleBarDisplayBounds.set(titleBarBounds);
+        mVoicePlateDisplayBounds.set(voicePlateBounds);
         mCarDisplayAreaTouchHandler.setTitleBarBounds(titleBarBounds);
     }
 
@@ -587,6 +622,7 @@ public class CarDisplayAreaController {
     private void updateBounds(WindowContainerTransaction wct) {
         Rect foregroundApplicationDisplayBound = mForegroundApplicationDisplayBounds;
         Rect titleBarDisplayBounds = mTitleBarDisplayBounds;
+        Rect voicePlateDisplayBounds = mVoicePlateDisplayBounds;
         Rect backgroundApplicationDisplayBound = mBackgroundApplicationDisplayBounds;
         Rect controlBarDisplayBound = mControlBarDisplayBounds;
 
@@ -596,6 +632,8 @@ public class CarDisplayAreaController {
                 mImeContainerDisplayArea.getDisplayAreaInfo().token;
         WindowContainerToken titleBarDisplayToken =
                 mTitleBarDisplay.getDisplayAreaInfo().token;
+        WindowContainerToken voicePlateDisplayToken =
+                mVoicePlateDisplay.getDisplayAreaInfo().token;
         WindowContainerToken backgroundDisplayToken =
                 mBackgroundApplicationDisplay.getDisplayAreaInfo().token;
         WindowContainerToken controlBarDisplayToken =
@@ -622,6 +660,17 @@ public class CarDisplayAreaController {
         wct.setScreenSizeDp(titleBarDisplayToken, titleBarDisplayWidthDp,
                 titleBarDisplayHeightDp);
         wct.setSmallestScreenWidthDp(titleBarDisplayToken, titleBarDisplayWidthDp);
+
+        int voicePlateDisplayWidthDp =
+                voicePlateDisplayBounds.width() * DisplayMetrics.DENSITY_DEFAULT
+                        / mDpiDensity;
+        int voicePlateDisplayHeightDp =
+                voicePlateDisplayBounds.height() * DisplayMetrics.DENSITY_DEFAULT
+                        / mDpiDensity;
+        wct.setBounds(voicePlateDisplayToken, voicePlateDisplayBounds);
+        wct.setScreenSizeDp(voicePlateDisplayToken, voicePlateDisplayWidthDp,
+                voicePlateDisplayHeightDp);
+        wct.setSmallestScreenWidthDp(voicePlateDisplayToken, voicePlateDisplayWidthDp);
 
         int backgroundDisplayWidthDp =
                 backgroundApplicationDisplayBound.width() * DisplayMetrics.DENSITY_DEFAULT
@@ -655,6 +704,9 @@ public class CarDisplayAreaController {
             t.setPosition(mForegroundApplicationsDisplay.getLeash(),
                     foregroundApplicationDisplayBound.left,
                     foregroundApplicationDisplayBound.top);
+            t.setPosition(mVoicePlateDisplay.getLeash(),
+                    voicePlateDisplayBounds.left,
+                    voicePlateDisplayBounds.top);
             t.setPosition(mTitleBarDisplay.getLeash(),
                     titleBarDisplayBounds.left, -mTitleBarHeight);
             t.setPosition(mBackgroundApplicationDisplay.getLeash(),
