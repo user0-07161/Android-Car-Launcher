@@ -18,6 +18,8 @@ package com.android.car.carlauncher.displayarea;
 
 import static android.window.DisplayAreaOrganizer.FEATURE_DEFAULT_TASK_CONTAINER;
 
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FEATURE_VOICE_PLATE;
+
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.content.Context;
@@ -49,6 +51,13 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
     @Override
     public void onTaskAppeared(ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash) {
         super.onTaskAppeared(taskInfo, leash);
+
+
+        if (taskInfo.displayAreaFeatureId == FEATURE_VOICE_PLATE) {
+            mCarDisplayAreaController.showVoicePlateDisplayArea();
+            return;
+        }
+
         if (taskInfo.displayAreaFeatureId == FEATURE_DEFAULT_TASK_CONTAINER
                 && !mCarDisplayAreaController.shouldIgnoreOpeningForegroundDA(taskInfo)) {
             if (!mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()) {
@@ -65,5 +74,12 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
                 mContext.startActivity(taskInfo.baseIntent, options.toBundle());
             }
         }
+
+    }
+
+    @Override
+    public void onTaskVanished(ActivityManager.RunningTaskInfo taskInfo) {
+        super.onTaskVanished(taskInfo);
+        mCarDisplayAreaController.resetVoicePlateDisplayArea();
     }
 }
