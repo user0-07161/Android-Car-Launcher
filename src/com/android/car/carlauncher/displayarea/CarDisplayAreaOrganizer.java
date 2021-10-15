@@ -80,7 +80,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
 
     public static final int FEATURE_TITLE_BAR = FEATURE_VENDOR_FIRST + 5;
 
-    private static final int FEATURE_VOICE_PLATE = FEATURE_VENDOR_FIRST + 7;
+    static final int FEATURE_VOICE_PLATE = FEATURE_VENDOR_FIRST + 6;
     @Nullable
     private final ComponentName mAssistantVoicePlateActivityName;
 
@@ -103,6 +103,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     private WindowContainerToken mForegroundDisplayToken;
     private WindowContainerToken mControbarDisplayToken;
     private WindowContainerToken mTitleBarDisplayToken;
+    private WindowContainerToken mVoicePlateDisplayToken;
     private int mDpiDensity = -1;
     private DisplayAreaAppearedInfo mBackgroundApplicationDisplay;
     private DisplayAreaAppearedInfo mForegroundApplicationDisplay;
@@ -196,9 +197,8 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                                 Car.CAR_ACTIVITY_SERVICE);
                         setPersistentActivity(carAm, mMapsIntent.getComponent(),
                                 BACKGROUND_TASK_CONTAINER, "Background");
-                        // The following code will be enabled after FEATURE_VOICE_PLATE is landed.
-                        //setPersistentActivity(carAm, mAssistantVoicePlateActivityName,
-                        //        FEATURE_VOICE_PLATE, "VoicePlate");
+                        setPersistentActivity(carAm, mAssistantVoicePlateActivityName,
+                                FEATURE_VOICE_PLATE, "VoicePlate");
                     }
                 }
             };
@@ -377,6 +377,8 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
             mForegroundDisplayToken = displayAreaInfo.token;
         } else if (displayAreaInfo.featureId == FEATURE_TITLE_BAR) {
             mTitleBarDisplayToken = displayAreaInfo.token;
+        } else if (displayAreaInfo.featureId == FEATURE_VOICE_PLATE) {
+            mVoicePlateDisplayToken = displayAreaInfo.token;
         }
         mDisplayAreaTokenMap.put(displayAreaInfo.token, leash);
     }
