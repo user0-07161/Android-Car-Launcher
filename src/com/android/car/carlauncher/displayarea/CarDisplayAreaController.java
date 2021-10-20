@@ -64,6 +64,7 @@ import androidx.annotation.Nullable;
 import com.android.car.carlauncher.AppGridActivity;
 import com.android.car.carlauncher.ControlBarActivity;
 import com.android.car.carlauncher.R;
+import com.android.internal.app.AssistUtils;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 import java.util.HashMap;
@@ -132,6 +133,7 @@ public class CarDisplayAreaController {
     private View mTitleBarView;
     private Context mApplicationContext;
     private int mForegroundDisplayTop;
+    private AssistUtils mAssistUtils;
 
     /**
      * The WindowContext that is registered with {@link #mTitleBarWindowManager} with options to
@@ -192,6 +194,7 @@ public class CarDisplayAreaController {
         mAssistantVoicePlateActivityName = ComponentName.unflattenFromString(
                 applicationContext.getResources().getString(
                         R.string.config_assistantVoicePlateActivity));
+        mAssistUtils = new AssistUtils(applicationContext);
 
         // Get bottom nav bar height.
         Resources resources = applicationContext.getResources();
@@ -425,6 +428,12 @@ public class CarDisplayAreaController {
         if (isVoicePlate) {
             return;
         }
+
+        // Check is there is an existing session running for assist, cancel it.
+        if (mAssistUtils.isSessionRunning()) {
+            mAssistUtils.hideCurrentSession();
+        }
+
         if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
             if (mForegroundDAComponentsVisibilityMap.containsKey(
                     componentName.flattenToShortString())
