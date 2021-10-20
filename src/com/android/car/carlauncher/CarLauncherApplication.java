@@ -20,6 +20,7 @@ import android.app.Application;
 import android.content.Intent;
 
 import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
+import com.android.car.carlauncher.displayarea.CarDisplayAreaHealthMonitor;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaTouchHandler;
 import com.android.car.internal.common.UserHelperLite;
@@ -55,11 +56,15 @@ public class CarLauncherApplication extends Application {
             controlBarIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             CarDisplayAreaTouchHandler handler = new CarDisplayAreaTouchHandler(
                     new HandlerExecutor(getMainThreadHandler()));
-            carDisplayAreaController.init(this, mSyncTransactionQueue,
-                    CarDisplayAreaOrganizer.getInstance(mShellExecutor, this,
-                            CarLauncherUtils.getMapsIntent(this),
-                            controlBarIntent, mSyncTransactionQueue), handler);
+            CarDisplayAreaOrganizer org = CarDisplayAreaOrganizer.getInstance(mShellExecutor, this,
+                    CarLauncherUtils.getMapsIntent(this),
+                    controlBarIntent, mSyncTransactionQueue);
+            carDisplayAreaController.init(this, mSyncTransactionQueue, org, handler);
             carDisplayAreaController.register();
+
+            CarDisplayAreaHealthMonitor monitor = CarDisplayAreaHealthMonitor.getInstance(this,
+                    org);
+            monitor.register();
         }
     }
 
