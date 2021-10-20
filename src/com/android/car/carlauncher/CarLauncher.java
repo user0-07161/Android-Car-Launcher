@@ -45,6 +45,7 @@ import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer;
 import com.android.car.carlauncher.displayarea.CarFullscreenTaskListener;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
+import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.launcher3.icons.IconProvider;
 import com.android.wm.shell.ShellTaskOrganizer;
@@ -163,7 +164,7 @@ public class CarLauncher extends FragmentActivity {
         }
 
         mCarLauncherTaskId = getTaskId();
-        ActivityTaskManager.getInstance().registerTaskStackListener(mTaskStackListener);
+        TaskStackChangeListeners.getInstance().registerTaskStackListener(mTaskStackListener);
 
         // Setting as trusted overlay to let touches pass through.
         getWindow().addPrivateFlags(PRIVATE_FLAG_TRUSTED_OVERLAY);
@@ -230,7 +231,7 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ActivityTaskManager.getInstance().unregisterTaskStackListener(mTaskStackListener);
+        TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
         if (mTaskView != null && mTaskViewReady) {
             mTaskView.release();
             mTaskView = null;
