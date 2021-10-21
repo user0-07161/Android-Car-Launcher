@@ -155,11 +155,6 @@ public class CarDisplayAreaController {
         public void onTaskCreated(int taskId, ComponentName componentName) {
             updateForegroundDaVisibility(componentName);
         }
-
-        @Override
-        public void onTaskDescriptionChanged(ActivityManager.RunningTaskInfo taskInfo) {
-            updateForegroundDaVisibility(taskInfo.topActivity);
-        }
     };
 
     /**
