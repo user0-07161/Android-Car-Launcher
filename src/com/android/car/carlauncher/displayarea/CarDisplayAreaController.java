@@ -425,7 +425,7 @@ public class CarDisplayAreaController {
         // Voice plate will be shown as the top most layer. Also, we don't want to change the
         // state of the DA's when voice plate is shown.
         boolean isVoicePlate = componentName.equals(mAssistantVoicePlateActivityName);
-        if (isVoicePlate) {
+        if (isVoicePlate || isMaps) {
             return;
         }
 
@@ -434,20 +434,20 @@ public class CarDisplayAreaController {
             mAssistUtils.hideCurrentSession();
         }
 
-        if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
+        if (isHostingDefaultApplicationDisplayAreaVisible()) {
             if (mForegroundDAComponentsVisibilityMap.containsKey(
                     componentName.flattenToShortString())
                     && mForegroundDAComponentsVisibilityMap.get(
                     componentName.flattenToShortString())) {
                 startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
             }
-        } else if (!(isMaps || ignoreOpeningForegroundDA || componentName.getClassName().contains(
+        } else if (!(ignoreOpeningForegroundDA || componentName.getClassName().contains(
                 LOCATION_SETTINGS_ACTIVITY)
                 || componentName.getClassName().contains(GRANT_PERMISSION_ACTIVITY))) {
             startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
         }
 
-        if (isMaps || ignoreOpeningForegroundDA || componentName.flattenToShortString().equals(
+        if (ignoreOpeningForegroundDA || componentName.flattenToShortString().equals(
                 mControlBarActivityComponent)) {
             return;
         }
