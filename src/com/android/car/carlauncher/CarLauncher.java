@@ -47,6 +47,7 @@ import com.android.car.carlauncher.displayarea.CarFullscreenTaskListener;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.car.internal.common.UserHelperLite;
+import com.android.launcher3.icons.IconProvider;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
@@ -145,7 +146,7 @@ public class CarLauncher extends FragmentActivity {
             taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
             StartingWindowController startingController =
                     new StartingWindowController(this, application.getShellExecutor(),
-                            new PhoneStartingWindowTypeAlgorithm(),
+                            new PhoneStartingWindowTypeAlgorithm(), new IconProvider(this),
                             application.getTransactionPool());
             taskOrganizer.initStartingWindow(startingController);
             List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
