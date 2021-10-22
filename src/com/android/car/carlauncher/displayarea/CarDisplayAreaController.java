@@ -64,6 +64,7 @@ import androidx.annotation.Nullable;
 import com.android.car.carlauncher.AppGridActivity;
 import com.android.car.carlauncher.ControlBarActivity;
 import com.android.car.carlauncher.R;
+import com.android.internal.app.AssistUtils;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 import java.util.HashMap;
@@ -132,6 +133,7 @@ public class CarDisplayAreaController {
     private View mTitleBarView;
     private Context mApplicationContext;
     private int mForegroundDisplayTop;
+    private AssistUtils mAssistUtils;
 
     /**
      * The WindowContext that is registered with {@link #mTitleBarWindowManager} with options to
@@ -152,11 +154,6 @@ public class CarDisplayAreaController {
         @Override
         public void onTaskCreated(int taskId, ComponentName componentName) {
             updateForegroundDaVisibility(componentName);
-        }
-
-        @Override
-        public void onTaskDescriptionChanged(ActivityManager.RunningTaskInfo taskInfo) {
-            updateForegroundDaVisibility(taskInfo.topActivity);
         }
     };
 
@@ -192,6 +189,7 @@ public class CarDisplayAreaController {
         mAssistantVoicePlateActivityName = ComponentName.unflattenFromString(
                 applicationContext.getResources().getString(
                         R.string.config_assistantVoicePlateActivity));
+        mAssistUtils = new AssistUtils(applicationContext);
 
         // Get bottom nav bar height.
         Resources resources = applicationContext.getResources();
@@ -422,23 +420,29 @@ public class CarDisplayAreaController {
         // Voice plate will be shown as the top most layer. Also, we don't want to change the
         // state of the DA's when voice plate is shown.
         boolean isVoicePlate = componentName.equals(mAssistantVoicePlateActivityName);
-        if (isVoicePlate) {
+        if (isVoicePlate || isMaps) {
             return;
         }
-        if (isHostingDefaultApplicationDisplayAreaVisible() && !isMaps) {
+
+        // Check is there is an existing session running for assist, cancel it.
+        if (mAssistUtils.isSessionRunning()) {
+            mAssistUtils.hideCurrentSession();
+        }
+
+        if (isHostingDefaultApplicationDisplayAreaVisible()) {
             if (mForegroundDAComponentsVisibilityMap.containsKey(
                     componentName.flattenToShortString())
                     && mForegroundDAComponentsVisibilityMap.get(
                     componentName.flattenToShortString())) {
                 startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.CONTROL_BAR);
             }
-        } else if (!(isMaps || ignoreOpeningForegroundDA || componentName.getClassName().contains(
+        } else if (!(ignoreOpeningForegroundDA || componentName.getClassName().contains(
                 LOCATION_SETTINGS_ACTIVITY)
                 || componentName.getClassName().contains(GRANT_PERMISSION_ACTIVITY))) {
             startAnimation(AppGridActivity.CAR_LAUNCHER_STATE.DEFAULT);
         }
 
-        if (isMaps || ignoreOpeningForegroundDA || componentName.flattenToShortString().equals(
+        if (ignoreOpeningForegroundDA || componentName.flattenToShortString().equals(
                 mControlBarActivityComponent)) {
             return;
         }
