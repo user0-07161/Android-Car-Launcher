@@ -419,7 +419,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     @Override
     public void onDisplayAreaInfoChanged(DisplayAreaInfo displayAreaInfo) {
         super.onDisplayAreaInfoChanged(displayAreaInfo);
-
+        if (mForegroundApplicationDisplay == null) return;
         SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
         tx.setLayer(mForegroundApplicationDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
         tx.apply(true);
