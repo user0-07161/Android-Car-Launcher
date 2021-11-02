@@ -193,7 +193,13 @@ public class CarLauncher extends FragmentActivity {
         ActivityTaskManager atm = ActivityTaskManager.getInstance();
         for (TaskAppearedInfo taskAppearedInfo : taskAppearedInfos) {
             TaskInfo taskInfo = taskAppearedInfo.getTaskInfo();
-            atm.removeTask(taskInfo.taskId);
+            try {
+                atm.removeTask(taskInfo.taskId);
+            } catch (Exception e) {
+                if (DEBUG) {
+                    Log.d(TAG, "failed to remove task likely b/c it no longer exists " + taskInfo);
+                }
+            }
         }
     }
 
