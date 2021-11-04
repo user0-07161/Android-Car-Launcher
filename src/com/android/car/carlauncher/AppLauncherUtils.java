@@ -27,10 +27,13 @@ import android.car.media.CarMediaManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 import android.os.Process;
 import android.service.media.MediaBrowserService;
 import android.text.TextUtils;
@@ -40,8 +43,14 @@ import android.util.Log;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.lang.annotation.Retention;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,6 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Util class that contains helper method used by app launcher classes.
@@ -61,6 +71,15 @@ class AppLauncherUtils {
     @interface AppTypes {}
     static final int APP_TYPE_LAUNCHABLES = 1;
     static final int APP_TYPE_MEDIA_SERVICES = 2;
+
+    private static final String TAG_AUTOMOTIVE_APP = "automotiveApp";
+    private static final String TAG_USES = "uses";
+    private static final String ATTRIBUTE_NAME = "name";
+    private static final String TYPE_VIDEO = "video";
+
+    // Max no. of uses tags in automotiveApp XML. This is an arbitrary limit to be defensive
+    // to bad input.
+    private static final int MAX_APP_TYPES = 64;
 
     private AppLauncherUtils() {
     }
@@ -165,6 +184,10 @@ class AppLauncherUtils {
      * @param launcherApps          The {@link LauncherApps} system service
      * @param carPackageManager     The {@link CarPackageManager} system service
      * @param packageManager        The {@link PackageManager} system service
+     * @param videoAppPredicate     Predicate that checks if a given {@link ResolveInfo} resolves
+     *                              to a video app. See {@link #VideoAppPredicate}. Media-services
+     *                              of such apps are always excluded.
+     * @param carMediaManager       The {@link CarMediaManager} system service
      * @return a new {@link LauncherAppsInfo}
      */
     @NonNull
@@ -176,6 +199,7 @@ class AppLauncherUtils {
             LauncherApps launcherApps,
             CarPackageManager carPackageManager,
             PackageManager packageManager,
+            @NonNull Predicate<ResolveInfo> videoAppPredicate,
             CarMediaManager carMediaManager) {
 
         if (launcherApps == null || carPackageManager == null || packageManager == null
@@ -183,9 +207,16 @@ class AppLauncherUtils {
             return EMPTY_APPS_INFO;
         }
 
-        List<ResolveInfo> mediaServices = packageManager.queryIntentServices(
-                new Intent(MediaBrowserService.SERVICE_INTERFACE),
-                PackageManager.GET_RESOLVED_FILTER);
+        // Useing new list since we require a mutable list to do removeIf.
+        List<ResolveInfo> mediaServices = new ArrayList<>();
+        mediaServices.addAll(
+                packageManager.queryIntentServices(
+                        new Intent(MediaBrowserService.SERVICE_INTERFACE),
+                        PackageManager.GET_RESOLVED_FILTER));
+        // Exclude Media Services from Video apps from being considered. These apps should offer a
+        // normal Launcher Activity as an entry point.
+        mediaServices.removeIf(videoAppPredicate);
+
         List<LauncherActivityInfo> availableActivities =
                 launcherApps.getActivityList(null, Process.myUserHandle());
 
@@ -310,6 +341,143 @@ class AppLauncherUtils {
 
         return new LauncherAppsInfo(launchablesMap, mediaServicesMap);
     }
+
+    /**
+     * Predicate that can be used to check if a given {@link ResolveInfo} resolves to a Video app.
+     */
+    public static class VideoAppPredicate implements Predicate<ResolveInfo> {
+        private final PackageManager mPackageManager;
+
+        VideoAppPredicate(PackageManager packageManager) {
+            mPackageManager = packageManager;
+        }
+
+        @Override
+        public boolean test(ResolveInfo resolveInfo) {
+            String packageName = resolveInfo != null ? getPackageName(resolveInfo) : null;
+            if (packageName == null) {
+                Log.w(TAG, "Unable to determine packageName from resolveInfo");
+                return false;
+            }
+            List<String> automotiveAppTypes =
+                    getAutomotiveAppTypes(mPackageManager, getPackageName(resolveInfo));
+            return automotiveAppTypes.contains(TYPE_VIDEO);
+        }
+
+        protected String getPackageName(ResolveInfo resolveInfo) {
+            // A valid ResolveInfo should have exactly one of these set.
+            if (resolveInfo.activityInfo != null) {
+                return resolveInfo.activityInfo.packageName;
+            }
+            if (resolveInfo.serviceInfo != null) {
+                return resolveInfo.serviceInfo.packageName;
+            }
+            if (resolveInfo.providerInfo != null) {
+                return resolveInfo.providerInfo.packageName;
+            }
+            // Unexpected case.
+            return null;
+        }
+    }
+
+    /**
+     * Queries an app manifest and resources to determine the types of AAOS app it declares itself
+     * as.
+     *
+     * @param packageManager {@link PackageManager} to query.
+     * @param packageName App package.
+     * @return List of AAOS app-types from XML resources.
+     */
+    public static List<String> getAutomotiveAppTypes(PackageManager packageManager,
+            String packageName) {
+        ApplicationInfo appInfo;
+        Resources appResources;
+        try {
+            appInfo = packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+            appResources = packageManager.getResourcesForApplication(appInfo);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.w(TAG, "Unexpected package not found for: " + packageName, e);
+            return new ArrayList<>();
+        }
+
+        int resourceId =
+                appInfo.metaData != null
+                        ? appInfo.metaData.getInt("com.android.automotive", -1) : -1;
+        if (resourceId == -1) {
+            return new ArrayList<>();
+        }
+        try (XmlResourceParser parser = appResources.getXml(resourceId)) {
+            return parseAutomotiveAppTypes(parser);
+        }
+    }
+
+    @VisibleForTesting
+    static List<String> parseAutomotiveAppTypes(XmlPullParser parser) {
+        try {
+            // This pattern for parsing can be seen in Javadocs for XmlPullParser.
+            List<String> appTypes = new ArrayList<>();
+            ArrayDeque<String> tagStack = new ArrayDeque<>();
+            int eventType = parser.getEventType();
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                if (eventType == XmlPullParser.START_TAG) {
+                    String tag = parser.getName();
+                    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                        Log.v(TAG, "Start tag " + tag);
+                    }
+                    tagStack.addFirst(tag);
+                    if (!validTagStack(tagStack)) {
+                        Log.w(TAG, "Invalid XML; tagStack: " + tagStack);
+                        return new ArrayList<>();
+                    }
+                    if (TAG_USES.equals(tag)) {
+                        String nameValue =
+                                parser.getAttributeValue(/* namespace= */ null , ATTRIBUTE_NAME);
+                        if (TextUtils.isEmpty(nameValue)) {
+                            Log.w(TAG, "Invalid XML; uses tag with missing/empty name attribute");
+                            return new ArrayList<>();
+                        }
+                        appTypes.add(nameValue);
+                        if (appTypes.size() > MAX_APP_TYPES) {
+                            Log.w(TAG, "Too many uses tags in automotiveApp tag");
+                            return new ArrayList<>();
+                        }
+                        if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                            Log.v(TAG, "Found appType: " + nameValue);
+                        }
+                    }
+                } else if (eventType == XmlPullParser.END_TAG) {
+                    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                        Log.v(TAG, "End tag " + parser.getName());
+                    }
+                    tagStack.removeFirst();
+                }
+                eventType = parser.next();
+            }
+            return appTypes;
+        } catch (XmlPullParserException | IOException e) {
+            Log.w(TAG, "Unexpected exception whiling parsing XML resource", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private static boolean validTagStack(ArrayDeque<String> tagStack) {
+        // Expected to be called after a new tag is pushed on this stack.
+        // Ensures that XML is of form:
+        // <automotiveApp>
+        //     <uses/>
+        //     <uses/>
+        //     ....
+        // </automotiveApp>
+        switch (tagStack.size()) {
+            case 1:
+                return TAG_AUTOMOTIVE_APP.equals(tagStack.peekFirst());
+            case 2:
+                return TAG_USES.equals(tagStack.peekFirst());
+            default:
+                return false;
+        }
+    }
+
 
     private static List<ResolveInfo> getDisabledActivities(
             PackageManager packageManager, Set<String> enabledPackages) {
