@@ -262,6 +262,7 @@ public class AppGridActivity extends Activity implements InsetsChangedListener {
                 getSystemService(LauncherApps.class),
                 mCarPackageManager,
                 mPackageManager,
+                new AppLauncherUtils.VideoAppPredicate(mPackageManager),
                 mCarMediaManager);
         mGridAdapter.setAllApps(appsInfo.getLaunchableComponentsList());
         mGridAdapter.setMostRecentApps(getMostRecentApps(appsInfo));
