@@ -33,6 +33,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.Observer;
 
 import com.android.car.apps.common.imaging.ImageBinder;
+import com.android.car.carlauncher.AppLauncherUtils;
 import com.android.car.carlauncher.homescreen.HomeCardInterface;
 import com.android.car.carlauncher.homescreen.ui.CardContent;
 import com.android.car.carlauncher.homescreen.ui.CardHeader;
@@ -155,16 +156,22 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
     private void updateModel() {
         MediaSource mediaSource = mSourceViewModel.getPrimaryMediaSource().getValue();
         if (mediaSourceChanged()) {
-            if (mediaSource == null) {
-                mAppName = null;
-                mAppIcon = null;
-                mCardHeader = null;
-                clearMetadata();
-            } else {
+            // Video apps are not surfaced here, even if they happen to offer MediaBrowse.
+            // Rationale is that very few apps do this and users might be confused why some
+            // apps can be controlled via widget while others can't. For Video apps, the card
+            // will switch to showing "no media playing" case.
+            if (mediaSource != null
+                    && !AppLauncherUtils.isVideoApp(mContext.getPackageManager(),
+                        mediaSource.getPackageName())) {
                 mAppName = mediaSource.getDisplayName();
                 mAppIcon = mediaSource.getIcon();
                 mCardHeader = new CardHeader(mAppName, mAppIcon);
                 updateMetadata();
+            } else {
+                mAppName = null;
+                mAppIcon = null;
+                mCardHeader = null;
+                clearMetadata();
             }
             mAudioPresenter.onModelUpdated(this);
         }
