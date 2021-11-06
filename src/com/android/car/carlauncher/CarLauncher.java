@@ -131,6 +131,16 @@ public class CarLauncher extends FragmentActivity {
                 startMapsInTaskView();
             }
         }
+
+        @Override
+        public void onActivityRestartAttempt(ActivityManager.RunningTaskInfo task,
+                boolean homeTaskVisible, boolean clearedTask, boolean wasVisible) {
+            if (!homeTaskVisible && mTaskViewTaskId == task.taskId) {
+                // The embedded map component received an intent, therefore forcibly bringing the
+                // launcher to the foreground.
+                bringToForeground();
+            }
+        }
     };
 
     @Override
@@ -332,6 +342,13 @@ public class CarLauncher extends FragmentActivity {
                 Log.i(TAG, "Launcher for user " + getUserId() + " is ready");
                 mIsReadyLogged = true;
             }
+        }
+    }
+
+    /** Brings the Car Launcher to the foreground. */
+    private void bringToForeground() {
+        if (mCarLauncherTaskId != INVALID_TASK_ID) {
+            mActivityManager.moveTaskToFront(mCarLauncherTaskId,  /* flags= */ 0);
         }
     }
 }
