@@ -189,5 +189,22 @@ public class TaskStackChangeListeners {
                 }
             });
         }
+
+        @Override
+        public void onActivityRestartAttempt(ActivityManager.RunningTaskInfo task,
+                boolean homeTaskVisible, boolean clearedTask, boolean wasVisible) {
+            mExecutor.execute(() -> {
+                synchronized (mTaskStackListeners) {
+                    for (TaskStackListener listener : mTaskStackListeners) {
+                        try {
+                            listener.onActivityRestartAttempt(
+                                    task, homeTaskVisible, clearedTask, wasVisible);
+                        } catch (RemoteException e) {
+                            Log.e(TAG, "onActivityRestartAttempt failed", e);
+                        }
+                    }
+                }
+            });
+        }
     }
 }
