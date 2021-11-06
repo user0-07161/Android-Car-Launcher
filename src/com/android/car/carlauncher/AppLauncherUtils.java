@@ -63,7 +63,7 @@ import java.util.function.Predicate;
 /**
  * Util class that contains helper method used by app launcher classes.
  */
-class AppLauncherUtils {
+public class AppLauncherUtils {
     private static final String TAG = "AppLauncherUtils";
 
     @Retention(SOURCE)
@@ -345,7 +345,7 @@ class AppLauncherUtils {
     /**
      * Predicate that can be used to check if a given {@link ResolveInfo} resolves to a Video app.
      */
-    public static class VideoAppPredicate implements Predicate<ResolveInfo> {
+    static class VideoAppPredicate implements Predicate<ResolveInfo> {
         private final PackageManager mPackageManager;
 
         VideoAppPredicate(PackageManager packageManager) {
@@ -378,6 +378,14 @@ class AppLauncherUtils {
             // Unexpected case.
             return null;
         }
+    }
+
+
+    /**
+     * Returns whether app identified by {@code packageName} declares itself as a video app.
+     */
+    public static boolean isVideoApp(PackageManager packageManager, String packageName) {
+        return getAutomotiveAppTypes(packageManager, packageName).contains(TYPE_VIDEO);
     }
 
     /**
