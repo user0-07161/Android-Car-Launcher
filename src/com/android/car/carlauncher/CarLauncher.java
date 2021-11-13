@@ -17,6 +17,7 @@
 package com.android.car.carlauncher;
 
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_SWITCHING;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
 
 import static com.android.wm.shell.ShellTaskOrganizer.TASK_LISTENER_TYPE_FULLSCREEN;
@@ -27,6 +28,9 @@ import android.app.ActivityTaskManager;
 import android.app.PendingIntent;
 import android.app.TaskInfo;
 import android.app.TaskStackListener;
+import android.car.Car;
+import android.car.user.CarUserManager;
+import android.car.user.CarUserManager.UserLifecycleListener;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.res.Configuration;
@@ -37,6 +41,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.window.TaskAppearedInfo;
 
+import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -76,6 +81,10 @@ public class CarLauncher extends FragmentActivity {
     private static final boolean DEBUG = false;
 
     private ActivityManager mActivityManager;
+    private CarUserManager mCarUserManager;
+    private ShellTaskOrganizer mShellTaskOrganizer;
+    private TaskViewManager mTaskViewManager;
+
     private TaskView mTaskView;
     private boolean mTaskViewReady;
     // Tracking this to check if the task in TaskView has crashed in the background.
@@ -143,6 +152,17 @@ public class CarLauncher extends FragmentActivity {
         }
     };
 
+    private final UserLifecycleListener mUserLifecyleListener = new UserLifecycleListener() {
+        @Override
+        public void onEvent(@NonNull CarUserManager.UserLifecycleEvent event) {
+            if (event.getEventType() == USER_LIFECYCLE_EVENT_TYPE_SWITCHING) {
+                // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
+                // So tries to release the resource explicitly.
+                release();
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,18 +172,19 @@ public class CarLauncher extends FragmentActivity {
         if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
             CarLauncherApplication application = (CarLauncherApplication) getApplication();
 
-            ShellTaskOrganizer taskOrganizer = new ShellTaskOrganizer(
+            mShellTaskOrganizer = new ShellTaskOrganizer(
                     application.getShellExecutor(), this);
             CarFullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskListener(
                     this, application.getSyncTransactionQueue(),
                     CarDisplayAreaController.getInstance());
-            taskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
+            mShellTaskOrganizer.addListenerForType(
+                    fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
             StartingWindowController startingController =
                     new StartingWindowController(this, application.getShellExecutor(),
                             new PhoneStartingWindowTypeAlgorithm(), new IconProvider(this),
                             application.getTransactionPool());
-            taskOrganizer.initStartingWindow(startingController);
-            List<TaskAppearedInfo> taskAppearedInfos = taskOrganizer.registerOrganizer();
+            mShellTaskOrganizer.initStartingWindow(startingController);
+            List<TaskAppearedInfo> taskAppearedInfos = mShellTaskOrganizer.registerOrganizer();
             try {
                 cleanUpExistingTaskViewTasks(taskAppearedInfos);
             } catch (Exception ex) {
@@ -176,6 +197,14 @@ public class CarLauncher extends FragmentActivity {
             org.startMapsInBackGroundDisplayArea();
             return;
         }
+
+        Car.createCar(getApplicationContext(), /* handler= */ null,
+                Car.CAR_WAIT_TIMEOUT_WAIT_FOREVER,
+                (car, ready) -> {
+                    if (!ready) return;
+                    mCarUserManager = (CarUserManager) car.getCarManager(Car.CAR_USER_SERVICE);
+                    mCarUserManager.addListener(getMainExecutor(), mUserLifecyleListener);
+                });
 
         mActivityManager = getSystemService(ActivityManager.class);
         mCarLauncherTaskId = getTaskId();
@@ -219,9 +248,9 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void setUpTaskView(ViewGroup parent) {
-        TaskViewManager taskViewManager = new TaskViewManager(this,
+        mTaskViewManager = new TaskViewManager(this,
                 new HandlerExecutor(getMainThreadHandler()));
-        taskViewManager.createTaskView(taskView -> {
+        mTaskViewManager.createTaskView(taskView -> {
             taskView.setListener(getMainExecutor(), mTaskViewListener);
             parent.addView(taskView);
             mTaskView = taskView;
@@ -255,9 +284,19 @@ public class CarLauncher extends FragmentActivity {
     protected void onDestroy() {
         super.onDestroy();
         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
+        release();
+    }
+
+    private void release() {
+        if (mShellTaskOrganizer != null) {
+            mShellTaskOrganizer.unregisterOrganizer();
+        }
         if (mTaskView != null && mTaskViewReady) {
             mTaskView.release();
             mTaskView = null;
+        }
+        if (mTaskViewManager != null) {
+            mTaskViewManager.release();
         }
     }
 
