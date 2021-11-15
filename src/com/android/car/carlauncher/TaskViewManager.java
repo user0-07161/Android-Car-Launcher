@@ -50,6 +50,11 @@ public final class TaskViewManager {
     private final Context mContext;
     private final HandlerExecutor mExecutor;
     private final TaskViewFactory mTaskViewFactory;
+    /**
+     * Having a TaskOrganizer, it's critical to keep the application (CarLauncher) stays running
+     * even when there is memory pressure. we're binding CarLauncherService with CarService to
+     * bump up OOM adj score, for the detail, please refer to CarLauncherService.
+     */
     private final ShellTaskOrganizer mTaskOrganizer;
 
     public TaskViewManager(@UiContext Context context, HandlerExecutor handlerExecutor) {
