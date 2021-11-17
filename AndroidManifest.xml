@@ -122,5 +122,11 @@
                 <action android:name="android.telecom.InCallService"/>
             </intent-filter>
         </service>
+        <!-- Empty Service to bind with CarService to bump up OOM adj score.
+        For the detail, please refer to CarLauncherService. -->
+        <service android:name=".CarLauncherService"
+            android:exported="true"
+            android:enabled="true">
+        </service>
     </application>
 </manifest>
