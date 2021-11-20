@@ -82,11 +82,6 @@ public class CarLauncher extends FragmentActivity {
 
     private ActivityManager mActivityManager;
     private CarUserManager mCarUserManager;
-    /**
-     * Having a TaskOrganizer, it's critical to keep the application (CarLauncher) stays running
-     * even when there is memory pressure. we're binding CarLauncherService with CarService to
-     * bump up OOM adj score, for the detail, please refer to CarLauncherService.
-     */
     private ShellTaskOrganizer mShellTaskOrganizer;
     private TaskViewManager mTaskViewManager;
 
