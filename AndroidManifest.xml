@@ -58,6 +58,8 @@
     <uses-permission android:name="android.permission.ACCESS_VOICE_INTERACTION_SERVICE" />
     <!-- Permission to use InteractionJankMonitor. -->
     <uses-permission android:name="android.permission.READ_DEVICE_CONFIG" />
+    <!-- Permission to send notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- To connect to media browser services in other apps, media browser clients
     that target Android 11 need to add the following in their manifest -->
