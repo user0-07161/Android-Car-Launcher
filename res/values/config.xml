@@ -61,4 +61,11 @@
     <!-- The ComponentName of Assistant VoicePlate Activity, the Activity will be placed in
         VoicePlate TDA. -->
     <string name="config_assistantVoicePlateActivity" translatable="false"></string>
+
+    <!-- An intent to start a map activity with limited functionality, optimized for small canvas.
+         The default map intent is used, if this value is empty or cannot be parsed as an intent
+         URI, for example:
+         "intent:#Intent;component=com.google.android.apps.maps/com.google.android.maps.LimitedMapsActivity;end"
+    -->
+    <string name="config_smallCanvasOptimizedMapIntent" translatable="false"></string>
 </resources>
