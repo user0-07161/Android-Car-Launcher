@@ -22,28 +22,32 @@ import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FE
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
+import android.car.app.CarActivityManager;
 import android.content.Context;
 import android.view.SurfaceControl;
 
 import com.android.car.carlauncher.AppGridActivity;
+import com.android.car.carlauncher.CarFullscreenTaskMonitorListener;
 import com.android.wm.shell.common.SyncTransactionQueue;
-import com.android.wm.shell.fullscreen.FullscreenTaskListener;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Organizes tasks presented in display area using {@link CarDisplayAreaOrganizer}.
  */
-public class CarFullscreenTaskListener extends FullscreenTaskListener {
+public final class CarFullscreenTaskListener extends CarFullscreenTaskMonitorListener {
     // TODO(b/202182129): Introduce more robust way to resolve the intents.
     static final String MAPS = "maps";
 
     private final CarDisplayAreaController mCarDisplayAreaController;
     private final Context mContext;
 
-    public CarFullscreenTaskListener(Context context, SyncTransactionQueue syncQueue,
+    public CarFullscreenTaskListener(Context context,
+            AtomicReference<CarActivityManager> activityManagerRef,
+            SyncTransactionQueue syncQueue,
             CarDisplayAreaController carDisplayAreaController) {
-        super(syncQueue, Optional.empty());
+        super(activityManagerRef, syncQueue, Optional.empty());
         mContext = context;
         mCarDisplayAreaController = carDisplayAreaController;
     }

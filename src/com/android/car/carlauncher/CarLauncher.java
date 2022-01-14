@@ -29,6 +29,7 @@ import android.app.PendingIntent;
 import android.app.TaskInfo;
 import android.app.TaskStackListener;
 import android.car.Car;
+import android.car.app.CarActivityManager;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
 import android.content.ActivityNotFoundException;
@@ -62,6 +63,7 @@ import com.android.wm.shell.startingsurface.phone.PhoneStartingWindowTypeAlgorit
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Basic Launcher for Android Automotive which demonstrates the use of {@link TaskView} to host
@@ -79,6 +81,9 @@ import java.util.Set;
 public class CarLauncher extends FragmentActivity {
     public static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
+
+    private final AtomicReference<CarActivityManager> mCarActivityManagerRef =
+            new AtomicReference<>();
 
     private ActivityManager mActivityManager;
     private CarUserManager mCarUserManager;
@@ -194,7 +199,7 @@ public class CarLauncher extends FragmentActivity {
             mShellTaskOrganizer = new ShellTaskOrganizer(
                     application.getShellExecutor(), this);
             CarFullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskListener(
-                    this, application.getSyncTransactionQueue(),
+                    this, mCarActivityManagerRef, application.getSyncTransactionQueue(),
                     CarDisplayAreaController.getInstance());
             mShellTaskOrganizer.addListenerForType(
                     fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
@@ -220,9 +225,17 @@ public class CarLauncher extends FragmentActivity {
         Car.createCar(/* context= */ this, /* handler= */ null,
                 Car.CAR_WAIT_TIMEOUT_WAIT_FOREVER,
                 (car, ready) -> {
-                    if (!ready) return;
+                    if (!ready) {
+                        Log.w(TAG, "CarService looks crashed");
+                        mCarActivityManagerRef.set(null);
+                        return;
+                    }
                     mCarUserManager = (CarUserManager) car.getCarManager(Car.CAR_USER_SERVICE);
                     mCarUserManager.addListener(getMainExecutor(), mUserLifecyleListener);
+                    CarActivityManager carAM = (CarActivityManager) car.getCarManager(
+                            Car.CAR_ACTIVITY_SERVICE);
+                    mCarActivityManagerRef.set(carAM);
+                    carAM.registerTaskMonitor();
                 });
 
         mActivityManager = getSystemService(ActivityManager.class);
@@ -268,7 +281,7 @@ public class CarLauncher extends FragmentActivity {
 
     private void setUpTaskView(ViewGroup parent) {
         mTaskViewManager = new TaskViewManager(this,
-                new HandlerExecutor(getMainThreadHandler()));
+                new HandlerExecutor(getMainThreadHandler()), mCarActivityManagerRef);
         mTaskViewManager.createTaskView(taskView -> {
             taskView.setListener(getMainExecutor(), mTaskViewListener);
             parent.addView(taskView);
@@ -314,6 +327,11 @@ public class CarLauncher extends FragmentActivity {
         }
         if (mTaskViewManager != null) {
             mTaskViewManager.release();
+        }
+        CarActivityManager carAM = mCarActivityManagerRef.get();
+        if (carAM != null) {
+            carAM.unregisterTaskMonitor();
+            mCarActivityManagerRef.set(null);
         }
     }
 
