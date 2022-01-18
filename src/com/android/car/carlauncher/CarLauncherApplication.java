@@ -17,7 +17,10 @@
 package com.android.car.carlauncher;
 
 import android.app.Application;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 
 import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
 import com.android.car.carlauncher.displayarea.CarDisplayAreaHealthMonitor;
@@ -39,6 +42,17 @@ public class CarLauncherApplication extends Application {
     private SyncTransactionQueue mSyncTransactionQueue;
     private TransactionPool mTransactionPool = new TransactionPool();
 
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            CarDisplayAreaController carDisplayAreaController =
+                    CarDisplayAreaController.getInstance();
+            carDisplayAreaController.makeForegroundDAFullscreen();
+            carDisplayAreaController.unregister();
+            context.unregisterReceiver(mReceiver);
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -46,6 +60,7 @@ public class CarLauncherApplication extends Application {
         if (UserHelperLite.isHeadlessSystemUser(getUserId())) {
             return;
         }
+
         if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
             mShellExecutor = new HandlerExecutor(getMainThreadHandler());
             CarDisplayAreaController carDisplayAreaController =
@@ -65,6 +80,11 @@ public class CarLauncherApplication extends Application {
             CarDisplayAreaHealthMonitor monitor = CarDisplayAreaHealthMonitor.getInstance(this,
                     org);
             monitor.register();
+
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(Intent.ACTION_USER_SWITCHED);
+
+            registerReceiver(mReceiver, filter);
         }
     }
 
