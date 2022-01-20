@@ -52,7 +52,6 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
     public void onTaskAppeared(ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash) {
         super.onTaskAppeared(taskInfo, leash);
 
-
         if (taskInfo.displayAreaFeatureId == FEATURE_VOICE_PLATE) {
             mCarDisplayAreaController.showVoicePlateDisplayArea();
             return;
@@ -74,12 +73,13 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
                 mContext.startActivity(taskInfo.baseIntent, options.toBundle());
             }
         }
-
     }
 
     @Override
     public void onTaskVanished(ActivityManager.RunningTaskInfo taskInfo) {
         super.onTaskVanished(taskInfo);
-        mCarDisplayAreaController.resetVoicePlateDisplayArea();
+        if (taskInfo.displayAreaFeatureId == FEATURE_VOICE_PLATE) {
+            mCarDisplayAreaController.resetVoicePlateDisplayArea();
+        }
     }
 }

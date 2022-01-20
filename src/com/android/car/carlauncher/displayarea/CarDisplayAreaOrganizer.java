@@ -81,6 +81,7 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
     public static final int FEATURE_TITLE_BAR = FEATURE_VENDOR_FIRST + 5;
 
     static final int FEATURE_VOICE_PLATE = FEATURE_VENDOR_FIRST + 6;
+
     @Nullable
     private final ComponentName mAssistantVoicePlateActivityName;
 
@@ -180,7 +181,6 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
         // TODO(b/201712747): Gets the Assistant Activity by resolving the indirect Intent.
         mAssistantVoicePlateActivityName = ComponentName.unflattenFromString(
                 context.getResources().getString(R.string.config_assistantVoicePlateActivity));
-
         mAnimationController = new CarLauncherDisplayAreaAnimationController(mContext);
         mHandlerForAnimation = mContext.getMainThreadHandler();
 
