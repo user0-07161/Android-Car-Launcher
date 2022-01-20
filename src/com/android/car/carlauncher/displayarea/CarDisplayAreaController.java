@@ -126,6 +126,7 @@ public class CarDisplayAreaController {
     private int mDefaultDisplayHeight;
     private int mTitleBarHeight;
     private int mScreenHeightWithoutNavBar;
+    private int mTotalScreenHeight;
     private boolean mIsHostingDefaultApplicationDisplayAreaVisible;
     private CarDisplayAreaTouchHandler mCarDisplayAreaTouchHandler;
 
@@ -134,6 +135,7 @@ public class CarDisplayAreaController {
     private Context mApplicationContext;
     private int mForegroundDisplayTop;
     private AssistUtils mAssistUtils;
+    private boolean mIsForegroundDaVisible = false;
 
     /**
      * The WindowContext that is registered with {@link #mTitleBarWindowManager} with options to
@@ -173,7 +175,7 @@ public class CarDisplayAreaController {
         mApplicationContext = applicationContext;
         mSyncQueue = syncQueue;
         mOrganizer = organizer;
-        int totalScreenHeight = applicationContext.getResources().getDimensionPixelSize(
+        mTotalScreenHeight = applicationContext.getResources().getDimensionPixelSize(
                 R.dimen.total_screen_height);
         mTotalScreenWidth = applicationContext.getResources().getDimensionPixelSize(
                 R.dimen.total_screen_width);
@@ -196,8 +198,8 @@ public class CarDisplayAreaController {
         int navBarHeight = resources.getDimensionPixelSize(
                 com.android.internal.R.dimen.navigation_bar_height);
         if (navBarHeight > 0) {
-            mNavBarBounds.set(0, totalScreenHeight - navBarHeight, mTotalScreenWidth,
-                    totalScreenHeight);
+            mNavBarBounds.set(0, mTotalScreenHeight - navBarHeight, mTotalScreenWidth,
+                    mTotalScreenHeight);
         }
 
         // Get left nav bar width.
@@ -206,7 +208,7 @@ public class CarDisplayAreaController {
         int leftNavBarWidth = 0;
         if (leftNavBarWidthResId > 0) {
             leftNavBarWidth = resources.getDimensionPixelSize(leftNavBarWidthResId);
-            mNavBarBounds.set(0, 0, leftNavBarWidth, totalScreenHeight);
+            mNavBarBounds.set(0, 0, leftNavBarWidth, mTotalScreenHeight);
         }
 
         // Get right nav bar width.
@@ -216,10 +218,10 @@ public class CarDisplayAreaController {
         if (rightNavBarWidthResId > 0) {
             rightNavBarWidth = resources.getDimensionPixelSize(rightNavBarWidthResId);
             mNavBarBounds.set(mTotalScreenWidth - rightNavBarWidth, 0, mTotalScreenWidth,
-                    totalScreenHeight);
+                    mTotalScreenHeight);
         }
 
-        mScreenHeightWithoutNavBar = totalScreenHeight - mNavBarBounds.height();
+        mScreenHeightWithoutNavBar = mTotalScreenHeight - mNavBarBounds.height();
         mTitleBarHeight = resources.getDimensionPixelSize(R.dimen.title_bar_display_area_height);
         mEnterExitAnimationDurationMs = applicationContext.getResources().getInteger(
                 R.integer.enter_exit_animation_foreground_display_area_duration_ms);
@@ -257,6 +259,7 @@ public class CarDisplayAreaController {
         LayoutInflater inflater = LayoutInflater.from(context);
         mTitleBarView = inflater
                 .inflate(R.layout.title_bar_display_area_view, null, true);
+        mTitleBarView.setVisibility(View.VISIBLE);
 
         // Show the confirmation.
         WindowManager.LayoutParams lp = getTitleBarWindowLayoutParams();
@@ -514,8 +517,10 @@ public class CarDisplayAreaController {
         tx.setLayer(mTitleBarDisplay.getLeash(), FOREGROUND_LAYER_INDEX);
         tx.setLayer(mVoicePlateDisplay.getLeash(), VOICE_PLATE_LAYER_SHOWN_INDEX);
         tx.setLayer(mControlBarDisplay.getLeash(), CONTROL_BAR_LAYER_INDEX);
-        tx.apply();
+
         tx.hide(mVoicePlateDisplay.getLeash());
+        tx.hide(mForegroundApplicationsDisplay.getLeash());
+        tx.apply();
     }
 
     /** Un-Registers DA organizer. */
@@ -526,10 +531,12 @@ public class CarDisplayAreaController {
         mTitleBarDisplay = null;
         mBackgroundApplicationDisplay = null;
         mControlBarDisplay = null;
+        mVoicePlateDisplay = null;
         mImeContainerDisplayArea = null;
         mCarDisplayAreaTouchHandler.enable(false);
         ActivityTaskManager.getInstance()
                 .unregisterTaskStackListener(mOnActivityRestartAttemptListener);
+        mTitleBarView.setVisibility(View.GONE);
     }
 
     /**
@@ -542,6 +549,7 @@ public class CarDisplayAreaController {
         // TODO: currently the animations are only bottom/up. Make it more generic animations here.
         int fromPos = 0;
         int toPos = 0;
+
         Intent intent = new Intent(DISPLAY_AREA_VISIBILITY_CHANGED);
         switch (toState) {
             case CONTROL_BAR:
@@ -577,6 +585,12 @@ public class CarDisplayAreaController {
     }
 
     private void animateToDefaultState(int fromPos, int toPos, int durationMs) {
+        if (!mIsForegroundDaVisible) {
+            SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+            tx.show(mForegroundApplicationsDisplay.getLeash());
+            tx.apply(true);
+            mIsForegroundDaVisible = true;
+        }
         mBackgroundApplicationDisplayBounds.bottom = toPos - mTitleBarHeight;
         animate(fromPos, toPos, DEFAULT, durationMs);
         mIsHostingDefaultApplicationDisplayAreaVisible = true;
@@ -660,6 +674,7 @@ public class CarDisplayAreaController {
         WindowContainerToken controlBarDisplayToken =
                 mControlBarDisplay.getDisplayAreaInfo().token;
 
+        // Default TDA
         int foregroundDisplayWidthDp =
                 foregroundApplicationDisplayBound.width() * DisplayMetrics.DENSITY_DEFAULT
                         / mDpiDensity;
@@ -671,6 +686,7 @@ public class CarDisplayAreaController {
                 foregroundDisplayHeightDp);
         wct.setSmallestScreenWidthDp(foregroundDisplayToken, foregroundDisplayWidthDp);
 
+        // Title bar
         int titleBarDisplayWidthDp =
                 titleBarDisplayBounds.width() * DisplayMetrics.DENSITY_DEFAULT
                         / mDpiDensity;
@@ -682,6 +698,7 @@ public class CarDisplayAreaController {
                 titleBarDisplayHeightDp);
         wct.setSmallestScreenWidthDp(titleBarDisplayToken, titleBarDisplayWidthDp);
 
+        // voice plate
         int voicePlateDisplayWidthDp =
                 voicePlateDisplayBounds.width() * DisplayMetrics.DENSITY_DEFAULT
                         / mDpiDensity;
@@ -693,6 +710,7 @@ public class CarDisplayAreaController {
                 voicePlateDisplayHeightDp);
         wct.setSmallestScreenWidthDp(voicePlateDisplayToken, voicePlateDisplayWidthDp);
 
+        // background TDA
         int backgroundDisplayWidthDp =
                 backgroundApplicationDisplayBound.width() * DisplayMetrics.DENSITY_DEFAULT
                         / mDpiDensity;
@@ -710,6 +728,7 @@ public class CarDisplayAreaController {
                 backgroundDisplayHeightDp);
         wct.setSmallestScreenWidthDp(imeRootDisplayToken, backgroundDisplayWidthDp);
 
+        // control bar
         int controlBarDisplayWidthDp =
                 controlBarDisplayBound.width() * DisplayMetrics.DENSITY_DEFAULT
                         / mDpiDensity;
@@ -741,4 +760,34 @@ public class CarDisplayAreaController {
                     controlBarDisplayBound.top);
         });
     }
+
+    /**
+     * Update the bounds of foreground DA to cover full screen.
+     */
+    public void makeForegroundDAFullscreen() {
+        WindowContainerTransaction wct = new WindowContainerTransaction();
+        Rect foregroundApplicationDisplayBounds = new Rect(0, 0, mTotalScreenWidth,
+                mTotalScreenHeight);
+        WindowContainerToken foregroundDisplayToken =
+                mForegroundApplicationsDisplay.getDisplayAreaInfo().token;
+
+        int foregroundDisplayWidthDp =
+                foregroundApplicationDisplayBounds.width() * DisplayMetrics.DENSITY_DEFAULT
+                        / mDpiDensity;
+        int foregroundDisplayHeightDp =
+                foregroundApplicationDisplayBounds.height() * DisplayMetrics.DENSITY_DEFAULT
+                        / mDpiDensity;
+        wct.setBounds(foregroundDisplayToken, foregroundApplicationDisplayBounds);
+        wct.setScreenSizeDp(foregroundDisplayToken, foregroundDisplayWidthDp,
+                foregroundDisplayHeightDp);
+        wct.setSmallestScreenWidthDp(foregroundDisplayToken,
+                Math.min(foregroundDisplayWidthDp, foregroundDisplayHeightDp));
+
+        mSyncQueue.runInSync(t -> {
+            t.setPosition(mBackgroundApplicationDisplay.getLeash(), 0, 0);
+        });
+
+        mOrganizer.applyTransaction(wct);
+    }
 }
+
