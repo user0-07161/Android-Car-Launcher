@@ -217,7 +217,7 @@ public class CarLauncher extends FragmentActivity {
             return;
         }
 
-        Car.createCar(getApplicationContext(), /* handler= */ null,
+        Car.createCar(/* context= */ this, /* handler= */ null,
                 Car.CAR_WAIT_TIMEOUT_WAIT_FOREVER,
                 (car, ready) -> {
                     if (!ready) return;
