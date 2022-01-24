@@ -423,7 +423,11 @@ public class CarDisplayAreaController {
         // Voice plate will be shown as the top most layer. Also, we don't want to change the
         // state of the DA's when voice plate is shown.
         boolean isVoicePlate = componentName.equals(mAssistantVoicePlateActivityName);
-        if (isVoicePlate || isMaps) {
+        if (isVoicePlate) {
+            showVoicePlateDisplayArea();
+            return;
+        }
+        if (isMaps) {
             return;
         }
 
@@ -456,11 +460,13 @@ public class CarDisplayAreaController {
     void showVoicePlateDisplayArea() {
         SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
         tx.show(mVoicePlateDisplay.getLeash());
+        tx.apply(true);
     }
 
     void resetVoicePlateDisplayArea() {
         SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
         tx.hide(mVoicePlateDisplay.getLeash());
+        tx.apply(true);
     }
 
     /** Registers DA organizer. */
@@ -520,7 +526,7 @@ public class CarDisplayAreaController {
 
         tx.hide(mVoicePlateDisplay.getLeash());
         tx.hide(mForegroundApplicationsDisplay.getLeash());
-        tx.apply();
+        tx.apply(true);
     }
 
     /** Un-Registers DA organizer. */
