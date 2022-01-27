@@ -313,9 +313,6 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void release() {
-        if (mShellTaskOrganizer != null) {
-            mShellTaskOrganizer.unregisterOrganizer();
-        }
         if (mTaskView != null && mTaskViewReady) {
             mTaskView.release();
             mTaskView = null;
