@@ -33,6 +33,7 @@ import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -97,6 +98,8 @@ public class CarLauncher extends FragmentActivity {
     /** Set to {@code true} once we've logged that the Activity is fully drawn. */
     private boolean mIsReadyLogged;
 
+    private boolean mUseSmallCanvasOptimizedMap;
+
     // The callback methods in {@code mTaskViewListener} are running under MainThread.
     private final TaskView.Listener mTaskViewListener = new TaskView.Listener() {
         @Override
@@ -144,7 +147,9 @@ public class CarLauncher extends FragmentActivity {
         @Override
         public void onActivityRestartAttempt(ActivityManager.RunningTaskInfo task,
                 boolean homeTaskVisible, boolean clearedTask, boolean wasVisible) {
-            if (!homeTaskVisible && mTaskViewTaskId == task.taskId) {
+            if (!mUseSmallCanvasOptimizedMap
+                    && !homeTaskVisible
+                    && mTaskViewTaskId == task.taskId) {
                 // The embedded map component received an intent, therefore forcibly bringing the
                 // launcher to the foreground.
                 bringToForeground();
@@ -197,6 +202,9 @@ public class CarLauncher extends FragmentActivity {
             org.startMapsInBackGroundDisplayArea();
             return;
         }
+
+        mUseSmallCanvasOptimizedMap =
+                CarLauncherUtils.isSmallCanvasOptimizedMapIntentConfigured(this);
 
         Car.createCar(getApplicationContext(), /* handler= */ null,
                 Car.CAR_WAIT_TIMEOUT_WAIT_FOREVER,
@@ -288,9 +296,6 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void release() {
-        if (mShellTaskOrganizer != null) {
-            mShellTaskOrganizer.unregisterOrganizer();
-        }
         if (mTaskView != null && mTaskViewReady) {
             mTaskView.release();
             mTaskView = null;
@@ -316,9 +321,12 @@ public class CarLauncher extends FragmentActivity {
         try {
             ActivityOptions options = ActivityOptions.makeCustomAnimation(this,
                     /* enterResId= */ 0, /* exitResId= */ 0);
+            Intent mapIntent = mUseSmallCanvasOptimizedMap
+                    ? CarLauncherUtils.getSmallCanvasOptimizedMapIntent(this)
+                    : CarLauncherUtils.getMapsIntent(this);
             mTaskView.startActivity(
                     PendingIntent.getActivity(this, /* requestCode= */ 0,
-                            CarLauncherUtils.getMapsIntent(this),
+                            mapIntent,
                             PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
                     /* fillInIntent= */ null, options, null /* launchBounds */);
         } catch (ActivityNotFoundException e) {

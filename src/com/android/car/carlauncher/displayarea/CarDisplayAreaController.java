@@ -412,7 +412,7 @@ public class CarDisplayAreaController {
     }
 
     private void updateForegroundDaVisibility(ComponentName componentName) {
-        if (componentName == null) {
+        if (componentName == null || isDisplayAreaAnimating()) {
             return;
         }
 
