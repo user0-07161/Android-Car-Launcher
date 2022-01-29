@@ -58,6 +58,7 @@ public class CarFullscreenTaskListener extends FullscreenTaskListener {
         }
 
         if (taskInfo.displayAreaFeatureId == FEATURE_DEFAULT_TASK_CONTAINER
+                && taskInfo.isVisible()
                 && !mCarDisplayAreaController.shouldIgnoreOpeningForegroundDA(taskInfo)) {
             if (!mCarDisplayAreaController.isHostingDefaultApplicationDisplayAreaVisible()) {
                 mCarDisplayAreaController.startAnimation(
