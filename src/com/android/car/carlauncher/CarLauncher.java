@@ -32,6 +32,7 @@ import android.car.Car;
 import android.car.app.CarActivityManager;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
+import android.car.user.UserLifecycleEventFilter;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -43,7 +44,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.window.TaskAppearedInfo;
 
-import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -181,15 +181,12 @@ public class CarLauncher extends FragmentActivity {
         }
     };
 
-    private final UserLifecycleListener mUserLifecyleListener = new UserLifecycleListener() {
-        @Override
-        public void onEvent(@NonNull CarUserManager.UserLifecycleEvent event) {
-            if (event.getEventType() == USER_LIFECYCLE_EVENT_TYPE_SWITCHING) {
-                // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
-                // So tries to release the resource explicitly.
-                release();
-            }
-        }
+    private final UserLifecycleListener mUserLifecycleListener = event -> {
+        if (DEBUG) Log.d(TAG, "UserLifecycleListener.onEvent: Received an event " + event);
+
+        // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
+        // So tries to release the resource explicitly.
+        release();
     };
 
     @Override
@@ -239,7 +236,10 @@ public class CarLauncher extends FragmentActivity {
                         return;
                     }
                     mCarUserManager = (CarUserManager) car.getCarManager(Car.CAR_USER_SERVICE);
-                    mCarUserManager.addListener(getMainExecutor(), mUserLifecyleListener);
+                    // Only listen to user switching events.
+                    UserLifecycleEventFilter filter = new UserLifecycleEventFilter.Builder()
+                            .addEventType(USER_LIFECYCLE_EVENT_TYPE_SWITCHING).build();
+                    mCarUserManager.addListener(getMainExecutor(), filter, mUserLifecycleListener);
                     CarActivityManager carAM = (CarActivityManager) car.getCarManager(
                             Car.CAR_ACTIVITY_SERVICE);
                     mCarActivityManagerRef.set(carAM);
