@@ -256,6 +256,7 @@ public class CarDisplayAreaController {
      * Show the title bar within a targeted display area using the rootDisplayAreaId.
      */
     public void showTitleBar(int rootDisplayAreaId, Context context) {
+        removeTitleBar();
         LayoutInflater inflater = LayoutInflater.from(context);
         mTitleBarView = inflater
                 .inflate(R.layout.title_bar_display_area_view, null, true);
@@ -286,6 +287,15 @@ public class CarDisplayAreaController {
         }
 
         return mTitleBarWindowManager;
+    }
+
+    /**
+     * Remove the title bar view
+     */
+    public void removeTitleBar() {
+        if (mTitleBarView != null) {
+            mTitleBarWindowManager.removeView(mTitleBarView);
+        }
     }
 
     /**
