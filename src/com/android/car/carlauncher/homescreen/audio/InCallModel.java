@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.android.car.carlauncher.R;
@@ -92,25 +93,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
         @Override
         public void onStateChanged(Call call, int state) {
             super.onStateChanged(call, state);
-            if (state == Call.STATE_ACTIVE) {
-                mCurrentCall = call;
-                mMuteCallToggle = true;
-                CallDetail callDetails = CallDetail.fromTelecomCallDetail(call.getDetails());
-                // If the home app does not have permission to read contacts, just display the
-                // phone number
-                if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    updateModelWithPhoneNumber(callDetails.getNumber());
-                    return;
-                }
-                if (mPhoneNumberInfoFuture != null) {
-                    mPhoneNumberInfoFuture.cancel(/* mayInterruptIfRunning= */ true);
-                }
-                mPhoneNumberInfoFuture = TelecomUtils.getPhoneNumberInfo(mContext,
-                        callDetails.getNumber())
-                        .thenAcceptAsync(x -> updateModelWithContact(x),
-                                mContext.getMainExecutor());
-            }
+            handleActiveCall(call);
         }
     };
 
@@ -198,6 +181,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     @Override
     public void onCallAdded(Call call) {
         if (call != null) {
+            handleActiveCall(call);
             call.registerCallback(mCallback);
         }
     }
@@ -260,6 +244,29 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
                 mOngoingCallSubtitle, mElapsedTimeClock.millis(), mMuteButton, mEndCallButton,
                 mDialpadButton);
         mPresenter.onModelUpdated(this);
+    }
+
+    private void handleActiveCall(@NonNull Call call) {
+        if (call.getState() != Call.STATE_ACTIVE) {
+            return;
+        }
+        mCurrentCall = call;
+        mMuteCallToggle = true;
+        CallDetail callDetails = CallDetail.fromTelecomCallDetail(call.getDetails());
+        // If the home app does not have permission to read contacts, just display the
+        // phone number
+        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            updateModelWithPhoneNumber(callDetails.getNumber());
+            return;
+        }
+        if (mPhoneNumberInfoFuture != null) {
+            mPhoneNumberInfoFuture.cancel(/* mayInterruptIfRunning= */ true);
+        }
+        mPhoneNumberInfoFuture = TelecomUtils.getPhoneNumberInfo(mContext,
+                        callDetails.getNumber())
+                .thenAcceptAsync(x -> updateModelWithContact(x),
+                        mContext.getMainExecutor());
     }
 
     private void initializeAudioControls() {
