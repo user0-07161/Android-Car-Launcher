@@ -20,6 +20,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.android.car.carlauncher.CarLauncher.TAG;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.BACKGROUND_LAYER_INDEX;
+import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.CONTROL_BAR_LAYER_INDEX;
 import static com.android.car.carlauncher.displayarea.CarDisplayAreaController.FOREGROUND_LAYER_INDEX;
 
 import android.app.ActivityOptions;
@@ -128,8 +129,12 @@ public class CarDisplayAreaOrganizer extends DisplayAreaOrganizer {
                     SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
                     // Update the foreground panel layer index to animate on top of the
                     // background DA.
+                    tx.setLayer(mBackgroundApplicationDisplay.getLeash(),
+                            BACKGROUND_LAYER_INDEX);
                     tx.setLayer(mForegroundApplicationDisplay.getLeash(),
                             BACKGROUND_LAYER_INDEX + 1);
+                    tx.setLayer(mControlBarDisplay.getLeash(),
+                            CONTROL_BAR_LAYER_INDEX);
                     tx.apply(true);
                 }
 
