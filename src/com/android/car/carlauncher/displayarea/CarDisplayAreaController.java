@@ -470,6 +470,9 @@ public class CarDisplayAreaController {
 
     void showVoicePlateDisplayArea() {
         SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+        // Reset the layer for voice plate. This is needed as when the tasks are launched on
+        // other DA's those are brought to the top.
+        tx.setLayer(mVoicePlateDisplay.getLeash(), VOICE_PLATE_LAYER_SHOWN_INDEX);
         tx.show(mVoicePlateDisplay.getLeash());
         tx.apply(true);
     }
