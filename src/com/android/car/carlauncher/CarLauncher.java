@@ -332,7 +332,9 @@ public class CarLauncher extends FragmentActivity {
             Log.d(TAG, "onDestroy(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
-        mCarUserManager.removeListener(mUserLifecycleListener);
+        if (mCarUserManager != null) {
+            mCarUserManager.removeListener(mUserLifecycleListener);
+        }
         release();
     }
 
