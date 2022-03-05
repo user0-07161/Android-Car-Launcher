@@ -182,7 +182,10 @@ public class CarLauncher extends FragmentActivity {
     };
 
     private final UserLifecycleListener mUserLifecycleListener = event -> {
-        if (DEBUG) Log.d(TAG, "UserLifecycleListener.onEvent: Received an event " + event);
+        if (DEBUG) {
+            Log.d(TAG, "UserLifecycleListener.onEvent: For User " + getUserId()
+                    + ", received an event " + event);
+        }
 
         // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
         // So tries to release the resource explicitly.
@@ -192,6 +195,10 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (DEBUG) {
+            Log.d(TAG, "onCreate(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
+        }
 
         // If policy provider is defined then AppGridActivity should be launched.
         // TODO: update this code flow. Maybe have some kind of configurable activity.
@@ -302,7 +309,7 @@ public class CarLauncher extends FragmentActivity {
         super.onResume();
         maybeLogReady();
         if (DEBUG) {
-            Log.d(TAG, "onResume: mTaskViewTaskId=" + mTaskViewTaskId);
+            Log.d(TAG, "onResume(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
     }
 
@@ -321,7 +328,11 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (DEBUG) {
+            Log.d(TAG, "onDestroy(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
+        }
         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
+        mCarUserManager.removeListener(mUserLifecycleListener);
         release();
     }
 
