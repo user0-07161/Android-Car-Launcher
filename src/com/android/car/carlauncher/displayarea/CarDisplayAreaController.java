@@ -46,6 +46,7 @@ import android.os.RemoteException;
 import android.os.UserHandle;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.IWindowManager;
 import android.view.LayoutInflater;
@@ -56,6 +57,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
 import android.window.DisplayAreaAppearedInfo;
+import android.window.DisplayAreaInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
@@ -519,7 +521,10 @@ public class CarDisplayAreaController {
         List<DisplayAreaAppearedInfo> imeDisplayAreaInfos =
                 mOrganizer.registerOrganizer(FEATURE_IME_PLACEHOLDER);
         for (DisplayAreaAppearedInfo info : imeDisplayAreaInfos) {
-            if (info.getDisplayAreaInfo().rootDisplayAreaId == FEATURE_ROOT) {
+            DisplayAreaInfo daInfo = info.getDisplayAreaInfo();
+            // Need to check the display for the multi displays platform.
+            if (daInfo.rootDisplayAreaId == FEATURE_ROOT
+                    && daInfo.displayId == Display.DEFAULT_DISPLAY) {
                 mImeContainerDisplayArea = info;
             }
         }
