@@ -189,7 +189,9 @@ public class CarLauncher extends FragmentActivity {
 
         // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
         // So tries to release the resource explicitly.
-        release();
+        if (getUserId() == event.getPreviousUserId()) {
+            release();
+        }
     };
 
     @Override
