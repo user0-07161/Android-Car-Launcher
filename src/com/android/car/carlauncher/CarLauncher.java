@@ -32,6 +32,7 @@ import android.car.Car;
 import android.car.app.CarActivityManager;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
+import android.car.user.UserLifecycleEventFilter;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -43,7 +44,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.window.TaskAppearedInfo;
 
-import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -181,20 +181,26 @@ public class CarLauncher extends FragmentActivity {
         }
     };
 
-    private final UserLifecycleListener mUserLifecyleListener = new UserLifecycleListener() {
-        @Override
-        public void onEvent(@NonNull CarUserManager.UserLifecycleEvent event) {
-            if (event.getEventType() == USER_LIFECYCLE_EVENT_TYPE_SWITCHING) {
-                // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
-                // So tries to release the resource explicitly.
-                release();
-            }
+    private final UserLifecycleListener mUserLifecycleListener = event -> {
+        if (DEBUG) {
+            Log.d(TAG, "UserLifecycleListener.onEvent: For User " + getUserId()
+                    + ", received an event " + event);
+        }
+
+        // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
+        // So tries to release the resource explicitly.
+        if (getUserId() == event.getPreviousUserId()) {
+            release();
         }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (DEBUG) {
+            Log.d(TAG, "onCreate(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
+        }
 
         // If policy provider is defined then AppGridActivity should be launched.
         // TODO: update this code flow. Maybe have some kind of configurable activity.
@@ -239,7 +245,10 @@ public class CarLauncher extends FragmentActivity {
                         return;
                     }
                     mCarUserManager = (CarUserManager) car.getCarManager(Car.CAR_USER_SERVICE);
-                    mCarUserManager.addListener(getMainExecutor(), mUserLifecyleListener);
+                    // Only listen to user switching events.
+                    UserLifecycleEventFilter filter = new UserLifecycleEventFilter.Builder()
+                            .addEventType(USER_LIFECYCLE_EVENT_TYPE_SWITCHING).build();
+                    mCarUserManager.addListener(getMainExecutor(), filter, mUserLifecycleListener);
                     CarActivityManager carAM = (CarActivityManager) car.getCarManager(
                             Car.CAR_ACTIVITY_SERVICE);
                     mCarActivityManagerRef.set(carAM);
@@ -302,7 +311,7 @@ public class CarLauncher extends FragmentActivity {
         super.onResume();
         maybeLogReady();
         if (DEBUG) {
-            Log.d(TAG, "onResume: mTaskViewTaskId=" + mTaskViewTaskId);
+            Log.d(TAG, "onResume(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
     }
 
@@ -321,7 +330,13 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (DEBUG) {
+            Log.d(TAG, "onDestroy(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
+        }
         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
+        if (mCarUserManager != null) {
+            mCarUserManager.removeListener(mUserLifecycleListener);
+        }
         release();
     }
 
