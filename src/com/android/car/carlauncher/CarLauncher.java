@@ -35,6 +35,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
@@ -350,11 +351,13 @@ public class CarLauncher extends FragmentActivity {
             Intent mapIntent = mUseSmallCanvasOptimizedMap
                     ? CarLauncherUtils.getSmallCanvasOptimizedMapIntent(this)
                     : CarLauncherUtils.getMapsIntent(this);
+            Rect launchBounds = new Rect();
+            mTaskView.getBoundsOnScreen(launchBounds);
             mTaskView.startActivity(
                     PendingIntent.getActivity(this, /* requestCode= */ 0,
                             mapIntent,
                             PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
-                    /* fillInIntent= */ null, options, null /* launchBounds */);
+                    /* fillInIntent= */ null, options, launchBounds);
         } catch (ActivityNotFoundException e) {
             Log.w(TAG, "Maps activity not found", e);
         }
