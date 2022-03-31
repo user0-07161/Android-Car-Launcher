@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.-->
 <!--
 THIS FILE WAS AUTO GENERATED, DO NOT EDIT MANUALLY.
-REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
+REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
 -->
 <resources>
   <overlayable name="CarLauncher">
@@ -151,6 +151,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="string" name="app_launcher_title_media_only"/>
       <item type="string" name="app_title"/>
       <item type="string" name="config_smallCanvasOptimizedMapIntent"/>
+      <item type="string" name="dialing_call_text"/>
       <item type="string" name="driving_toast_text"/>
       <item type="string" name="fake_weather_footer_text"/>
       <item type="string" name="fake_weather_main_text"/>
