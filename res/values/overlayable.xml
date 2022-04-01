@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.-->
 <!--
 THIS FILE WAS AUTO GENERATED, DO NOT EDIT MANUALLY.
-REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
+REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
 -->
 <resources>
   <overlayable name="CarLauncher">
@@ -146,7 +146,6 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="layout" name="recent_apps_row"/>
       <item type="layout" name="tap_for_more_text"/>
       <item type="layout" name="text_block"/>
-      <item type="plurals" name="projection_devices"/>
       <item type="string" name="app_launcher_title_all_apps"/>
       <item type="string" name="app_launcher_title_media_only"/>
       <item type="string" name="app_title"/>
@@ -159,6 +158,7 @@ REGENERATE USING packages/apps/Car/tests/tools/rro/generate-overlayable.py
       <item type="string" name="ongoing_call_text"/>
       <item type="string" name="projected_launch_text"/>
       <item type="string" name="projected_onclick_launch_error_toast_text"/>
+      <item type="string" name="projection_devices"/>
       <item type="string" name="show_debug_apps"/>
       <item type="string" name="tap_for_more_info_text"/>
       <item type="string" name="tap_to_launch_text"/>
