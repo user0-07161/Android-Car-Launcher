@@ -25,6 +25,8 @@
     <string name="tap_to_launch_text" msgid="6910695705119260847">"Trokit te karta për ta nisur"</string>
     <string name="ongoing_call_duration_text_separator" msgid="6019453854809413561">" • "</string>
     <string name="ongoing_call_text" msgid="2394626676478708070">"Telefonatë në vazhdim"</string>
+    <!-- no translation found for dialing_call_text (415326503409745490) -->
+    <skip />
     <string name="projected_launch_text" msgid="5809132353957907500">"Hap Android Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Android Auto nuk mund të niset. Nuk u gjet asnjë aktivitet."</string>
     <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">

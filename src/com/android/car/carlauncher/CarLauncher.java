@@ -290,17 +290,6 @@ public class CarLauncher extends FragmentActivity {
         if (DEBUG) {
             Log.d(TAG, "onResume(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
-    }
-
-    @Override
-    public void onTopResumedActivityChanged(boolean isTopResumed) {
-        super.onTopResumedActivityChanged(isTopResumed);
-        if (DEBUG) {
-            Log.d(TAG, "onTopResumedActivityChanged: isTopResumed=" + isTopResumed);
-        }
-        if (!isTopResumed) {
-            return;
-        }
         maybeBringEmbeddedTaskToForeground();
     }
 
