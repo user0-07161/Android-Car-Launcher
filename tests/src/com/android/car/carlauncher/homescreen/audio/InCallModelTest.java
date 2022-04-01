@@ -17,14 +17,18 @@
 package com.android.car.carlauncher.homescreen.audio;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.net.Uri;
 import android.telecom.Call;
+import android.telecom.CallAudioState;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -32,6 +36,7 @@ import com.android.car.carlauncher.R;
 import com.android.car.carlauncher.homescreen.HomeCardInterface;
 import com.android.car.carlauncher.homescreen.ui.DescriptiveTextWithControlsView;
 import com.android.car.telephony.common.TelecomUtils;
+import com.android.internal.util.ArrayUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -132,5 +137,70 @@ public class InCallModelTest {
         assertEquals(content.getTitle(), DISPLAY_NAME);
         assertEquals(content.getSubtitle(), mOngoingCallSecondaryText);
         assertNotNull(content.getImage());
+    }
+
+    @Test
+    public void onCallAudioStateChanged_callsPresenterWhenMuteButtonIsOutOfSync() {
+        // calls the mPresenter.onModelUpdated only when there is a change in the mute state
+        // which is not reflected in the button's state
+
+        CallAudioState callAudioState = new CallAudioState(true,
+                CallAudioState.ROUTE_WIRED_OR_EARPIECE, CallAudioState.ROUTE_WIRED_OR_EARPIECE);
+        mInCallModel.updateMuteButtonDrawableState(new int[0]);
+        mInCallModel.onCallAudioStateChanged(callAudioState);
+        verify(mPresenter, times(1)).onModelUpdated(mInCallModel);
+
+    }
+
+    @Test
+    public void onCallAudioStateChanged_doesNotCallPresenterWhenMuteButtonIsInSync() {
+        // calls the mPresenter.onModelUpdated only when there is a change in the mute state
+        // which is not reflected in the button's state
+
+        CallAudioState callAudioState = new CallAudioState(false,
+                CallAudioState.ROUTE_WIRED_OR_EARPIECE, CallAudioState.ROUTE_WIRED_OR_EARPIECE);
+        mInCallModel.updateMuteButtonDrawableState(new int[0]);
+        mInCallModel.onCallAudioStateChanged(callAudioState);
+        verify(mPresenter, times(0)).onModelUpdated(mInCallModel);
+    }
+
+    @Test
+    public void updateMuteButtonIconState_outOfSync_updatesIconState() {
+        boolean isUpdateRequired;
+        CallAudioState callAudioState;
+
+        // case callAudioState muted but mute icon state not contain selected
+        // expected: update mute icon state to contain selected state and return true
+        callAudioState = new CallAudioState(true,
+                CallAudioState.ROUTE_WIRED_OR_EARPIECE, CallAudioState.ROUTE_WIRED_OR_EARPIECE);
+        mInCallModel.updateMuteButtonDrawableState(new int[0]);
+        isUpdateRequired = mInCallModel.updateMuteButtonIconState(callAudioState);
+        assertTrue(isUpdateRequired);
+        assertTrue(ArrayUtils.contains(mInCallModel.getMuteButtonDrawableState(),
+                android.R.attr.state_selected));
+
+        // case callAudioState not muted but mute icon state contains selected state
+        // expected: update mute icon state to not contain selected state and return true
+        callAudioState = new CallAudioState(false,
+                CallAudioState.ROUTE_WIRED_OR_EARPIECE, CallAudioState.ROUTE_WIRED_OR_EARPIECE);
+        mInCallModel.updateMuteButtonDrawableState(new int[]{android.R.attr.state_selected});
+        isUpdateRequired = mInCallModel.updateMuteButtonIconState(callAudioState);
+        assertTrue(isUpdateRequired);
+        assertFalse(ArrayUtils.contains(mInCallModel.getMuteButtonDrawableState(),
+                android.R.attr.state_selected));
+    }
+
+    @Test
+    public void updateMuteButtonIconState_inSync_doesNotUpdateIconState() {
+        boolean isUpdateRequired;
+        CallAudioState callAudioState;
+
+        // case callAudioState is muted and mute icon state contains selected state
+        // expected: return false
+        callAudioState = new CallAudioState(true,
+                CallAudioState.ROUTE_WIRED_OR_EARPIECE, CallAudioState.ROUTE_WIRED_OR_EARPIECE);
+        mInCallModel.updateMuteButtonDrawableState(new int[]{android.R.attr.state_selected});
+        isUpdateRequired = mInCallModel.updateMuteButtonIconState(callAudioState);
+        assertFalse(isUpdateRequired);
     }
 }
