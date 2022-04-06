@@ -31,6 +31,7 @@
     <!-- Separates the duration from the ongoing_call_text -->
     <string name="ongoing_call_duration_text_separator">&#160;&#8226;&#160;</string>
     <string name="ongoing_call_text">Ongoing call</string>
+    <string name="dialing_call_text">Dialing&#8230;</string>
 
     <!-- ProjectionModel strings -->
     <string name="projected_launch_text">Launch Android Auto</string>
