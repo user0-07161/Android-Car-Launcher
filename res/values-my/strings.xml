@@ -25,6 +25,8 @@
     <string name="tap_to_launch_text" msgid="6910695705119260847">"ဖွင့်ရန် ကတ်ကိုတို့ပါ"</string>
     <string name="ongoing_call_duration_text_separator" msgid="6019453854809413561">" • "</string>
     <string name="ongoing_call_text" msgid="2394626676478708070">"လက်ရှိခေါ်ဆိုမှု"</string>
+    <!-- no translation found for dialing_call_text (415326503409745490) -->
+    <skip />
     <string name="projected_launch_text" msgid="5809132353957907500">"Android Auto ဖွင့်ပါ"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Android Auto ဖွင့်၍မရပါ။ လုပ်ဆောင်ချက် မရှိပါ။"</string>
     <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
