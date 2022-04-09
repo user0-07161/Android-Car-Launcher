@@ -25,6 +25,7 @@
     <string name="tap_to_launch_text" msgid="6910695705119260847">"Հպեք քարտին՝ գործարկելու ամար"</string>
     <string name="ongoing_call_duration_text_separator" msgid="6019453854809413561">" • "</string>
     <string name="ongoing_call_text" msgid="2394626676478708070">"Ընթացիկ զանգ"</string>
+    <string name="dialing_call_text" msgid="415326503409745490">"Համարհավաքում…"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Գործարկել Android Auto-ն"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Չհաջողվեց գործարկել Android Auto-ն։ Ոչ մի գործողություն չի գտնվել։"</string>
     <plurals name="projection_devices" formatted="false" msgid="4740612230451956299">
