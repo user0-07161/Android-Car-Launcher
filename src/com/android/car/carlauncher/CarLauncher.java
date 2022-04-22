@@ -270,7 +270,6 @@ public class CarLauncher extends FragmentActivity {
         if (DEBUG) {
             Log.d(TAG, "onResume(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
-        maybeBringEmbeddedTaskToForeground();
     }
 
     @Override
