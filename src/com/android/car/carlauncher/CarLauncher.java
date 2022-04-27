@@ -22,9 +22,7 @@ import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERL
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
-import android.app.ActivityTaskManager;
 import android.app.PendingIntent;
-import android.app.TaskInfo;
 import android.app.TaskStackListener;
 import android.car.Car;
 import android.car.app.CarActivityManager;
@@ -35,12 +33,12 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.window.TaskAppearedInfo;
 
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
@@ -52,11 +50,9 @@ import com.android.car.carlauncher.homescreen.MapsHealthMonitor;
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.internal.annotations.VisibleForTesting;
-import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -82,7 +78,6 @@ public class CarLauncher extends FragmentActivity {
 
     private ActivityManager mActivityManager;
     private CarUserManager mCarUserManager;
-    private ShellTaskOrganizer mShellTaskOrganizer;
     private TaskViewManager mTaskViewManager;
 
     private TaskView mTaskView;
@@ -258,20 +253,6 @@ public class CarLauncher extends FragmentActivity {
         initializeCards();
     }
 
-    private static void cleanUpExistingTaskViewTasks(List<TaskAppearedInfo> taskAppearedInfos) {
-        ActivityTaskManager atm = ActivityTaskManager.getInstance();
-        for (TaskAppearedInfo taskAppearedInfo : taskAppearedInfos) {
-            TaskInfo taskInfo = taskAppearedInfo.getTaskInfo();
-            try {
-                atm.removeTask(taskInfo.taskId);
-            } catch (Exception e) {
-                if (DEBUG) {
-                    Log.d(TAG, "failed to remove task likely b/c it no longer exists " + taskInfo);
-                }
-            }
-        }
-    }
-
     private void setUpTaskView(ViewGroup parent) {
         mTaskViewManager = new TaskViewManager(this,
                 new HandlerExecutor(getMainThreadHandler()), mCarActivityManagerRef);
@@ -289,18 +270,6 @@ public class CarLauncher extends FragmentActivity {
         if (DEBUG) {
             Log.d(TAG, "onResume(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
-    }
-
-    @Override
-    public void onTopResumedActivityChanged(boolean isTopResumed) {
-        super.onTopResumedActivityChanged(isTopResumed);
-        if (DEBUG) {
-            Log.d(TAG, "onTopResumedActivityChanged: isTopResumed=" + isTopResumed);
-        }
-        if (!isTopResumed) {
-            return;
-        }
-        maybeBringEmbeddedTaskToForeground();
     }
 
     @Override
@@ -350,11 +319,13 @@ public class CarLauncher extends FragmentActivity {
             Intent mapIntent = mUseSmallCanvasOptimizedMap
                     ? CarLauncherUtils.getSmallCanvasOptimizedMapIntent(this)
                     : CarLauncherUtils.getMapsIntent(this);
+            Rect launchBounds = new Rect();
+            mTaskView.getBoundsOnScreen(launchBounds);
             mTaskView.startActivity(
                     PendingIntent.getActivity(this, /* requestCode= */ 0,
                             mapIntent,
                             PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
-                    /* fillInIntent= */ null, options, null /* launchBounds */);
+                    /* fillInIntent= */ null, options, launchBounds);
         } catch (ActivityNotFoundException e) {
             Log.w(TAG, "Maps activity not found", e);
         }
