@@ -26,6 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -57,6 +58,8 @@ public class InCallModelTest {
 
     private InCallModel mInCallModel;
     private String mOngoingCallSecondaryText;
+    private String mDialingCallSecondaryText;
+
     private Context mContext;
 
     @Mock
@@ -73,9 +76,9 @@ public class InCallModelTest {
         mInCallModel = new InCallModel(mClock);
         mInCallModel.setPresenter(mPresenter);
         mInCallModel.onCreate(mContext);
-        mOngoingCallSecondaryText =
-                ApplicationProvider.getApplicationContext().getResources().getString(
-                        R.string.ongoing_call_text);
+        Resources resources = ApplicationProvider.getApplicationContext().getResources();
+        mOngoingCallSecondaryText = resources.getString(R.string.ongoing_call_text);
+        mDialingCallSecondaryText = resources.getString(R.string.dialing_call_text);
     }
 
     @After
@@ -96,8 +99,8 @@ public class InCallModelTest {
     }
 
     @Test
-    public void updateModelWithPhoneNumber_setsPhoneNumber() {
-        mInCallModel.updateModelWithPhoneNumber(PHONE_NUMBER);
+    public void updateModelWithPhoneNumber_active_setsPhoneNumberAndSubtitle() {
+        mInCallModel.updateModelWithPhoneNumber(PHONE_NUMBER, Call.STATE_ACTIVE);
 
         verify(mPresenter).onModelUpdated(mInCallModel);
         DescriptiveTextWithControlsView content =
@@ -109,11 +112,24 @@ public class InCallModelTest {
     }
 
     @Test
-    public void updateModelWithContact_noAvatarUri_setsContactNameAndInitialsIcon() {
+    public void updateModelWithPhoneNumber_dialing_setsPhoneNumberAndSubtitle() {
+        mInCallModel.updateModelWithPhoneNumber(PHONE_NUMBER, Call.STATE_DIALING);
+
+        verify(mPresenter).onModelUpdated(mInCallModel);
+        DescriptiveTextWithControlsView content =
+                (DescriptiveTextWithControlsView) mInCallModel.getCardContent();
+        String formattedNumber = TelecomUtils.getFormattedNumber(
+                ApplicationProvider.getApplicationContext(), PHONE_NUMBER);
+        assertEquals(content.getTitle(), formattedNumber);
+        assertEquals(content.getSubtitle(), mDialingCallSecondaryText);
+    }
+
+    @Test
+    public void updateModelWithContact_active_noAvatarUri_setsContactNameAndInitialsIcon() {
         TelecomUtils.PhoneNumberInfo phoneInfo = new TelecomUtils.PhoneNumberInfo(PHONE_NUMBER,
                 DISPLAY_NAME, DISPLAY_NAME, INITIALS, /* avatarUri = */ null,
                 /* typeLabel = */ null, /*  lookupKey = */ null);
-        mInCallModel.updateModelWithContact(phoneInfo);
+        mInCallModel.updateModelWithContact(phoneInfo, Call.STATE_ACTIVE);
 
         verify(mPresenter).onModelUpdated(mInCallModel);
         DescriptiveTextWithControlsView content =
@@ -124,18 +140,33 @@ public class InCallModelTest {
     }
 
     @Test
-    public void updateModelWithContact_invalidAvatarUri_setsContactNameAndInitialsIcon() {
+    public void updateModelWithContact_active_invalidAvatarUri_setsContactNameAndInitialsIcon() {
         Uri invalidUri = new Uri.Builder().path("invalid uri path").build();
         TelecomUtils.PhoneNumberInfo phoneInfo = new TelecomUtils.PhoneNumberInfo(PHONE_NUMBER,
                 DISPLAY_NAME, DISPLAY_NAME, INITIALS, invalidUri, /* typeLabel = */ null,
                 /* lookupKey = */ null);
-        mInCallModel.updateModelWithContact(phoneInfo);
+        mInCallModel.updateModelWithContact(phoneInfo, Call.STATE_ACTIVE);
 
         verify(mPresenter).onModelUpdated(mInCallModel);
         DescriptiveTextWithControlsView content =
                 (DescriptiveTextWithControlsView) mInCallModel.getCardContent();
         assertEquals(content.getTitle(), DISPLAY_NAME);
         assertEquals(content.getSubtitle(), mOngoingCallSecondaryText);
+        assertNotNull(content.getImage());
+    }
+
+    @Test
+    public void updateModelWithContact_dialing_setsCardContent() {
+        TelecomUtils.PhoneNumberInfo phoneInfo = new TelecomUtils.PhoneNumberInfo(PHONE_NUMBER,
+                DISPLAY_NAME, DISPLAY_NAME, INITIALS, /* avatarUri = */ null,
+                /* typeLabel = */ null, /*  lookupKey = */ null);
+        mInCallModel.updateModelWithContact(phoneInfo, Call.STATE_DIALING);
+
+        verify(mPresenter).onModelUpdated(mInCallModel);
+        DescriptiveTextWithControlsView content =
+                (DescriptiveTextWithControlsView) mInCallModel.getCardContent();
+        assertEquals(content.getTitle(), DISPLAY_NAME);
+        assertEquals(content.getSubtitle(), mDialingCallSecondaryText);
         assertNotNull(content.getImage());
     }
 
