@@ -32,8 +32,6 @@ import android.window.TaskAppearedInfo;
 import com.android.launcher3.icons.IconProvider;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
-import com.android.wm.shell.TaskViewFactory;
-import com.android.wm.shell.TaskViewFactoryController;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.common.TransactionPool;
@@ -51,7 +49,7 @@ public final class TaskViewManager {
 
     private final Context mContext;
     private final HandlerExecutor mExecutor;
-    private final TaskViewFactory mTaskViewFactory;
+    private final SyncTransactionQueue mSyncQueue;
     private final ShellTaskOrganizer mTaskOrganizer;
 
     public TaskViewManager(@UiContext Context context, HandlerExecutor handlerExecutor,
@@ -59,15 +57,16 @@ public final class TaskViewManager {
         mContext = context;
         mExecutor = handlerExecutor;
         mTaskOrganizer = new ShellTaskOrganizer(mExecutor, mContext);
-        mTaskViewFactory = initWmShell(carActivityManagerRef);
+        TransactionPool transactionPool = new TransactionPool();
+        mSyncQueue = new SyncTransactionQueue(transactionPool, mExecutor);
+        initTaskOrganizer(carActivityManagerRef, transactionPool);
         if (DBG) Slog.d(TAG, "TaskViewManager.create");
     }
 
-    private TaskViewFactory initWmShell(AtomicReference<CarActivityManager> carActivityManagerRef) {
-        TransactionPool transactionPool = new TransactionPool();
-        SyncTransactionQueue syncQueue = new SyncTransactionQueue(transactionPool, mExecutor);
+    private void initTaskOrganizer(AtomicReference<CarActivityManager> carActivityManagerRef,
+            TransactionPool transactionPool) {
         FullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskMonitorListener(
-                carActivityManagerRef, syncQueue, Optional.empty());
+                carActivityManagerRef, mSyncQueue, Optional.empty());
         mTaskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         StartingWindowController startingController =
                 new StartingWindowController(mContext, mExecutor,
@@ -76,9 +75,6 @@ public final class TaskViewManager {
         mTaskOrganizer.initStartingWindow(startingController);
         List<TaskAppearedInfo> taskAppearedInfos = mTaskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
-
-        return new TaskViewFactoryController(mTaskOrganizer, mExecutor, syncQueue)
-                .asTaskViewFactory();
     }
 
     void release() {
@@ -87,7 +83,10 @@ public final class TaskViewManager {
     }
 
     void createTaskView(Consumer<TaskView> onCreate) {
-        mTaskViewFactory.create(mContext, mExecutor, onCreate);
+        CarTaskView taskView = new CarTaskView(mContext, mTaskOrganizer, mSyncQueue);
+        mExecutor.execute(() -> {
+            onCreate.accept(taskView);
+        });
     }
 
     private static void cleanUpExistingTaskViewTasks(List<TaskAppearedInfo> taskAppearedInfos) {
