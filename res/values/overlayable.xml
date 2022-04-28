@@ -18,6 +18,7 @@ REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
     <policy type="system|product|signature">
       <item type="array" name="config_homeCardModuleClasses"/>
       <item type="array" name="config_homeCardPreferredMapActivities"/>
+      <item type="array" name="config_taskViewPackages"/>
       <item type="array" name="hidden_apps"/>
       <item type="color" name="card_background_scrim"/>
       <item type="color" name="date_divider_bar_color"/>
