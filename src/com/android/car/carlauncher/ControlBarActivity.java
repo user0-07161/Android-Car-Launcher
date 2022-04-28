@@ -18,8 +18,6 @@ package com.android.car.carlauncher;
 
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
 
-import static com.android.car.carlauncher.displayarea.CarDisplayAreaOrganizer.FOREGROUND_DISPLAY_AREA_ROOT;
-
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,7 +28,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.android.car.carlauncher.displayarea.CarDisplayAreaController;
 import com.android.car.carlauncher.homescreen.HomeCardModule;
 
 import java.util.Set;
@@ -55,12 +52,6 @@ public class ControlBarActivity extends FragmentActivity {
 
         setContentView(R.layout.control_bar_container);
         initializeCards();
-
-        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
-            CarDisplayAreaController carDisplayAreaController =
-                    CarDisplayAreaController.getInstance();
-            carDisplayAreaController.showTitleBar(FOREGROUND_DISPLAY_AREA_ROOT, this);
-        }
     }
 
     @Override
