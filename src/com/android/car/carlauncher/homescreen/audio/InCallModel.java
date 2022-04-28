@@ -71,6 +71,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     private CardHeader mCardHeader;
     private CardContent mCardContent;
     private CharSequence mOngoingCallSubtitle;
+    private CharSequence mDialingCallSubtitle;
     private DescriptiveTextWithControlsView.Control mMuteButton;
     private DescriptiveTextWithControlsView.Control mEndCallButton;
     private DescriptiveTextWithControlsView.Control mDialpadButton;
@@ -107,6 +108,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
         mContext = context;
         mTelecomManager = context.getSystemService(TelecomManager.class);
         mOngoingCallSubtitle = context.getResources().getString(R.string.ongoing_call_text);
+        mDialingCallSubtitle = context.getResources().getString(R.string.dialing_call_text);
         initializeAudioControls();
         try {
             PackageManager pm = context.getPackageManager();
@@ -246,11 +248,9 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
      * Updates the model's content using the given phone number.
      */
     @VisibleForTesting
-    void updateModelWithPhoneNumber(String number) {
+    void updateModelWithPhoneNumber(String number, @Call.CallState int callState) {
         String formattedNumber = TelecomUtils.getFormattedNumber(mContext, number);
-        mCardContent = new DescriptiveTextWithControlsView(null, formattedNumber,
-                mOngoingCallSubtitle, mElapsedTimeClock.millis(), mMuteButton, mEndCallButton,
-                mDialpadButton);
+        mCardContent = createPhoneCardContent(null, formattedNumber, callState);
         mPresenter.onModelUpdated(this);
     }
 
@@ -260,7 +260,8 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
      * avatar, use an icon with their first initial.
      */
     @VisibleForTesting
-    void updateModelWithContact(TelecomUtils.PhoneNumberInfo phoneNumberInfo) {
+    void updateModelWithContact(TelecomUtils.PhoneNumberInfo phoneNumberInfo,
+            @Call.CallState int callState) {
         String contactName = phoneNumberInfo.getDisplayName();
         Drawable contactImage = null;
         if (phoneNumberInfo.getAvatarUri() != null) {
@@ -282,14 +283,14 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
             contactImage = TelecomUtils.createLetterTile(mContext,
                     phoneNumberInfo.getInitials(), phoneNumberInfo.getDisplayName());
         }
-        mCardContent = new DescriptiveTextWithControlsView(contactImage, contactName,
-                mOngoingCallSubtitle, mElapsedTimeClock.millis(), mMuteButton, mEndCallButton,
-                mDialpadButton);
+
+        mCardContent = createPhoneCardContent(contactImage, contactName, callState);
         mPresenter.onModelUpdated(this);
     }
 
     private void handleActiveCall(@NonNull Call call) {
-        if (call.getState() != Call.STATE_ACTIVE) {
+        @Call.CallState int callState = call.getState();
+        if (callState != Call.STATE_ACTIVE && callState != Call.STATE_DIALING) {
             return;
         }
         mCurrentCall = call;
@@ -298,7 +299,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
         // phone number
         if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS)
                 != PackageManager.PERMISSION_GRANTED) {
-            updateModelWithPhoneNumber(callDetails.getNumber());
+            updateModelWithPhoneNumber(callDetails.getNumber(), callState);
             return;
         }
         if (mPhoneNumberInfoFuture != null) {
@@ -306,8 +307,26 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
         }
         mPhoneNumberInfoFuture = TelecomUtils.getPhoneNumberInfo(mContext,
                         callDetails.getNumber())
-                .thenAcceptAsync(x -> updateModelWithContact(x),
+                .thenAcceptAsync(x -> updateModelWithContact(x, callState),
                         mContext.getMainExecutor());
+    }
+
+    private CardContent createPhoneCardContent(Drawable image, CharSequence title,
+            @Call.CallState int callState) {
+        switch (callState) {
+            case Call.STATE_DIALING:
+                return new DescriptiveTextWithControlsView(image, title, mDialingCallSubtitle,
+                        mMuteButton, mEndCallButton, mDialpadButton);
+            case Call.STATE_ACTIVE:
+                return new DescriptiveTextWithControlsView(image, title, mOngoingCallSubtitle,
+                        mElapsedTimeClock.millis(), mMuteButton, mEndCallButton, mDialpadButton);
+            default:
+                if (DEBUG) {
+                    Log.d(TAG, "Call State " + callState
+                            + " is not currently supported by this model");
+                }
+                return null;
+        }
     }
 
     private void initializeAudioControls() {
