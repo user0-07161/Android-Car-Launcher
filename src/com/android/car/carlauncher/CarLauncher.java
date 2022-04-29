@@ -50,7 +50,6 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.carlauncher.homescreen.HomeCardModule;
-import com.android.car.carlauncher.homescreen.MapsHealthMonitor;
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.internal.annotations.VisibleForTesting;
@@ -219,7 +218,6 @@ public class CarLauncher extends FragmentActivity {
             startActivity(
                     CarLauncherUtils.getMapsIntent(this).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             // Register health check monitor for maps.
-            MapsHealthMonitor.getInstance(this).register();
             finish();
             return;
         }
