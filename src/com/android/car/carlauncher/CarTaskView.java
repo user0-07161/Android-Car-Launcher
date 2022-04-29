@@ -23,14 +23,21 @@ import android.view.View;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
+import androidx.annotation.Nullable;
+
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.SyncTransactionQueue;
 
 /**
- * CarLauncher version of {@link TaskView} which solves some CarLauncehr specific issues.
+ * CarLauncher version of {@link TaskView} which solves some CarLauncher specific issues:
+ * <ul>
+ * <li>b/228092608: Clears the hidden flag to make it TopFocusedRootTask.</li>
+ * <li>b/225388469: Moves the embedded task to the top to make it resumed.</li>
+ * </ul>
  */
-public class CarTaskView extends TaskView {
+class CarTaskView extends TaskView {
+    @Nullable
     private WindowContainerToken mTaskToken;
     private final SyncTransactionQueue mSyncQueue;
 
@@ -46,17 +53,13 @@ public class CarTaskView extends TaskView {
         super.onTaskAppeared(taskInfo, leash);
     }
 
-    /**
-     * Called when the visibility of the window containing the view has changed.
-     * @param visibility The new visibility of the window.
-     */
     @Override
     protected void onWindowVisibilityChanged(int visibility) {
         super.onWindowVisibilityChanged(visibility);
         if (visibility == View.VISIBLE && mTaskToken != null) {
             WindowContainerTransaction wct = new WindowContainerTransaction();
             // Clears the hidden flag to make it TopFocusedRootTask: b/228092608
-            wct.setHidden(mTaskToken, /* hidden= */false);
+            wct.setHidden(mTaskToken, /* hidden= */ false);
             // Moves the embedded task to the top to make it resumed: b/225388469
             wct.reorder(mTaskToken, /* onTop= */ true);
             mSyncQueue.queue(wct);
