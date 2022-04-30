@@ -30,8 +30,11 @@ import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
 import android.car.user.UserLifecycleEventFilter;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -43,10 +46,10 @@ import android.view.WindowManager;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.carlauncher.homescreen.HomeCardModule;
-import com.android.car.carlauncher.homescreen.MapsHealthMonitor;
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.internal.annotations.VisibleForTesting;
@@ -72,6 +75,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CarLauncher extends FragmentActivity {
     public static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
+    private static final String SCHEME_PACKAGE = "package";
 
     private final AtomicReference<CarActivityManager> mCarActivityManagerRef =
             new AtomicReference<>();
@@ -183,6 +187,21 @@ public class CarLauncher extends FragmentActivity {
         }
     };
 
+    private Set<String> mTaskViewPackages;
+    private final BroadcastReceiver mPackageBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (DEBUG) Log.d(TAG, "onReceive: intent=" + intent);
+            String packageName = intent.getData().getSchemeSpecificPart();
+            boolean started = getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
+            if (started  // Don't start Maps in STOPPED, because it'll be started onRestart.
+                    && mTaskViewTaskId == INVALID_TASK_ID
+                    && mTaskViewPackages.contains(packageName)) {
+                startMapsInTaskView();
+            }
+        }
+    };
+
     @VisibleForTesting
     void setCarUserManager(CarUserManager carUserManager) {
         mCarUserManager = carUserManager;
@@ -199,7 +218,6 @@ public class CarLauncher extends FragmentActivity {
             startActivity(
                     CarLauncherUtils.getMapsIntent(this).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             // Register health check monitor for maps.
-            MapsHealthMonitor.getInstance(this).register();
             finish();
             return;
         }
@@ -251,6 +269,12 @@ public class CarLauncher extends FragmentActivity {
             }
         }
         initializeCards();
+
+        mTaskViewPackages = new ArraySet<>(getResources().getStringArray(
+                R.array.config_taskViewPackages));
+        IntentFilter packageIntentFilter = new IntentFilter(Intent.ACTION_PACKAGE_REPLACED);
+        packageIntentFilter.addDataScheme(SCHEME_PACKAGE);
+        registerReceiver(mPackageBroadcastReceiver, packageIntentFilter);
     }
 
     private void setUpTaskView(ViewGroup parent) {
@@ -278,6 +302,7 @@ public class CarLauncher extends FragmentActivity {
         if (DEBUG) {
             Log.d(TAG, "onDestroy(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
+        unregisterReceiver(mPackageBroadcastReceiver);
         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
         if (mCarUserManager != null) {
             mCarUserManager.removeListener(mUserLifecycleListener);
