@@ -299,6 +299,9 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            return;
+        }
         if (DEBUG) {
             Log.d(TAG, "onDestroy(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
