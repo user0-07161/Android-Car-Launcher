@@ -16,9 +16,10 @@
 
 package com.android.car.carlauncher;
 
+import static android.car.settings.CarSettings.Secure.KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE;
+
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.car.Car;
@@ -26,36 +27,49 @@ import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
 import android.car.media.CarMediaManager;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 import android.os.Process;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.service.media.MediaBrowserService;
 import android.text.TextUtils;
+import android.util.ArraySet;
 import android.util.Log;
-
-import com.android.car.media.common.source.MediaSourceViewModel;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.lang.annotation.Retention;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Util class that contains helper method used by app launcher classes.
  */
-class AppLauncherUtils {
+public class AppLauncherUtils {
     private static final String TAG = "AppLauncherUtils";
 
     @Retention(SOURCE)
@@ -63,6 +77,16 @@ class AppLauncherUtils {
     @interface AppTypes {}
     static final int APP_TYPE_LAUNCHABLES = 1;
     static final int APP_TYPE_MEDIA_SERVICES = 2;
+
+    private static final String TAG_AUTOMOTIVE_APP = "automotiveApp";
+    private static final String TAG_USES = "uses";
+    private static final String ATTRIBUTE_NAME = "name";
+    private static final String TYPE_VIDEO = "video";
+    static final String PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR = ";";
+
+    // Max no. of uses tags in automotiveApp XML. This is an arbitrary limit to be defensive
+    // to bad input.
+    private static final int MAX_APP_TYPES = 64;
 
     private AppLauncherUtils() {
     }
@@ -157,7 +181,7 @@ class AppLauncherUtils {
      * Gets all the components that we want to see in the launcher in unsorted order, including
      * launcher activities and media services.
      *
-     * @param blackList             A (possibly empty) list of apps (package names) to hide
+     * @param appsToHide            A (possibly empty) list of apps (package names) to hide
      * @param customMediaComponents A (possibly empty) list of media components (component names)
      *                              that shouldn't be shown in Launcher because their applications'
      *                              launcher activities will be shown
@@ -167,17 +191,23 @@ class AppLauncherUtils {
      * @param launcherApps          The {@link LauncherApps} system service
      * @param carPackageManager     The {@link CarPackageManager} system service
      * @param packageManager        The {@link PackageManager} system service
+     * @param videoAppPredicate     Predicate that checks if a given {@link ResolveInfo} resolves
+     *                              to a video app. See {@link #VideoAppPredicate}. Media-services
+     *                              of such apps are always excluded.
+     * @param carMediaManager       The {@link CarMediaManager} system service
      * @return a new {@link LauncherAppsInfo}
      */
     @NonNull
     static LauncherAppsInfo getLauncherApps(
-            @NonNull Set<String> blackList,
+            Context context,
+            @NonNull Set<String> appsToHide,
             @NonNull Set<String> customMediaComponents,
             @AppTypes int appTypes,
             boolean openMediaCenter,
             LauncherApps launcherApps,
             CarPackageManager carPackageManager,
             PackageManager packageManager,
+            @NonNull Predicate<ResolveInfo> videoAppPredicate,
             CarMediaManager carMediaManager) {
 
         if (launcherApps == null || carPackageManager == null || packageManager == null
@@ -185,15 +215,23 @@ class AppLauncherUtils {
             return EMPTY_APPS_INFO;
         }
 
-        List<ResolveInfo> mediaServices = packageManager.queryIntentServices(
-                new Intent(MediaBrowserService.SERVICE_INTERFACE),
-                PackageManager.GET_RESOLVED_FILTER);
+        // Using new list since we require a mutable list to do removeIf.
+        List<ResolveInfo> mediaServices = new ArrayList<>();
+        mediaServices.addAll(
+                packageManager.queryIntentServices(
+                        new Intent(MediaBrowserService.SERVICE_INTERFACE),
+                        PackageManager.GET_RESOLVED_FILTER));
+        // Exclude Media Services from Video apps from being considered. These apps should offer a
+        // normal Launcher Activity as an entry point.
+        mediaServices.removeIf(videoAppPredicate);
+
         List<LauncherActivityInfo> availableActivities =
                 launcherApps.getActivityList(null, Process.myUserHandle());
 
-        Map<ComponentName, AppMetaData> launchablesMap = new HashMap<>(
-                mediaServices.size() + availableActivities.size());
+        int launchablesSize = mediaServices.size() + availableActivities.size();
+        Map<ComponentName, AppMetaData> launchablesMap = new HashMap<>(launchablesSize);
         Map<ComponentName, ResolveInfo> mediaServicesMap = new HashMap<>(mediaServices.size());
+        Set<String> mEnabledPackages = new ArraySet<>(launchablesSize);
 
         // Process media services
         if ((appTypes & APP_TYPE_MEDIA_SERVICES) != 0) {
@@ -202,7 +240,8 @@ class AppLauncherUtils {
                 String className = info.serviceInfo.name;
                 ComponentName componentName = new ComponentName(packageName, className);
                 mediaServicesMap.put(componentName, info);
-                if (shouldAddToLaunchables(componentName, blackList, customMediaComponents,
+                mEnabledPackages.add(packageName);
+                if (shouldAddToLaunchables(componentName, appsToHide, customMediaComponents,
                         appTypes, APP_TYPE_MEDIA_SERVICES)) {
                     final boolean isDistractionOptimized = true;
 
@@ -214,15 +253,23 @@ class AppLauncherUtils {
                         componentName,
                         info.serviceInfo.loadIcon(packageManager),
                         isDistractionOptimized,
-                        context -> {
+                        contextArg -> {
                             if (openMediaCenter) {
-                                AppLauncherUtils.launchApp(context, intent);
+                                AppLauncherUtils.launchApp(contextArg, intent);
                             } else {
-                                selectMediaSourceAndFinish(context, componentName, carMediaManager);
+                                selectMediaSourceAndFinish(contextArg, componentName,
+                                        carMediaManager);
                             }
                         },
-                        context -> AppLauncherUtils.launchApp(context,
-                            packageManager.getLaunchIntentForPackage(packageName)));
+                        contextArg -> {
+                            // getLaunchIntentForPackage looks for a main activity in the category
+                            // Intent.CATEGORY_INFO, then Intent.CATEGORY_LAUNCHER, and returns null
+                            // if neither are found
+                            Intent packageLaunchIntent =
+                                    packageManager.getLaunchIntentForPackage(packageName);
+                            AppLauncherUtils.launchApp(contextArg,
+                                    packageLaunchIntent != null ? packageLaunchIntent : intent);
+                        });
                     launchablesMap.put(componentName, appMetaData);
                 }
             }
@@ -233,7 +280,8 @@ class AppLauncherUtils {
             for (LauncherActivityInfo info : availableActivities) {
                 ComponentName componentName = info.getComponentName();
                 String packageName = componentName.getPackageName();
-                if (shouldAddToLaunchables(componentName, blackList, customMediaComponents,
+                mEnabledPackages.add(packageName);
+                if (shouldAddToLaunchables(componentName, appsToHide, customMediaComponents,
                         appTypes, APP_TYPE_LAUNCHABLES)) {
                     boolean isDistractionOptimized =
                         isActivityDistractionOptimized(carPackageManager, packageName,
@@ -249,22 +297,239 @@ class AppLauncherUtils {
                         componentName,
                         info.getBadgedIcon(0),
                         isDistractionOptimized,
-                        context -> AppLauncherUtils.launchApp(context, intent),
+                        contextArg -> AppLauncherUtils.launchApp(contextArg, intent),
                         null);
                     launchablesMap.put(componentName, appMetaData);
                 }
+            }
+
+            List<ResolveInfo> disabledActivities = getDisabledActivities(context, packageManager,
+                    mEnabledPackages);
+            for (ResolveInfo info : disabledActivities) {
+                String packageName = info.activityInfo.packageName;
+                String className = info.activityInfo.name;
+                ComponentName componentName = new ComponentName(packageName, className);
+                if (!shouldAddToLaunchables(componentName, appsToHide, customMediaComponents,
+                        appTypes, APP_TYPE_LAUNCHABLES)) {
+                    continue;
+                }
+                boolean isDistractionOptimized =
+                        isActivityDistractionOptimized(carPackageManager, packageName, className);
+
+                Intent intent = new Intent(Intent.ACTION_MAIN)
+                        .setComponent(componentName)
+                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                AppMetaData appMetaData = new AppMetaData(
+                        info.activityInfo.loadLabel(packageManager),
+                        componentName,
+                        info.activityInfo.loadIcon(packageManager),
+                        isDistractionOptimized,
+                        contextArg -> {
+                            packageManager.setApplicationEnabledSetting(packageName,
+                                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0);
+                            /* Fetch the current enabled setting to make sure the setting is synced
+                             * before launching the activity. Otherwise, the activity may not
+                             * launch.
+                             */
+                            if (packageManager.getApplicationEnabledSetting(packageName)
+                                    != PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+                                throw new IllegalStateException(
+                                        "Failed to enable the disabled package [" + packageName
+                                                + "]");
+                            }
+                            Log.i(TAG, "Successfully enabled package [" + packageName + "]");
+                            AppLauncherUtils.launchApp(contextArg, intent);
+                        },
+                        null);
+                launchablesMap.put(componentName, appMetaData);
             }
         }
 
         return new LauncherAppsInfo(launchablesMap, mediaServicesMap);
     }
 
+    /**
+     * Predicate that can be used to check if a given {@link ResolveInfo} resolves to a Video app.
+     */
+    static class VideoAppPredicate implements Predicate<ResolveInfo> {
+        private final PackageManager mPackageManager;
+
+        VideoAppPredicate(PackageManager packageManager) {
+            mPackageManager = packageManager;
+        }
+
+        @Override
+        public boolean test(ResolveInfo resolveInfo) {
+            String packageName = resolveInfo != null ? getPackageName(resolveInfo) : null;
+            if (packageName == null) {
+                Log.w(TAG, "Unable to determine packageName from resolveInfo");
+                return false;
+            }
+            List<String> automotiveAppTypes =
+                    getAutomotiveAppTypes(mPackageManager, getPackageName(resolveInfo));
+            return automotiveAppTypes.contains(TYPE_VIDEO);
+        }
+
+        protected String getPackageName(ResolveInfo resolveInfo) {
+            // A valid ResolveInfo should have exactly one of these set.
+            if (resolveInfo.activityInfo != null) {
+                return resolveInfo.activityInfo.packageName;
+            }
+            if (resolveInfo.serviceInfo != null) {
+                return resolveInfo.serviceInfo.packageName;
+            }
+            if (resolveInfo.providerInfo != null) {
+                return resolveInfo.providerInfo.packageName;
+            }
+            // Unexpected case.
+            return null;
+        }
+    }
+
+
+    /**
+     * Returns whether app identified by {@code packageName} declares itself as a video app.
+     */
+    public static boolean isVideoApp(PackageManager packageManager, String packageName) {
+        return getAutomotiveAppTypes(packageManager, packageName).contains(TYPE_VIDEO);
+    }
+
+    /**
+     * Queries an app manifest and resources to determine the types of AAOS app it declares itself
+     * as.
+     *
+     * @param packageManager {@link PackageManager} to query.
+     * @param packageName App package.
+     * @return List of AAOS app-types from XML resources.
+     */
+    public static List<String> getAutomotiveAppTypes(PackageManager packageManager,
+            String packageName) {
+        ApplicationInfo appInfo;
+        Resources appResources;
+        try {
+            appInfo = packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+            appResources = packageManager.getResourcesForApplication(appInfo);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.w(TAG, "Unexpected package not found for: " + packageName, e);
+            return new ArrayList<>();
+        }
+
+        int resourceId =
+                appInfo.metaData != null
+                        ? appInfo.metaData.getInt("com.android.automotive", -1) : -1;
+        if (resourceId == -1) {
+            return new ArrayList<>();
+        }
+        try (XmlResourceParser parser = appResources.getXml(resourceId)) {
+            return parseAutomotiveAppTypes(parser);
+        }
+    }
+
+    @VisibleForTesting
+    static List<String> parseAutomotiveAppTypes(XmlPullParser parser) {
+        try {
+            // This pattern for parsing can be seen in Javadocs for XmlPullParser.
+            List<String> appTypes = new ArrayList<>();
+            ArrayDeque<String> tagStack = new ArrayDeque<>();
+            int eventType = parser.getEventType();
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                if (eventType == XmlPullParser.START_TAG) {
+                    String tag = parser.getName();
+                    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                        Log.v(TAG, "Start tag " + tag);
+                    }
+                    tagStack.addFirst(tag);
+                    if (!validTagStack(tagStack)) {
+                        Log.w(TAG, "Invalid XML; tagStack: " + tagStack);
+                        return new ArrayList<>();
+                    }
+                    if (TAG_USES.equals(tag)) {
+                        String nameValue =
+                                parser.getAttributeValue(/* namespace= */ null , ATTRIBUTE_NAME);
+                        if (TextUtils.isEmpty(nameValue)) {
+                            Log.w(TAG, "Invalid XML; uses tag with missing/empty name attribute");
+                            return new ArrayList<>();
+                        }
+                        appTypes.add(nameValue);
+                        if (appTypes.size() > MAX_APP_TYPES) {
+                            Log.w(TAG, "Too many uses tags in automotiveApp tag");
+                            return new ArrayList<>();
+                        }
+                        if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                            Log.v(TAG, "Found appType: " + nameValue);
+                        }
+                    }
+                } else if (eventType == XmlPullParser.END_TAG) {
+                    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                        Log.v(TAG, "End tag " + parser.getName());
+                    }
+                    tagStack.removeFirst();
+                }
+                eventType = parser.next();
+            }
+            return appTypes;
+        } catch (XmlPullParserException | IOException e) {
+            Log.w(TAG, "Unexpected exception whiling parsing XML resource", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private static boolean validTagStack(ArrayDeque<String> tagStack) {
+        // Expected to be called after a new tag is pushed on this stack.
+        // Ensures that XML is of form:
+        // <automotiveApp>
+        //     <uses/>
+        //     <uses/>
+        //     ....
+        // </automotiveApp>
+        switch (tagStack.size()) {
+            case 1:
+                return TAG_AUTOMOTIVE_APP.equals(tagStack.peekFirst());
+            case 2:
+                return TAG_USES.equals(tagStack.peekFirst());
+            default:
+                return false;
+        }
+    }
+
+    private static List<ResolveInfo> getDisabledActivities(Context context,
+            PackageManager packageManager, Set<String> enabledPackages) {
+        ContentResolver contentResolverForUser = context.createContextAsUser(
+                UserHandle.getUserHandleForUid(Process.myUid()), /* flags= */ 0)
+                .getContentResolver();
+        String settingsValue = Settings.Secure.getString(contentResolverForUser,
+                KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE);
+        Set<String> disabledPackages = TextUtils.isEmpty(settingsValue) ? new ArraySet<>()
+                : new ArraySet<>(Arrays.asList(settingsValue.split(
+                        PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR)));
+        if (disabledPackages.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<ResolveInfo> allActivities = packageManager.queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
+                PackageManager.ResolveInfoFlags.of(PackageManager.GET_RESOLVED_FILTER
+                        | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS));
+
+        List<ResolveInfo> disabledActivities = new ArrayList<>();
+        for (int i = 0; i < allActivities.size(); ++i) {
+            ResolveInfo info = allActivities.get(i);
+            if (!enabledPackages.contains(info.activityInfo.packageName)
+                    && disabledPackages.contains(info.activityInfo.packageName)) {
+                disabledActivities.add(info);
+            }
+        }
+        return disabledActivities;
+    }
+
     private static boolean shouldAddToLaunchables(@NonNull ComponentName componentName,
-            @NonNull Set<String> blackList,
+            @NonNull Set<String> appsToHide,
             @NonNull Set<String> customMediaComponents,
             @AppTypes int appTypesToShow,
             @AppTypes int componentAppType) {
-        if (blackList.contains(componentName.getPackageName())) {
+        if (appsToHide.contains(componentName.getPackageName())) {
             return false;
         }
         switch (componentAppType) {
