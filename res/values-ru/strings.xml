@@ -28,8 +28,7 @@
     <string name="dialing_call_text" msgid="415326503409745490">"Набор номера…"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Запустить Android Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Не удается запустить Android Auto. Ничего не найдено."</string>
-    <!-- no translation found for projection_devices (916314090031116598) -->
-    <skip />
+    <string name="projection_devices" msgid="916314090031116598">"{count,plural, =1{# устройство}one{# устройство}few{# устройства}many{# устройств}other{# устройства}}"</string>
     <string name="weather_app_name" msgid="8048146303519139993">"Погода"</string>
     <string name="fake_weather_main_text" msgid="8117240999340284429">"--° Преим. солнечно"</string>
     <string name="fake_weather_footer_text" msgid="4570172025869749926">"Маунтин-Вью • Макс. --°, мин. --°"</string>
