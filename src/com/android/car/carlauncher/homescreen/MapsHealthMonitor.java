@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.car.carlauncher.displayarea;
+package com.android.car.carlauncher.homescreen;
 
 import android.app.ActivityManager;
 import android.app.TaskStackListener;
@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.util.Log;
 
 import com.android.car.carlauncher.CarLauncherUtils;
@@ -38,26 +39,20 @@ import java.util.concurrent.Executor;
  * Component to monitor the health of the maps background display area. It will not reattempt
  * recovering the maps activity if the health check is requested within 10s of the previous request.
  */
-public class CarDisplayAreaHealthMonitor {
+public class MapsHealthMonitor {
 
     private static final String TAG = "DAHealthMonitor";
     private static final boolean DEBUG = Build.IS_DEBUGGABLE;
     private static final long MINIMUM_CHECK_INTERVAL_MS = 10000;
 
-    private static CarDisplayAreaHealthMonitor sInstance;
-
-    /** Returns a singleton instance of the health monitor. */
-    public static synchronized CarDisplayAreaHealthMonitor getInstance(Context context,
-            CarDisplayAreaOrganizer organizer) {
-        if (sInstance == null) {
-            sInstance = new CarDisplayAreaHealthMonitor(context, Clock.systemUTC(),
-                    new HandlerExecutor(
-                            Handler.getMain()), () -> organizer.startMapsInBackGroundDisplayArea());
-        }
-
-        return sInstance;
-    }
-
+    private static MapsHealthMonitor sInstance;
+    private final Context mContext;
+    private final PackageManager mPackageManager;
+    private final ActivityManager mActivityManager;
+    private final Clock mClock;
+    private final Executor mExecutor;
+    private final Runnable mRecoverRunnable;
+    private long mLastCheckMs;
     private final TaskStackListener mTaskStackListener = new TaskStackListener() {
         @Override
         public void onTaskCreated(int taskId, ComponentName componentName) {
@@ -92,16 +87,7 @@ public class CarDisplayAreaHealthMonitor {
         }
     };
 
-    private final Context mContext;
-    private final PackageManager mPackageManager;
-    private final ActivityManager mActivityManager;
-    private final Clock mClock;
-    private final Executor mExecutor;
-    private final Runnable mRecoverRunnable;
-
-    private long mLastCheckMs;
-
-    public CarDisplayAreaHealthMonitor(Context context, Clock clock, Executor executor,
+    public MapsHealthMonitor(Context context, Clock clock, Executor executor,
             Runnable recover) {
         mContext = context;
         mPackageManager = context.getPackageManager();
@@ -109,6 +95,18 @@ public class CarDisplayAreaHealthMonitor {
         mClock = clock;
         mExecutor = executor;
         mRecoverRunnable = recover;
+    }
+
+    /** Returns a singleton instance of the health monitor. */
+    public static synchronized MapsHealthMonitor getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new MapsHealthMonitor(context, Clock.systemUTC(),
+                    new HandlerExecutor(
+                            Handler.getMain()),
+                    () -> context.startActivityAsUser(CarLauncherUtils.getMapsIntent(context),
+                            UserHandle.CURRENT));
+        }
+        return sInstance;
     }
 
     /** Registers the task stack listener to retrigger health check if needed. */
