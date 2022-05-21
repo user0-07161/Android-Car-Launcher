@@ -18,6 +18,7 @@ package com.android.car.carlauncher;
 
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_SWITCHING;
+import static android.car.user.CarUserManager.USER_LIFECYCLE_EVENT_TYPE_UNLOCKED;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
 
 import android.app.ActivityManager;
@@ -30,11 +31,15 @@ import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
 import android.car.user.UserLifecycleEventFilter;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
@@ -43,10 +48,10 @@ import android.view.WindowManager;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.carlauncher.homescreen.HomeCardModule;
-import com.android.car.carlauncher.homescreen.MapsHealthMonitor;
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.car.internal.common.UserHelperLite;
 import com.android.internal.annotations.VisibleForTesting;
@@ -72,11 +77,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CarLauncher extends FragmentActivity {
     public static final String TAG = "CarLauncher";
     private static final boolean DEBUG = false;
+    private static final String SCHEME_PACKAGE = "package";
 
     private final AtomicReference<CarActivityManager> mCarActivityManagerRef =
             new AtomicReference<>();
 
     private ActivityManager mActivityManager;
+    private UserManager mUserManager;
     private CarUserManager mCarUserManager;
     private TaskViewManager mTaskViewManager;
 
@@ -175,11 +182,35 @@ public class CarLauncher extends FragmentActivity {
             Log.d(TAG, "UserLifecycleListener.onEvent: For User " + getUserId()
                     + ", received an event " + event);
         }
+        // When user-unlocked, if Maps isn't launched yet, then try to start it.
+        if (event.getEventType() == USER_LIFECYCLE_EVENT_TYPE_UNLOCKED
+                && getUserId() == event.getUserId()
+                && mTaskViewTaskId == INVALID_TASK_ID) {
+            startMapsInTaskView();
+            return;
+        }
 
         // When user-switching, onDestroy in the previous user's CarLauncher isn't called.
         // So tries to release the resource explicitly.
-        if (getUserId() == event.getPreviousUserId()) {
+        if (event.getEventType() == USER_LIFECYCLE_EVENT_TYPE_SWITCHING
+                && getUserId() == event.getPreviousUserId()) {
             release();
+            return;
+        }
+    };
+
+    private Set<String> mTaskViewPackages;
+    private final BroadcastReceiver mPackageBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (DEBUG) Log.d(TAG, "onReceive: intent=" + intent);
+            String packageName = intent.getData().getSchemeSpecificPart();
+            boolean started = getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
+            if (started  // Don't start Maps in STOPPED, because it'll be started onRestart.
+                    && mTaskViewTaskId == INVALID_TASK_ID
+                    && mTaskViewPackages.contains(packageName)) {
+                startMapsInTaskView();
+            }
         }
     };
 
@@ -199,7 +230,6 @@ public class CarLauncher extends FragmentActivity {
             startActivity(
                     CarLauncherUtils.getMapsIntent(this).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             // Register health check monitor for maps.
-            MapsHealthMonitor.getInstance(this).register();
             finish();
             return;
         }
@@ -216,8 +246,8 @@ public class CarLauncher extends FragmentActivity {
                         return;
                     }
                     setCarUserManager((CarUserManager) car.getCarManager(Car.CAR_USER_SERVICE));
-                    // Only listen to user switching events.
                     UserLifecycleEventFilter filter = new UserLifecycleEventFilter.Builder()
+                            .addEventType(USER_LIFECYCLE_EVENT_TYPE_UNLOCKED)
                             .addEventType(USER_LIFECYCLE_EVENT_TYPE_SWITCHING).build();
                     mCarUserManager.addListener(getMainExecutor(), filter, mUserLifecycleListener);
                     CarActivityManager carAM = (CarActivityManager) car.getCarManager(
@@ -227,6 +257,7 @@ public class CarLauncher extends FragmentActivity {
                 });
 
         mActivityManager = getSystemService(ActivityManager.class);
+        mUserManager = getSystemService(UserManager.class);
         mCarLauncherTaskId = getTaskId();
         TaskStackChangeListeners.getInstance().registerTaskStackListener(mTaskStackListener);
 
@@ -251,6 +282,12 @@ public class CarLauncher extends FragmentActivity {
             }
         }
         initializeCards();
+
+        mTaskViewPackages = new ArraySet<>(getResources().getStringArray(
+                R.array.config_taskViewPackages));
+        IntentFilter packageIntentFilter = new IntentFilter(Intent.ACTION_PACKAGE_REPLACED);
+        packageIntentFilter.addDataScheme(SCHEME_PACKAGE);
+        registerReceiver(mPackageBroadcastReceiver, packageIntentFilter);
     }
 
     private void setUpTaskView(ViewGroup parent) {
@@ -275,9 +312,13 @@ public class CarLauncher extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (CarLauncherUtils.isCustomDisplayPolicyDefined(this)) {
+            return;
+        }
         if (DEBUG) {
             Log.d(TAG, "onDestroy(" + getUserId() + "): mTaskViewTaskId=" + mTaskViewTaskId);
         }
+        unregisterReceiver(mPackageBroadcastReceiver);
         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
         if (mCarUserManager != null) {
             mCarUserManager.removeListener(mUserLifecycleListener);
@@ -302,15 +343,22 @@ public class CarLauncher extends FragmentActivity {
 
     private void startMapsInTaskView() {
         if (mTaskView == null || !mTaskViewReady) {
+            if (DEBUG) Log.d(TAG, "Can't start Maps due to TaskView isn't ready.");
+            return;
+        }
+        if (!mUserManager.isUserUnlocked()) {
+            if (DEBUG) Log.d(TAG, "Can't start Maps due to the user isn't unlocked.");
             return;
         }
         // If we happen to be be resurfaced into a multi display mode we skip launching content
         // in the activity view as we will get recreated anyway.
         if (isInMultiWindowMode() || isInPictureInPictureMode()) {
+            if (DEBUG) Log.d(TAG, "Can't start Maps due to CarLauncher isn't in a correct mode");
             return;
         }
         // Don't start Maps when the display is off for ActivityVisibilityTests.
         if (getDisplay().getState() != Display.STATE_ON) {
+            if (DEBUG) Log.d(TAG, "Can't start Maps due to the display is off");
             return;
         }
         try {
