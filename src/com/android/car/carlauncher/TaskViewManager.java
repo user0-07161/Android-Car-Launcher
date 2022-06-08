@@ -66,7 +66,7 @@ public final class TaskViewManager {
     private void initTaskOrganizer(AtomicReference<CarActivityManager> carActivityManagerRef,
             TransactionPool transactionPool) {
         FullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskMonitorListener(
-                carActivityManagerRef, mSyncQueue);
+                carActivityManagerRef, mSyncQueue, Optional.empty());
         mTaskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         StartingWindowController startingController =
                 new StartingWindowController(mContext, mExecutor,
