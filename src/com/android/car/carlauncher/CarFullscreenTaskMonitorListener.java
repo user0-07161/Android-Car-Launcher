@@ -23,6 +23,7 @@ import android.view.SurfaceControl;
 
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.fullscreen.FullscreenTaskListener;
+import com.android.wm.shell.fullscreen.FullscreenUnfoldController;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,8 +37,9 @@ public class CarFullscreenTaskMonitorListener extends FullscreenTaskListener {
 
     public CarFullscreenTaskMonitorListener(
             AtomicReference<CarActivityManager> carActivityManagerRef,
-            SyncTransactionQueue syncQueue) {
-        super(syncQueue);
+            SyncTransactionQueue syncQueue,
+            Optional<FullscreenUnfoldController> unfoldController) {
+        super(syncQueue, unfoldController);
         mCarActivityManagerRef = carActivityManagerRef;
     }
     @Override
