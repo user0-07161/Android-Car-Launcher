@@ -208,7 +208,7 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
     }
 
     private void clearMetadata() {
-        mSongTitle = null;
+        mSongTitle = mContext.getString(R.string.default_media_song_title);
         mArtistName = null;
         mAlbumArtBinder.setImage(mContext, /* newArtRef = */ null);
     }
