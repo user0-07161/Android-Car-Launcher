@@ -151,6 +151,7 @@ REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
       <item type="string" name="app_launcher_title_media_only"/>
       <item type="string" name="app_title"/>
       <item type="string" name="config_smallCanvasOptimizedMapIntent"/>
+      <item type="string" name="default_media_song_title"/>
       <item type="string" name="dialing_call_text"/>
       <item type="string" name="driving_toast_text"/>
       <item type="string" name="fake_weather_footer_text"/>
