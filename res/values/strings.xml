@@ -20,6 +20,8 @@
     <string name="app_launcher_title_all_apps">All apps</string>
     <string name="app_launcher_title_media_only">Media apps</string>
 
+    <string name="default_media_song_title"></string>
+
     <string name="driving_toast_text">
         <xliff:g id="app_name" example="Settings">%1$s</xliff:g> can\'t be used while driving.
     </string>
