@@ -20,6 +20,7 @@
     <string name="app_title" msgid="1995858460392177468">"Auto-Launcher"</string>
     <string name="app_launcher_title_all_apps" msgid="3215107396036838217">"Alle Apps"</string>
     <string name="app_launcher_title_media_only" msgid="4400886555907422816">"Medien-Apps"</string>
+    <string name="default_media_song_title" msgid="2970305231647817808"></string>
     <string name="driving_toast_text" msgid="149483091947120092">"<xliff:g id="APP_NAME">%1$s</xliff:g> kann während der Fahrt nicht genutzt werden."</string>
     <string name="tap_for_more_info_text" msgid="2043549383814415585">"Für weitere Informationen auf die Karte tippen"</string>
     <string name="tap_to_launch_text" msgid="6910695705119260847">"Zum Starten auf die Karte tippen"</string>
