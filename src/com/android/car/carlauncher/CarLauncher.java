@@ -76,7 +76,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class CarLauncher extends FragmentActivity {
     public static final String TAG = "CarLauncher";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
     private static final String SCHEME_PACKAGE = "package";
 
     private final AtomicReference<CarActivityManager> mCarActivityManagerRef =
@@ -87,7 +87,7 @@ public class CarLauncher extends FragmentActivity {
     private CarUserManager mCarUserManager;
     private TaskViewManager mTaskViewManager;
 
-    private TaskView mTaskView;
+    private CarTaskView mTaskView;
     private boolean mTaskViewReady;
     // Tracking this to check if the task in TaskView has crashed in the background.
     private int mTaskViewTaskId = INVALID_TASK_ID;
@@ -120,7 +120,7 @@ public class CarLauncher extends FragmentActivity {
             if (DEBUG) Log.d(TAG, "onTaskCreated: taskId=" + taskId);
             mTaskViewTaskId = taskId;
             if (isResumed()) {
-                maybeBringEmbeddedTaskToForeground();
+                mTaskViewManager.showEmbeddedTask(mTaskView);
             }
         }
 
@@ -293,7 +293,7 @@ public class CarLauncher extends FragmentActivity {
     private void setUpTaskView(ViewGroup parent) {
         mTaskViewManager = new TaskViewManager(this,
                 new HandlerExecutor(getMainThreadHandler()), mCarActivityManagerRef);
-        mTaskViewManager.createTaskView(taskView -> {
+        mTaskViewManager.createTaskView(getMainExecutor(), taskView -> {
             taskView.setListener(getMainExecutor(), mTaskViewListener);
             parent.addView(taskView);
             mTaskView = taskView;
@@ -327,13 +327,7 @@ public class CarLauncher extends FragmentActivity {
     }
 
     private void release() {
-        if (mTaskView != null && mTaskViewReady) {
-            mTaskView.release();
-            mTaskView = null;
-        }
-        if (mTaskViewManager != null) {
-            mTaskViewManager.release();
-        }
+        mTaskView = null;
         CarActivityManager carAM = mCarActivityManagerRef.get();
         if (carAM != null) {
             carAM.unregisterTaskMonitor();
@@ -435,16 +429,6 @@ public class CarLauncher extends FragmentActivity {
                 Log.i(TAG, "Launcher for user " + getUserId() + " is ready");
                 mIsReadyLogged = true;
             }
-        }
-    }
-
-    /** Brings embedded task to front, if the task view is created and the task is launched. */
-    private void maybeBringEmbeddedTaskToForeground() {
-        if (mTaskViewTaskId != INVALID_TASK_ID) {
-            // The task in TaskView should be in top to make it visible.
-            // NOTE: Tried setTaskAlwaysOnTop before, the flag has some side effect to hinder
-            // AccessibilityService from finding the correct window geometry: b/197247311
-            mActivityManager.moveTaskToFront(mTaskViewTaskId, /* flags= */ 0);
         }
     }
 
