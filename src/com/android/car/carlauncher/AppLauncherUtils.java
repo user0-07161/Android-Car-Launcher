@@ -78,12 +78,11 @@ public class AppLauncherUtils {
     static final int APP_TYPE_LAUNCHABLES = 1;
     static final int APP_TYPE_MEDIA_SERVICES = 2;
 
-    static final String PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR = ";";
-
     private static final String TAG_AUTOMOTIVE_APP = "automotiveApp";
     private static final String TAG_USES = "uses";
     private static final String ATTRIBUTE_NAME = "name";
     private static final String TYPE_VIDEO = "video";
+    static final String PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR = ";";
 
     // Max no. of uses tags in automotiveApp XML. This is an arbitrary limit to be defensive
     // to bad input.
@@ -502,7 +501,7 @@ public class AppLauncherUtils {
                 .getContentResolver();
         String settingsValue = Settings.Secure.getString(contentResolverForUser,
                 KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE);
-        Set<String> disabledPackages = TextUtils.isEmpty(settingsValue) ? Collections.emptySet()
+        Set<String> disabledPackages = TextUtils.isEmpty(settingsValue) ? new ArraySet<>()
                 : new ArraySet<>(Arrays.asList(settingsValue.split(
                         PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR)));
         if (disabledPackages.isEmpty()) {
@@ -511,8 +510,8 @@ public class AppLauncherUtils {
 
         List<ResolveInfo> allActivities = packageManager.queryIntentActivities(
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-                PackageManager.GET_RESOLVED_FILTER
-                        | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS);
+                PackageManager.ResolveInfoFlags.of(PackageManager.GET_RESOLVED_FILTER
+                        | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS));
 
         List<ResolveInfo> disabledActivities = new ArrayList<>();
         for (int i = 0; i < allActivities.size(); ++i) {

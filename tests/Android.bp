@@ -27,7 +27,7 @@ android_test {
 
   libs: [
       "android.test.base",
-      "android.car",
+      "android.car-system-stubs",
   ],
 
   static_libs: [
