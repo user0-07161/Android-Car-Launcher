@@ -32,6 +32,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.Slog;
 import android.window.TaskAppearedInfo;
+import android.window.WindowContainerToken;
+import android.window.WindowContainerTransaction;
 
 import com.android.launcher3.icons.IconProvider;
 import com.android.wm.shell.ShellTaskOrganizer;
@@ -176,6 +178,38 @@ public final class TaskViewManager {
                     release();
                 }
             };
+
+    /**
+     * Creates a root task in the specified {code windowingMode}.
+     */
+    public void createRootTask(int displayId, int windowingMode,
+            ShellTaskOrganizer.TaskListener listener) {
+        mTaskOrganizer.createRootTask(displayId, windowingMode, listener);
+    }
+
+    /**
+     * Deletes the root task corresponding to the given {@code token}.
+     */
+    public void deleteRootTask(WindowContainerToken token) {
+        mTaskOrganizer.deleteRootTask(token);
+    }
+
+    // TODO(b/235151420): Remove this API as part of TaskViewManager API improvement
+    /**
+     * Runs the given {@code runnable} in the {@link SyncTransactionQueue} used by {@link TaskView}.
+     */
+    public void runInSync(SyncTransactionQueue.TransactionRunnable runnable) {
+        mSyncQueue.runInSync(runnable);
+    }
+
+    // TODO(b/235151420): Remove this API as part of TaskViewManager API improvement
+    /**
+     * Applies the given {@code windowContainerTransaction} to the underlying
+     * {@link ShellTaskOrganizer}.
+     */
+    public void enqueueTransaction(WindowContainerTransaction windowContainerTransaction) {
+        mSyncQueue.queue(windowContainerTransaction);
+    }
 
     private static void cleanUpExistingTaskViewTasks(List<TaskAppearedInfo> taskAppearedInfos) {
         ActivityTaskManager atm = ActivityTaskManager.getInstance();
