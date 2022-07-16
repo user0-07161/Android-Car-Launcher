@@ -16,14 +16,12 @@
 
 package com.android.car.carlauncher;
 
+import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.view.SurfaceControl;
-import android.view.View;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
-
-import androidx.annotation.Nullable;
 
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
@@ -36,7 +34,7 @@ import com.android.wm.shell.common.SyncTransactionQueue;
  * <li>b/225388469: Moves the embedded task to the top to make it resumed.</li>
  * </ul>
  */
-class CarTaskView extends TaskView {
+public class CarTaskView extends TaskView {
     @Nullable
     private WindowContainerToken mTaskToken;
     private final SyncTransactionQueue mSyncQueue;
@@ -53,16 +51,18 @@ class CarTaskView extends TaskView {
         super.onTaskAppeared(taskInfo, leash);
     }
 
-    @Override
-    protected void onWindowVisibilityChanged(int visibility) {
-        super.onWindowVisibilityChanged(visibility);
-        if (visibility == View.VISIBLE && mTaskToken != null) {
-            WindowContainerTransaction wct = new WindowContainerTransaction();
-            // Clears the hidden flag to make it TopFocusedRootTask: b/228092608
-            wct.setHidden(mTaskToken, /* hidden= */ false);
-            // Moves the embedded task to the top to make it resumed: b/225388469
-            wct.reorder(mTaskToken, /* onTop= */ true);
-            mSyncQueue.queue(wct);
+    /**
+     * Moves the embedded task over the embedding task to make it shown.
+     */
+    public void showEmbeddedTask() {
+        if (mTaskToken == null) {
+            return;
         }
+        WindowContainerTransaction wct = new WindowContainerTransaction();
+        // Clears the hidden flag to make it TopFocusedRootTask: b/228092608
+        wct.setHidden(mTaskToken, /* hidden= */ false);
+        // Moves the embedded task to the top to make it resumed: b/225388469
+        wct.reorder(mTaskToken, /* onTop= */ true);
+        mSyncQueue.queue(wct);
     }
 }
