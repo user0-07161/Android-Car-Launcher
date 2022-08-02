@@ -43,6 +43,7 @@ import com.android.wm.shell.common.annotations.ShellMainThread;
 import com.android.wm.shell.fullscreen.FullscreenTaskListener;
 import com.android.wm.shell.startingsurface.StartingWindowController;
 import com.android.wm.shell.startingsurface.phone.PhoneStartingWindowTypeAlgorithm;
+import com.android.wm.shell.sysui.ShellInit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public final class TaskViewManager {
             AtomicReference<CarActivityManager> carActivityManagerRef) {
         mContext = context;
         mExecutor = handlerExecutor;
-        mTaskOrganizer = new ShellTaskOrganizer(mExecutor, mContext);
+        mTaskOrganizer = new ShellTaskOrganizer(mExecutor);
         TransactionPool transactionPool = new TransactionPool();
         mSyncQueue = new SyncTransactionQueue(transactionPool, mExecutor);
         initTaskOrganizer(carActivityManagerRef, transactionPool);
@@ -80,11 +81,12 @@ public final class TaskViewManager {
         FullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskMonitorListener(
                 carActivityManagerRef, mSyncQueue);
         mTaskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
+        ShellInit shellInit = new ShellInit(mExecutor);
         StartingWindowController startingController =
-                new StartingWindowController(mContext, mExecutor,
+                new StartingWindowController(mContext, shellInit, mTaskOrganizer, mExecutor,
                         new PhoneStartingWindowTypeAlgorithm(), new IconProvider(mContext),
                         transactionPool);
-        mTaskOrganizer.initStartingWindow(startingController);
+        shellInit.init();
         List<TaskAppearedInfo> taskAppearedInfos = mTaskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
     }
