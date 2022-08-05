@@ -361,6 +361,8 @@ public class CarLauncher extends FragmentActivity {
             Intent mapIntent = mUseSmallCanvasOptimizedMap
                     ? CarLauncherUtils.getSmallCanvasOptimizedMapIntent(this)
                     : CarLauncherUtils.getMapsIntent(this);
+            // Don't want to show this Activity in Recents.
+            mapIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
             Rect launchBounds = new Rect();
             mTaskView.getBoundsOnScreen(launchBounds);
             mTaskView.startActivity(
