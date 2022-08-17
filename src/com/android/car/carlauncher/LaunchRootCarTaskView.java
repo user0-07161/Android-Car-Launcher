@@ -39,7 +39,7 @@ import java.util.concurrent.Executor;
  * A {@link CarTaskView} that can act as a default app container. A default app container is the
  * container where all apps open by default.
  */
-public final class LaunchRootCarTaskView extends CarTaskView {
+final class LaunchRootCarTaskView extends CarTaskView {
     private static final String TAG = LaunchRootCarTaskView.class.getSimpleName();
 
     private final Executor mCallbackExecutor;
@@ -128,9 +128,8 @@ public final class LaunchRootCarTaskView extends CarTaskView {
     }
 
     @Override
-    protected void notifyInitialized() {
-        super.notifyInitialized();
-
+    protected void onCarTaskViewInitialized() {
+        super.onCarTaskViewInitialized();
         mShellTaskOrganizer.getExecutor().execute(() -> {
             // Should run on shell's executor
             mShellTaskOrganizer.createRootTask(DEFAULT_DISPLAY,

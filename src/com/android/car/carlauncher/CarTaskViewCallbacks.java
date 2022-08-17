@@ -18,17 +18,24 @@ package com.android.car.carlauncher;
 
 /**
  * A callback interface for the host activity that uses {@link CarTaskView} and its derivatives.
- * @param <T> The type of the {@link CarTaskView}
  */
-interface CarTaskViewCallbacks<T extends CarTaskView> {
+interface CarTaskViewCallbacks {
     /**
-     * Called when the underlying {@link com.android.wm.shell.TaskView} instance is created.
-     * @param taskView the new newly created {@link com.android.wm.shell.TaskView} instance.
+     * Called when the underlying {@link CarTaskView} instance is created.
+     *
+     * @param taskView the new newly created {@link CarTaskView} instance.
      */
-    void onTaskViewCreated(T taskView);
+    void onTaskViewCreated(CarTaskView taskView);
 
     /**
-     * Called when the underlying {@link CarTaskView}
+     * Called when the underlying {@link CarTaskView} is ready. A {@link CarTaskView} can be
+     * considered ready when it has completed all the set up that is required.
+     * This callback is only triggered once.
+     *
+     * For {@link LaunchRootCarTaskView}, this is called once the launch root task has been
+     * fully set up.
+     * For {@link SemiControlledCarTaskView} & {@link ControlledCarTaskView} this is called when
+     * the surface is created.
      */
     void onTaskViewReady();
 }

@@ -20,4 +20,4 @@ package com.android.car.carlauncher;
  * A callbacks interface for {@link LaunchRootCarTaskView}.
  */
 public interface LaunchRootCarTaskViewCallbacks extends
-        CarTaskViewCallbacks<LaunchRootCarTaskView> {}
+        CarTaskViewCallbacks {}
