@@ -112,7 +112,8 @@ public final class TaskViewManager {
     }
 
     /**
-     * Creates a {@code TaskView}.
+     * Creates a {@code CarTaskView}.
+     *
      * @param callbackExecutor the {@link Executor} where the callback is called.
      * @param onCreate a callback to get the instance of the created TaskView.
      */
