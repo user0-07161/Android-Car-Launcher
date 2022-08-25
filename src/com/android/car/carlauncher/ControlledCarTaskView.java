@@ -16,11 +16,10 @@
 
 package com.android.car.carlauncher;
 
-import static android.app.ActivityTaskManager.INVALID_TASK_ID;
-
 import static com.android.car.carlauncher.TaskViewManager.DBG;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -44,12 +43,14 @@ import java.util.concurrent.Executor;
  *     <li>The underlying task is meant to be started by the host and be there forever.</li>
  * </ul>
  */
-public final class ControlledCarTaskView extends CarTaskView {
+final class ControlledCarTaskView extends CarTaskView {
     private static final String TAG = ControlledCarTaskView.class.getSimpleName();
 
     private final Executor mCallbackExecutor;
     private final Intent mActivityIntent;
-    private final Set<String> mPackagesThatCanRestart;
+    private final boolean mAutoRestartOnCrash;
+    // TODO(b/242861717): When mAutoRestartOnCrash is enabled, mPackagesThatCanRestart doesn't make
+    // a lot of sense. Consider removing it when there is more confidence with mAutoRestartOnCrash.
     private final ControlledCarTaskViewCallbacks mCallbacks;
     private final UserManager mUserManager;
 
@@ -58,13 +59,13 @@ public final class ControlledCarTaskView extends CarTaskView {
             SyncTransactionQueue syncQueue,
             Executor callbackExecutor,
             Intent activityIntent,
-            Set<String> packagesThatCanRestart,
+            Boolean autoRestartOnCrash,
             ControlledCarTaskViewCallbacks callbacks,
             UserManager userManager) {
         super(context, organizer, syncQueue);
         mCallbackExecutor = callbackExecutor;
         mActivityIntent = activityIntent;
-        mPackagesThatCanRestart = packagesThatCanRestart;
+        mAutoRestartOnCrash = autoRestartOnCrash;
         mCallbacks = callbacks;
         mUserManager = userManager;
 
@@ -72,8 +73,8 @@ public final class ControlledCarTaskView extends CarTaskView {
     }
 
     @Override
-    protected void notifyInitialized() {
-        super.notifyInitialized();
+    protected void onCarTaskViewInitialized() {
+        super.onCarTaskViewInitialized();
         startActivity();
         mCallbackExecutor.execute(() -> mCallbacks.onTaskViewReady());
     }
@@ -87,9 +88,16 @@ public final class ControlledCarTaskView extends CarTaskView {
             return;
         }
 
+        // Don't start activity when the display is off. This can happen when the taskview is not
+        // attached to a window.
+        if (getDisplay() == null) {
+            Log.w(TAG, "Can't start activity because display is not available in "
+                    + "taskview yet.");
+            return;
+        }
         // Don't start activity when the display is off for ActivityVisibilityTests.
         if (getDisplay().getState() != Display.STATE_ON) {
-            if (DBG) Log.d(TAG, "Can't start activity due to the display is off");
+            Log.w(TAG, "Can't start activity due to the display is off");
             return;
         }
 
@@ -108,19 +116,19 @@ public final class ControlledCarTaskView extends CarTaskView {
     }
 
     /**
-     * @return a set of packages which should lead to restart of the current task, when changed.
+     * See {@link ControlledCarTaskViewCallbacks#getDependingPackageNames()}.
      */
-    Set<String> getPackagesThatCanRestart() {
-        return mPackagesThatCanRestart;
+    Set<String> getDependingPackageNames() {
+        return mCallbacks.getDependingPackageNames();
     }
 
-    /**
-     * Returns the taskId of the currently running task.
-     */
-    public int getTaskId() {
-        if (mTaskInfo == null) {
-            return INVALID_TASK_ID;
+    @Override
+    public void onTaskVanished(ActivityManager.RunningTaskInfo taskInfo) {
+        super.onTaskVanished(taskInfo);
+        if (mAutoRestartOnCrash) {
+            Log.i(TAG, "Restarting task " + taskInfo.baseActivity
+                    + " in ControlledCarTaskView");
+            startActivity();
         }
-        return mTaskInfo.taskId;
     }
 }

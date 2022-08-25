@@ -16,6 +16,10 @@
 
 package com.android.car.carlauncher;
 
+import static android.app.ActivityTaskManager.INVALID_TASK_ID;
+
+import static com.android.car.carlauncher.TaskViewManager.DBG;
+
 import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -43,6 +47,7 @@ public class CarTaskView extends TaskView {
     private WindowContainerToken mTaskToken;
     private final SyncTransactionQueue mSyncQueue;
     private final SparseArray<Rect> mInsets = new SparseArray<>();
+    private boolean mTaskViewReadySent;
 
     public CarTaskView(Context context, ShellTaskOrganizer organizer,
             SyncTransactionQueue syncQueue) {
@@ -57,6 +62,22 @@ public class CarTaskView extends TaskView {
 
         applyInsets();
     }
+
+    @Override
+    protected void notifyInitialized() {
+        super.notifyInitialized();
+        if (mTaskViewReadySent) {
+            if (DBG) Log.i(TAG, "car task view ready already sent");
+            return;
+        }
+        onCarTaskViewInitialized();
+        mTaskViewReadySent = true;
+    }
+
+    /**
+     * Called only once when the {@link CarTaskView} is ready.
+     */
+    protected void onCarTaskViewInitialized() {}
 
     /**
      * Moves the embedded task over the embedding task to make it shown.
@@ -99,5 +120,15 @@ public class CarTaskView extends TaskView {
             wct.addRectInsetsProvider(mTaskToken, mInsets.valueAt(i), new int[]{mInsets.keyAt(i)});
         }
         mSyncQueue.queue(wct);
+    }
+
+    /**
+     * @return the taskId of the currently running task.
+     */
+    public int getTaskId() {
+        if (mTaskInfo == null) {
+            return INVALID_TASK_ID;
+        }
+        return mTaskInfo.taskId;
     }
 }

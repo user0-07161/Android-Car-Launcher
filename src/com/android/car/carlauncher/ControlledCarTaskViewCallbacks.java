@@ -16,8 +16,19 @@
 
 package com.android.car.carlauncher;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * A callback interface for {@link ControlledCarTaskView}.
  */
 public interface ControlledCarTaskViewCallbacks extends
-        CarTaskViewCallbacks<ControlledCarTaskView> {}
+        CarTaskViewCallbacks {
+    /**
+     * @return a set of package names which the task in the ControlledCarTaskView depends upon.
+     * When any of these packages are changed, it will lead to restart of the task.
+     */
+    default Set<String> getDependingPackageNames() {
+        return Collections.emptySet();
+    }
+}

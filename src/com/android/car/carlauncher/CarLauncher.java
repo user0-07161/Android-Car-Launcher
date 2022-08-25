@@ -64,7 +64,7 @@ public class CarLauncher extends FragmentActivity {
     private ActivityManager mActivityManager;
     private TaskViewManager mTaskViewManager;
 
-    private ControlledCarTaskView mTaskView;
+    private CarTaskView mTaskView;
     private int mCarLauncherTaskId = INVALID_TASK_ID;
     private Set<HomeCardModule> mHomeCardModules;
 
@@ -162,10 +162,10 @@ public class CarLauncher extends FragmentActivity {
         mTaskViewManager.createControlledCarTaskView(
                 getMainExecutor(),
                 mapIntent,
-                taskViewPackages,
+                /* autoRestartOnCrash = */ false,
                 new ControlledCarTaskViewCallbacks() {
                     @Override
-                    public void onTaskViewCreated(ControlledCarTaskView taskView) {
+                    public void onTaskViewCreated(CarTaskView taskView) {
                         parent.addView(taskView);
                         mTaskView = taskView;
                     }
@@ -173,6 +173,11 @@ public class CarLauncher extends FragmentActivity {
                     @Override
                     public void onTaskViewReady() {
                         maybeLogReady();
+                    }
+
+                    @Override
+                    public Set<String> getDependingPackageNames() {
+                        return taskViewPackages;
                     }
                 });
     }

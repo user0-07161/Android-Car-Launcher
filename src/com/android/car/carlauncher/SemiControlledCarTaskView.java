@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
  *     <li>Suitable for apps like Assistant or Setup-Wizard.</li>
  * </ul>
  */
-public final class SemiControlledCarTaskView extends CarTaskView {
+final class SemiControlledCarTaskView extends CarTaskView {
     private final Executor mCallbackExecutor;
     private final SemiControlledCarTaskViewCallbacks mCallbacks;
 
@@ -50,8 +50,8 @@ public final class SemiControlledCarTaskView extends CarTaskView {
     }
 
     @Override
-    protected void notifyInitialized() {
-        super.notifyInitialized();
+    protected void onCarTaskViewInitialized() {
+        super.onCarTaskViewInitialized();
         mCallbackExecutor.execute(() -> mCallbacks.onTaskViewReady());
     }
 

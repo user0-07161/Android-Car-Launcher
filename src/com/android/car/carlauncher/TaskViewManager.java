@@ -58,7 +58,6 @@ import com.android.wm.shell.sysui.ShellInit;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -252,7 +251,7 @@ public final class TaskViewManager {
             for (int i = mControlledTaskViews.size() - 1; i >= 0; --i) {
                 ControlledCarTaskView taskView = mControlledTaskViews.get(i);
                 if (taskView.getTaskId() == INVALID_TASK_ID
-                        && taskView.getPackagesThatCanRestart().contains(packageName)) {
+                        && taskView.getDependingPackageNames().contains(packageName)) {
                     taskView.startActivity();
                 }
             }
@@ -328,18 +327,16 @@ public final class TaskViewManager {
      *                         be executed on.
      * @param activityIntent the intent of the activity that is meant to be started in this
      *                       {@link ControlledCarTaskView}.
-     * @param packagesThatCanRestart the set of packages that can lead to restart of the underlying
-     *                               activity, when changed.
      * @param taskViewCallbacks the callbacks for the underlying TaskView.
      */
     public void createControlledCarTaskView(
             Executor callbackExecutor,
             Intent activityIntent,
-            Set<String> packagesThatCanRestart,
+            boolean autoRestartOnCrash,
             ControlledCarTaskViewCallbacks taskViewCallbacks) {
         mShellExecutor.execute(() -> {
             ControlledCarTaskView taskView = new ControlledCarTaskView(mContext, mTaskOrganizer,
-                    mSyncQueue, callbackExecutor, activityIntent, packagesThatCanRestart,
+                    mSyncQueue, callbackExecutor, activityIntent, autoRestartOnCrash,
                     taskViewCallbacks, mContext.getSystemService(UserManager.class));
             mControlledTaskViews.add(taskView);
         });
