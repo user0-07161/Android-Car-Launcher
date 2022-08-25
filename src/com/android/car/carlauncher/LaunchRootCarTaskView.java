@@ -48,7 +48,7 @@ final class LaunchRootCarTaskView extends CarTaskView {
     private final SyncTransactionQueue mSyncQueue;
     private final ShellTaskOrganizer.TaskListener mRootTaskListener;
 
-    private ActivityManager.RunningTaskInfo mDefaultContainerRootTask;
+    private ActivityManager.RunningTaskInfo mLaunchRootTask;
 
     private final ShellTaskOrganizer.TaskListener mRootTaskListenerWrapper =
             new ShellTaskOrganizer.TaskListener() {
@@ -56,7 +56,7 @@ final class LaunchRootCarTaskView extends CarTaskView {
                 public void onTaskAppeared(ActivityManager.RunningTaskInfo taskInfo,
                         SurfaceControl leash) {
                     // The first call to onTaskAppeared() is always for the root-task.
-                    if (mDefaultContainerRootTask == null && !taskInfo.hasParentTask()) {
+                    if (mLaunchRootTask == null && !taskInfo.hasParentTask()) {
                         setRootTaskAsLaunchRoot(taskInfo);
                         LaunchRootCarTaskView.this.onTaskAppeared(taskInfo, leash);
                         mCallbackExecutor.execute(() -> mCallbacks.onTaskViewReady());
@@ -74,8 +74,8 @@ final class LaunchRootCarTaskView extends CarTaskView {
 
                 @Override
                 public void onTaskInfoChanged(ActivityManager.RunningTaskInfo taskInfo) {
-                    if (mDefaultContainerRootTask != null
-                            && mDefaultContainerRootTask.taskId == taskInfo.taskId) {
+                    if (mLaunchRootTask != null
+                            && mLaunchRootTask.taskId == taskInfo.taskId) {
                         LaunchRootCarTaskView.this.onTaskInfoChanged(taskInfo);
                         if (DBG) {
                             Log.d(TAG, "got onTaskInfoChanged for the launch root task. Not "
@@ -97,8 +97,8 @@ final class LaunchRootCarTaskView extends CarTaskView {
                         Log.d(TAG, "onTaskVanished " + taskInfo.taskId + " - "
                                 + taskInfo.baseActivity);
                     }
-                    if (mDefaultContainerRootTask != null
-                            && mDefaultContainerRootTask.taskId == taskInfo.taskId) {
+                    if (mLaunchRootTask != null
+                            && mLaunchRootTask.taskId == taskInfo.taskId) {
                         LaunchRootCarTaskView.this.onTaskVanished(taskInfo);
                         if (DBG) {
                             Log.d(TAG, "got onTaskVanished for the launch root task. Not "
@@ -145,16 +145,20 @@ final class LaunchRootCarTaskView extends CarTaskView {
     }
 
     private void clearLaunchRootTask() {
+        if (mLaunchRootTask == null) {
+            Log.w(TAG, "Unable to clear launch root task because it is not created.");
+            return;
+        }
         WindowContainerTransaction wct = new WindowContainerTransaction();
-        wct.setLaunchRoot(mDefaultContainerRootTask.token, null, null);
+        wct.setLaunchRoot(mLaunchRootTask.token, null, null);
         mSyncQueue.queue(wct);
         // Should run on shell's executor
-        mShellTaskOrganizer.deleteRootTask(mDefaultContainerRootTask.token);
-        mDefaultContainerRootTask = null;
+        mShellTaskOrganizer.deleteRootTask(mLaunchRootTask.token);
+        mLaunchRootTask = null;
     }
 
     private void setRootTaskAsLaunchRoot(ActivityManager.RunningTaskInfo taskInfo) {
-        mDefaultContainerRootTask = taskInfo;
+        mLaunchRootTask = taskInfo;
         WindowContainerTransaction wct = new WindowContainerTransaction();
         wct.setLaunchRoot(taskInfo.token,
                         new int[]{WINDOWING_MODE_FULLSCREEN, WINDOWING_MODE_UNDEFINED},

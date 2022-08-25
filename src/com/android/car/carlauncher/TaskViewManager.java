@@ -48,6 +48,7 @@ import android.view.SurfaceControl;
 import android.window.TaskAppearedInfo;
 
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
+import com.android.internal.annotations.VisibleForTesting;
 import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
@@ -88,7 +89,6 @@ public final class TaskViewManager {
 
     private CarUserManager mCarUserManager;
     private Activity mContext;
-    private boolean mActivityAtLeastInStartedState;
 
     private final ShellTaskOrganizer.TaskListener mRootTaskListener =
             new ShellTaskOrganizer.TaskListener() {
@@ -243,11 +243,12 @@ public final class TaskViewManager {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (DBG) Log.d(TAG, "onReceive: intent=" + intent);
-            String packageName = intent.getData().getSchemeSpecificPart();
-            if (!mActivityAtLeastInStartedState) {
+
+            if (isActivityStopped(mContext)) {
                 return;
             }
 
+            String packageName = intent.getData().getSchemeSpecificPart();
             for (int i = mControlledTaskViews.size() - 1; i >= 0; --i) {
                 ControlledCarTaskView taskView = mControlledTaskViews.get(i);
                 if (taskView.getTaskId() == INVALID_TASK_ID
@@ -259,16 +260,22 @@ public final class TaskViewManager {
     };
 
     public TaskViewManager(Activity context, HandlerExecutor handlerExecutor) {
+        this(context, handlerExecutor, new ShellTaskOrganizer(handlerExecutor),
+                new SyncTransactionQueue(new TransactionPool(), handlerExecutor));
+    }
+
+    @VisibleForTesting
+    TaskViewManager(Activity context, HandlerExecutor handlerExecutor,
+            ShellTaskOrganizer shellTaskOrganizer, SyncTransactionQueue syncQueue) {
         if (DBG) Slog.d(TAG, "TaskViewManager(): " + context);
         mContext = context;
         mShellExecutor = handlerExecutor;
-        mTaskOrganizer = new ShellTaskOrganizer(mShellExecutor);
+        mTaskOrganizer = shellTaskOrganizer;
         mHostTaskId = mContext.getTaskId();
-        TransactionPool transactionPool = new TransactionPool();
-        mSyncQueue = new SyncTransactionQueue(transactionPool, mShellExecutor);
+        mSyncQueue = syncQueue;
 
         initCar();
-        initTaskOrganizer(mCarActivityManagerRef, transactionPool);
+        initTaskOrganizer(mCarActivityManagerRef);
         mContext.registerActivityLifecycleCallbacks(mActivityLifecycleCallbacks);
     }
 
@@ -309,8 +316,7 @@ public final class TaskViewManager {
         mCarUserManager = carUserManager;
     }
 
-    private void initTaskOrganizer(AtomicReference<CarActivityManager> carActivityManagerRef,
-            TransactionPool transactionPool) {
+    private void initTaskOrganizer(AtomicReference<CarActivityManager> carActivityManagerRef) {
         FullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskMonitorListener(
                 carActivityManagerRef, mSyncQueue);
         mTaskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
@@ -420,6 +426,12 @@ public final class TaskViewManager {
         });
     }
 
+    private static boolean isActivityStopped(Activity activity) {
+        // This code relies on Activity#isVisibleForAutofill() instead of maintaining a custom
+        // activity state.
+        return !activity.isVisibleForAutofill();
+    }
+
     private final ActivityLifecycleCallbacks mActivityLifecycleCallbacks =
             new ActivityLifecycleCallbacks() {
                 @Override
@@ -435,7 +447,6 @@ public final class TaskViewManager {
                     if (DBG) {
                         Log.d(TAG, "Host activity started");
                     }
-                    mActivityAtLeastInStartedState = true;
                 }
 
                 @Override
@@ -461,9 +472,7 @@ public final class TaskViewManager {
                 public void onActivityPaused(@NonNull Activity activity) {}
 
                 @Override
-                public void onActivityStopped(@NonNull Activity activity) {
-                    mActivityAtLeastInStartedState = false;
-                }
+                public void onActivityStopped(@NonNull Activity activity) {}
 
                 @Override
                 public void onActivitySaveInstanceState(@NonNull Activity activity,
@@ -471,7 +480,6 @@ public final class TaskViewManager {
 
                 @Override
                 public void onActivityDestroyed(@NonNull Activity activity) {
-                    mActivityAtLeastInStartedState = false;
                     release();
                 }
             };
@@ -486,5 +494,25 @@ public final class TaskViewManager {
                 atm.removeTask(taskInfo.taskId);
             }
         }
+    }
+
+    @VisibleForTesting
+    List<ControlledCarTaskView> getControlledTaskViews() {
+        return mControlledTaskViews;
+    }
+
+    @VisibleForTesting
+    LaunchRootCarTaskView getLaunchRootCarTaskView() {
+        return mLaunchRootCarTaskView;
+    }
+
+    @VisibleForTesting
+    List<SemiControlledCarTaskView> getSemiControlledTaskViews() {
+        return mSemiControlledTaskViews;
+    }
+
+    @VisibleForTesting
+    BroadcastReceiver getPackageBroadcastReceiver() {
+        return mPackageBroadcastReceiver;
     }
 }
