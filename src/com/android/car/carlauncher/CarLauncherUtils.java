@@ -31,8 +31,13 @@ import java.net.URISyntaxException;
 public class CarLauncherUtils {
 
     private static final String TAG = "CarLauncherUtils";
+    private static final String ACTION_APP_GRID = "com.android.car.carlauncher.ACTION_APP_GRID";
 
     private CarLauncherUtils() {
+    }
+
+    public static Intent getAppsGridIntent() {
+        return new Intent(ACTION_APP_GRID);
     }
 
     /** Intent used to find/launch the maps activity to run in the relevant DisplayArea. */
