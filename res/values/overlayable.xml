@@ -25,6 +25,7 @@ REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
       <item type="color" name="dialer_button_icon_color"/>
       <item type="color" name="dialer_end_call_button_color"/>
       <item type="color" name="icon_tint"/>
+      <item type="color" name="launcher_home_icon_color"/>
       <item type="color" name="media_button_tint"/>
       <item type="color" name="minimized_progress_bar_background"/>
       <item type="color" name="recent_apps_line_divider_color"/>
@@ -84,6 +85,7 @@ REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
       <item type="drawable" name="ic_call_end_button"/>
       <item type="drawable" name="ic_clear_black"/>
       <item type="drawable" name="ic_dialpad"/>
+      <item type="drawable" name="ic_launcher_home"/>
       <item type="drawable" name="ic_mic_off"/>
       <item type="drawable" name="ic_mic_on"/>
       <item type="drawable" name="ic_mute_activatable"/>
