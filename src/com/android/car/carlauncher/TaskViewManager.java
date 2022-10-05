@@ -58,6 +58,8 @@ import com.android.wm.shell.common.annotations.ShellMainThread;
 import com.android.wm.shell.fullscreen.FullscreenTaskListener;
 import com.android.wm.shell.startingsurface.StartingWindowController;
 import com.android.wm.shell.startingsurface.phone.PhoneStartingWindowTypeAlgorithm;
+import com.android.wm.shell.sysui.ShellCommandHandler;
+import com.android.wm.shell.sysui.ShellController;
 import com.android.wm.shell.sysui.ShellInit;
 
 import java.util.ArrayList;
@@ -324,9 +326,12 @@ public final class TaskViewManager {
                 carActivityManagerRef, mSyncQueue);
         mTaskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
         ShellInit shellInit = new ShellInit(mShellExecutor);
+        ShellCommandHandler shellCommandHandler = new ShellCommandHandler();
+        ShellController shellController = new ShellController(shellInit, shellCommandHandler,
+                mShellExecutor);
         // StartingWindowController needs to be initialized so that splash screen is displayed.
-        new StartingWindowController(mContext, shellInit, mTaskOrganizer, mShellExecutor,
-                new PhoneStartingWindowTypeAlgorithm(), new IconProvider(mContext),
+        new StartingWindowController(mContext, shellInit, shellController, mTaskOrganizer,
+                mShellExecutor, new PhoneStartingWindowTypeAlgorithm(), new IconProvider(mContext),
                 new TransactionPool());
         shellInit.init();
         List<TaskAppearedInfo> taskAppearedInfos = mTaskOrganizer.registerOrganizer();
