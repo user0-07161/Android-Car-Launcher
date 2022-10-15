@@ -114,8 +114,7 @@ public class CarLauncher extends FragmentActivity {
             startActivity(controlBarIntent);
             startActivity(
                     CarLauncherUtils.getMapsIntent(this).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            // Register health check monitor for maps.
-            finish();
+            setContentView(R.layout.car_launcher);
             return;
         }
 
