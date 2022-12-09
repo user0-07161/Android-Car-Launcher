@@ -20,6 +20,7 @@
     <string name="app_title" msgid="1995858460392177468">"కార్ లాంచర్"</string>
     <string name="app_launcher_title_all_apps" msgid="3215107396036838217">"అన్ని యాప్‌లు"</string>
     <string name="app_launcher_title_media_only" msgid="4400886555907422816">"మీడియా యాప్‌లు"</string>
+    <string name="default_media_song_title" msgid="2970305231647817808"></string>
     <string name="driving_toast_text" msgid="149483091947120092">"డ్రైవింగ్ చేస్తున్నపుడు <xliff:g id="APP_NAME">%1$s</xliff:g> ఉపయోగించలేరు."</string>
     <string name="tap_for_more_info_text" msgid="2043549383814415585">"మరింత సమాచారం కోసం కార్డ్‌ను ట్యాప్ చేయండి"</string>
     <string name="tap_to_launch_text" msgid="6910695705119260847">"లాంచ్ చేయడానికి కార్డ్‌ను ట్యాప్ చేయండి"</string>
