@@ -46,6 +46,7 @@ import android.util.Log;
 import android.util.Slog;
 import android.view.SurfaceControl;
 import android.window.TaskAppearedInfo;
+import android.window.WindowContainerTransaction;
 
 import com.android.car.carlauncher.taskstack.TaskStackChangeListeners;
 import com.android.internal.annotations.VisibleForTesting;
@@ -249,7 +250,7 @@ public final class TaskViewManager {
         public void onReceive(Context context, Intent intent) {
             if (DBG) Log.d(TAG, "onReceive: intent=" + intent);
 
-            if (isActivityStopped(mContext)) {
+            if (!isHostVisible()) {
                 return;
             }
 
@@ -266,12 +267,28 @@ public final class TaskViewManager {
 
     public TaskViewManager(Activity context, HandlerExecutor handlerExecutor) {
         this(context, handlerExecutor, new ShellTaskOrganizer(handlerExecutor),
-                new SyncTransactionQueue(new TransactionPool(), handlerExecutor));
+                new TransactionPool(), new ShellCommandHandler(), new ShellInit(handlerExecutor));
+    }
+
+    private TaskViewManager(Activity context, HandlerExecutor handlerExecutor,
+                    ShellTaskOrganizer taskOrganizer, TransactionPool transactionPool,
+                    ShellCommandHandler shellCommandHandler, ShellInit shellinit) {
+        this(context, handlerExecutor, taskOrganizer,
+                new SyncTransactionQueue(transactionPool, handlerExecutor),
+                shellinit,
+                new StartingWindowController(context, shellinit,
+                        new ShellController(shellinit, shellCommandHandler, handlerExecutor),
+                        taskOrganizer,
+                        handlerExecutor,
+                        new PhoneStartingWindowTypeAlgorithm(),
+                        new IconProvider(context),
+                        transactionPool));
     }
 
     @VisibleForTesting
     TaskViewManager(Activity context, HandlerExecutor handlerExecutor,
-            ShellTaskOrganizer shellTaskOrganizer, SyncTransactionQueue syncQueue) {
+                    ShellTaskOrganizer shellTaskOrganizer, SyncTransactionQueue syncQueue,
+                    ShellInit shellInit, StartingWindowController startingWindowController) {
         if (DBG) Slog.d(TAG, "TaskViewManager(): " + context);
         mContext = context;
         mShellExecutor = handlerExecutor;
@@ -280,6 +297,7 @@ public final class TaskViewManager {
         mSyncQueue = syncQueue;
 
         initCar();
+        shellInit.init();
         initTaskOrganizer(mCarActivityManagerRef);
         mContext.registerActivityLifecycleCallbacks(mActivityLifecycleCallbacks);
     }
@@ -325,15 +343,6 @@ public final class TaskViewManager {
         FullscreenTaskListener fullscreenTaskListener = new CarFullscreenTaskMonitorListener(
                 carActivityManagerRef, mSyncQueue);
         mTaskOrganizer.addListenerForType(fullscreenTaskListener, TASK_LISTENER_TYPE_FULLSCREEN);
-        ShellInit shellInit = new ShellInit(mShellExecutor);
-        ShellCommandHandler shellCommandHandler = new ShellCommandHandler();
-        ShellController shellController = new ShellController(shellInit, shellCommandHandler,
-                mShellExecutor);
-        // StartingWindowController needs to be initialized so that splash screen is displayed.
-        new StartingWindowController(mContext, shellInit, shellController, mTaskOrganizer,
-                mShellExecutor, new PhoneStartingWindowTypeAlgorithm(), new IconProvider(mContext),
-                new TransactionPool());
-        shellInit.init();
         List<TaskAppearedInfo> taskAppearedInfos = mTaskOrganizer.registerOrganizer();
         cleanUpExistingTaskViewTasks(taskAppearedInfos);
     }
@@ -355,7 +364,7 @@ public final class TaskViewManager {
         mShellExecutor.execute(() -> {
             ControlledCarTaskView taskView = new ControlledCarTaskView(mContext, mTaskOrganizer,
                     mSyncQueue, callbackExecutor, activityIntent, autoRestartOnCrash,
-                    taskViewCallbacks, mContext.getSystemService(UserManager.class));
+                    taskViewCallbacks, mContext.getSystemService(UserManager.class), this);
             mControlledTaskViews.add(taskView);
         });
     }
@@ -438,10 +447,10 @@ public final class TaskViewManager {
         });
     }
 
-    private static boolean isActivityStopped(Activity activity) {
+    boolean isHostVisible() {
         // This code relies on Activity#isVisibleForAutofill() instead of maintaining a custom
         // activity state.
-        return !activity.isVisibleForAutofill();
+        return mContext.isVisibleForAutofill();
     }
 
     private final ActivityLifecycleCallbacks mActivityLifecycleCallbacks =
@@ -468,15 +477,17 @@ public final class TaskViewManager {
                         return;
                     }
                     mShellExecutor.execute(() -> {
+                        WindowContainerTransaction wct = new WindowContainerTransaction();
                         for (int i = mControlledTaskViews.size() - 1; i >= 0; --i) {
-                            mControlledTaskViews.get(i).showEmbeddedTask();
+                            mControlledTaskViews.get(i).showEmbeddedTask(wct);
                         }
                         if (mLaunchRootCarTaskView != null) {
-                            mLaunchRootCarTaskView.showEmbeddedTask();
+                            mLaunchRootCarTaskView.showEmbeddedTask(wct);
                         }
                         for (int i = mSemiControlledTaskViews.size() - 1; i >= 0; --i) {
-                            mSemiControlledTaskViews.get(i).showEmbeddedTask();
+                            mSemiControlledTaskViews.get(i).showEmbeddedTask(wct);
                         }
+                        mSyncQueue.queue(wct);
                     });
                 }
 
