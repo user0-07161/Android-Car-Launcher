@@ -53,6 +53,7 @@ import android.car.test.mocks.AbstractExtendedMockitoTestCase;
 import android.car.user.CarUserManager;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Looper;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.window.TaskAppearedInfo;
@@ -72,7 +73,6 @@ import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.startingsurface.StartingWindowController;
-import com.android.wm.shell.sysui.ShellController;
 import com.android.wm.shell.sysui.ShellInit;
 
 import com.google.common.collect.ImmutableList;
@@ -117,9 +117,9 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     private WindowContainerToken mToken;
 
     @Mock
-    private ShellController mShellController;
-    @Mock
     private StartingWindowController mStartingWindowController;
+    @Mock
+    private TaskViewInputInterceptor mTaskViewInputInterceptor;
 
     @Captor
     private ArgumentCaptor<TaskStackListener> mTaskStackListenerArgumentCaptor;
@@ -235,6 +235,33 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
         runOnMainAndWait(() -> {});
         verify(controlledCarTaskViewCallbacks).onTaskViewCreated(any());
+        verifyZeroInteractions(mTaskViewInputInterceptor);
+    }
+
+    @Test
+    public void testCreateControlledTaskView_initializesInterceptor_whenCapturingEvents() throws
+            Exception {
+        TaskViewManager taskViewManager = createTaskViewManager();
+
+        Intent activityIntent = new Intent();
+        Set<String> packagesThatCanRestart = ImmutableSet.of("com.random.package");
+        ControlledCarTaskViewCallbacks controlledCarTaskViewCallbacks = mock(
+                ControlledCarTaskViewCallbacks.class);
+        when(controlledCarTaskViewCallbacks.getDependingPackageNames())
+                .thenReturn(packagesThatCanRestart);
+
+        taskViewManager.createControlledCarTaskView(
+                mActivity.getMainExecutor(),
+                ControlledCarTaskViewConfig.builder()
+                        .setActivityIntent(activityIntent)
+                        .setAutoRestartOnCrash(false)
+                        .setCaptureLongPress(true)
+                        .build(),
+                controlledCarTaskViewCallbacks
+        );
+
+        runOnMainAndWait(() -> {});
+        verify(mTaskViewInputInterceptor).init();
     }
 
     @Test
@@ -794,11 +821,21 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         assertThat(taskViewManager.getControlledTaskViews()).isEmpty();
 
         verify(mOrganizer).unregisterOrganizer();
+        verify(mTaskViewInputInterceptor).release();
     }
 
     private TaskViewManager createTaskViewManager() {
-        return new TaskViewManager(mActivity, mShellExecutor, mOrganizer, mSyncQueue,
-                new ShellInit(mShellExecutor), mStartingWindowController);
+        // InstrumentationTestRunner prepares a looper, but AndroidJUnitRunner does not.
+        // http://b/25897652.
+        Looper looper = Looper.myLooper();
+        if (looper == null) {
+            Looper.prepare();
+        }
+
+        TaskViewManager taskViewManager =  new TaskViewManager(mActivity, mShellExecutor,
+                mOrganizer, mSyncQueue, new ShellInit(mShellExecutor), mStartingWindowController);
+        taskViewManager.setTaskViewInputInterceptor(mTaskViewInputInterceptor);
+        return taskViewManager;
     }
 
     private void runOnMainAndWait(Runnable r) throws Exception {
