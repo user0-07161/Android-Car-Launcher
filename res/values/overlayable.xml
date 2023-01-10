@@ -23,8 +23,10 @@ REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
       <item type="color" name="card_background_scrim"/>
       <item type="color" name="date_divider_bar_color"/>
       <item type="color" name="dialer_button_icon_color"/>
+      <item type="color" name="dialer_icon_tint_state_list"/>
       <item type="color" name="dialer_end_call_button_color"/>
       <item type="color" name="icon_tint"/>
+      <item type="color" name="launcher_home_icon_color"/>
       <item type="color" name="media_button_tint"/>
       <item type="color" name="minimized_progress_bar_background"/>
       <item type="color" name="recent_apps_line_divider_color"/>
@@ -78,13 +80,14 @@ REGENERATE USING packages/apps/Car/libs/tools/rro/generate-overlayable.py
       <item type="dimen" name="vertical_border_size"/>
       <item type="drawable" name="car_button_background"/>
       <item type="drawable" name="default_audio_background"/>
+      <item type="drawable" name="dialer_button_active_state_circle"/>
       <item type="drawable" name="ic_apps_black"/>
       <item type="drawable" name="ic_arrow_back_black"/>
       <item type="drawable" name="ic_call_end"/>
       <item type="drawable" name="ic_call_end_button"/>
       <item type="drawable" name="ic_clear_black"/>
       <item type="drawable" name="ic_dialpad"/>
-      <item type="drawable" name="ic_mic_off"/>
+      <item type="drawable" name="ic_launcher_home"/>
       <item type="drawable" name="ic_mic_on"/>
       <item type="drawable" name="ic_mute_activatable"/>
       <item type="drawable" name="ic_search_black"/>
