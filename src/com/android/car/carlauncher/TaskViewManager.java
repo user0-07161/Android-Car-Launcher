@@ -352,19 +352,18 @@ public final class TaskViewManager {
      *
      * @param callbackExecutor the executor which the {@link ControlledCarTaskViewCallbacks} will
      *                         be executed on.
-     * @param activityIntent the intent of the activity that is meant to be started in this
-     *                       {@link ControlledCarTaskView}.
+     * @param controlledCarTaskViewConfig the configuration for the underlying
+     * {@link ControlledCarTaskView}.
      * @param taskViewCallbacks the callbacks for the underlying TaskView.
      */
     public void createControlledCarTaskView(
             Executor callbackExecutor,
-            Intent activityIntent,
-            boolean autoRestartOnCrash,
+            ControlledCarTaskViewConfig controlledCarTaskViewConfig,
             ControlledCarTaskViewCallbacks taskViewCallbacks) {
         mShellExecutor.execute(() -> {
             ControlledCarTaskView taskView = new ControlledCarTaskView(mContext, mTaskOrganizer,
-                    mSyncQueue, callbackExecutor, activityIntent, autoRestartOnCrash,
-                    taskViewCallbacks, mContext.getSystemService(UserManager.class), this);
+                    mSyncQueue, callbackExecutor, controlledCarTaskViewConfig, taskViewCallbacks,
+                    mContext.getSystemService(UserManager.class), this);
             mControlledTaskViews.add(taskView);
         });
     }
