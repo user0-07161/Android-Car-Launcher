@@ -115,6 +115,11 @@ final class ControlledCarTaskView extends CarTaskView {
                 /* fillInIntent= */ null, options, launchBounds);
     }
 
+    /** Gets the config used to build this controlled car task view. */
+    ControlledCarTaskViewConfig getConfig() {
+        return mConfig;
+    }
+
     /**
      * See {@link ControlledCarTaskViewCallbacks#getDependingPackageNames()}.
      */
