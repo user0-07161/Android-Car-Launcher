@@ -74,12 +74,28 @@ public final class ControlledCarTaskViewConfig {
             return this;
         }
 
-        private Builder setCaptureGestures(boolean captureGestures) {
-            throw new UnsupportedOperationException("setCaptureGestures is not supported yet");
+        /**
+         * Enables the swipe gesture capturing over {@link ControlledCarTaskView}. When enabled, the
+         * swipe gestures won't be sent to the embedded app and will instead be forwarded to the
+         * host activity.
+         */
+        public Builder setCaptureGestures(boolean captureGestures) {
+            mCaptureGestures = captureGestures;
+            return this;
         }
 
-        private Builder setCaptureLongPress(boolean captureLongPress) {
-            throw new UnsupportedOperationException("setCaptureGestures is not supported yet");
+        /**
+         * Enables the long press capturing over {@link ControlledCarTaskView}. When enabled, the
+         * long press won't be sent to the embedded app and will instead be sent to the listener
+         * specified via {@link
+         * ControlledCarTaskView#setOnLongClickListener(View.OnLongClickListener)}.
+         *
+         * <p>If disabled, the listener supplied via {@link
+         * ControlledCarTaskView#setOnLongClickListener(View.OnLongClickListener)} won't be called.
+         */
+        public Builder setCaptureLongPress(boolean captureLongPress) {
+            mCaptureLongPress = captureLongPress;
+            return this;
         }
 
         /** Creates the {@link ControlledCarTaskViewConfig} object. */

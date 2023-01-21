@@ -83,6 +83,7 @@ public final class TaskViewManager {
     private final HandlerExecutor mShellExecutor;
     private final SyncTransactionQueue mSyncQueue;
     private final ShellTaskOrganizer mTaskOrganizer;
+    private TaskViewInputInterceptor mTaskViewInputInterceptor;
     private final int mHostTaskId;
 
     // All TaskView are bound to the Host Activity if it exists.
@@ -295,6 +296,7 @@ public final class TaskViewManager {
         mTaskOrganizer = shellTaskOrganizer;
         mHostTaskId = mContext.getTaskId();
         mSyncQueue = syncQueue;
+        mTaskViewInputInterceptor = new TaskViewInputInterceptor(context, this);
 
         initCar();
         shellInit.init();
@@ -365,7 +367,13 @@ public final class TaskViewManager {
                     mSyncQueue, callbackExecutor, controlledCarTaskViewConfig, taskViewCallbacks,
                     mContext.getSystemService(UserManager.class), this);
             mControlledTaskViews.add(taskView);
+
+            if (controlledCarTaskViewConfig.mCaptureGestures
+                    || controlledCarTaskViewConfig.mCaptureLongPress) {
+                mTaskViewInputInterceptor.init();
+            }
         });
+
     }
 
     /**
@@ -443,6 +451,7 @@ public final class TaskViewManager {
 
             mContext.unregisterActivityLifecycleCallbacks(mActivityLifecycleCallbacks);
             mTaskOrganizer.unregisterOrganizer();
+            mTaskViewInputInterceptor.release();
         });
     }
 
@@ -536,5 +545,11 @@ public final class TaskViewManager {
     @VisibleForTesting
     BroadcastReceiver getPackageBroadcastReceiver() {
         return mPackageBroadcastReceiver;
+    }
+
+    @VisibleForTesting
+    /** Only meant for testing, should not be used by real code. */
+    void setTaskViewInputInterceptor(TaskViewInputInterceptor taskViewInputInterceptor) {
+        mTaskViewInputInterceptor = taskViewInputInterceptor;
     }
 }
