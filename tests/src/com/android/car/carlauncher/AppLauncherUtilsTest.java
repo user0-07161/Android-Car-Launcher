@@ -266,12 +266,12 @@ public final class AppLauncherUtilsTest extends AbstractExtendedMockitoTestCase 
             }
             return new ArrayList<>();
         });
-        when(mMockPackageManager.queryIntentActivities(any(), anyInt())).thenAnswer(args -> {
+        when(mMockPackageManager.queryIntentActivities(any(), any())).thenAnswer(args -> {
             Intent intent = args.getArgument(0);
-            int flags = args.getArgument(1);
+            PackageManager.ResolveInfoFlags flags = args.getArgument(1);
             List<ResolveInfo> resolveInfoList = new ArrayList<>();
             if (intent.getAction().equals(Intent.ACTION_MAIN)) {
-                if ((flags & MATCH_DISABLED_UNTIL_USED_COMPONENTS) != 0) {
+                if ((flags.getValue() & MATCH_DISABLED_UNTIL_USED_COMPONENTS) != 0) {
                     resolveInfoList.add(constructActivityResolveInfo(TEST_DISABLED_APP_1));
                     resolveInfoList.add(constructActivityResolveInfo(TEST_DISABLED_APP_2));
                 }
@@ -288,7 +288,7 @@ public final class AppLauncherUtilsTest extends AbstractExtendedMockitoTestCase 
     }
 
     private void mockSettingsStringCalls() {
-        when(mMockContext.createContextAsUser(any(), anyInt()))
+        when(mMockContext.createContextAsUser(any(UserHandle.class), anyInt()))
                 .thenAnswer(args -> {
                     Context context = mock(Context.class);
                     ContentResolver contentResolver = mock(ContentResolver.class);
@@ -298,7 +298,7 @@ public final class AppLauncherUtilsTest extends AbstractExtendedMockitoTestCase 
 
         doReturn(TEST_DISABLED_APP_1 + PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR
                 + TEST_DISABLED_APP_2)
-                .when(() -> Settings.Secure.getString(any(),
+                .when(() -> Settings.Secure.getString(any(ContentResolver.class),
                 eq(KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE)));
     }
 

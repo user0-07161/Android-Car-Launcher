@@ -16,14 +16,16 @@
 
 package com.android.car.carlauncher.homescreen.audio;
 
+import static android.car.media.CarMediaIntents.EXTRA_MEDIA_COMPONENT;
 import static android.car.media.CarMediaManager.MEDIA_SOURCE_MODE_PLAYBACK;
 
 import android.app.ActivityOptions;
 import android.app.Application;
-import android.car.Car;
+import android.car.media.CarMediaIntents;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.util.Size;
 import android.view.Display;
 import android.view.View;
@@ -51,6 +53,8 @@ import com.android.internal.annotations.VisibleForTesting;
  * for data on the audio source and audio metadata (such as song title), respectively.
  */
 public class MediaViewModel extends AndroidViewModel implements HomeCardInterface.Model {
+
+    private static final String TAG = "MediaViewModel";
 
     private HomeCardInterface.Presenter mAudioPresenter;
     // MediaSourceViewModel is for the current or last played media app
@@ -120,9 +124,15 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
         // If not set, activity launches in the calling TDA.
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchDisplayId(Display.DEFAULT_DISPLAY);
-        v.getContext().startActivity(new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE),
-                options.toBundle());
+        MediaSource mediaSource = mSourceViewModel.getPrimaryMediaSource().getValue();
+        Intent intent = new Intent(CarMediaIntents.ACTION_MEDIA_TEMPLATE);
+        if (mediaSource != null) {
+            intent.putExtra(EXTRA_MEDIA_COMPONENT,
+                    mediaSource.getBrowseServiceComponentName().flattenToString());
+        }
+        v.getContext().startActivity(intent, options.toBundle());
     }
+
 
     /**
      * Sets the Presenter, which will handle updating the UI
@@ -162,16 +172,19 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
             // will switch to showing "no media playing" case.
             if (mediaSource != null
                     && !AppLauncherUtils.isVideoApp(mContext.getPackageManager(),
-                        mediaSource.getPackageName())) {
+                          mediaSource.getPackageName())) {
+                if (Log.isLoggable(TAG, Log.INFO)) {
+                    Log.i(TAG, "Setting Media view to source " + mediaSource.getDisplayName());
+                }
                 mAppName = mediaSource.getDisplayName();
                 mAppIcon = mediaSource.getIcon();
                 mCardHeader = new CardHeader(mAppName, mAppIcon);
                 updateMetadata();
             } else {
-                mAppName = null;
-                mAppIcon = null;
-                mCardHeader = null;
-                clearMetadata();
+                if (Log.isLoggable(TAG, Log.INFO)) {
+                    Log.i(TAG, "Not resetting media widget for video apps or apps "
+                            + "that do not support media browse");
+                }
             }
             mAudioPresenter.onModelUpdated(this);
         }
@@ -201,7 +214,7 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
     }
 
     private void clearMetadata() {
-        mSongTitle = null;
+        mSongTitle = mContext.getString(R.string.default_media_song_title);
         mArtistName = null;
         mAlbumArtBinder.setImage(mContext, /* newArtRef = */ null);
     }
@@ -227,10 +240,16 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
     private boolean mediaSourceChanged() {
         MediaSource mediaSource = mSourceViewModel.getPrimaryMediaSource().getValue();
         if (mediaSource == null && (mAppName != null || mAppIcon != null)) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "new media source is null...");
+            }
             return true;
         }
         if (mediaSource != null && (mAppName != mediaSource.getDisplayName()
                 || mAppIcon != mediaSource.getIcon())) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "new media source is " + mediaSource.toString());
+            }
             return true;
         }
         return false;
