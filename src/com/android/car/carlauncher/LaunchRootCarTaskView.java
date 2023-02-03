@@ -109,6 +109,11 @@ final class LaunchRootCarTaskView extends CarTaskView {
 
                     mRootTaskListener.onTaskVanished(taskInfo);
                 }
+
+                @Override
+                public void onBackPressedOnTaskRoot(ActivityManager.RunningTaskInfo taskInfo) {
+                    mRootTaskListener.onBackPressedOnTaskRoot(taskInfo);
+                }
             };
 
     public LaunchRootCarTaskView(Activity context,
