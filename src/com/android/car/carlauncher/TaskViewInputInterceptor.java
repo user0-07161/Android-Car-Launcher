@@ -164,6 +164,8 @@ public final class TaskViewInputInterceptor {
     private final class GestureSpyView extends View {
         private boolean mConsumingCurrentEventStream = false;
         private boolean mActionDownInsideTaskView = false;
+        private float mTouchDownX;
+        private float mTouchDownY;
 
         GestureSpyView(Context context) {
             super(context);
@@ -181,6 +183,8 @@ public final class TaskViewInputInterceptor {
                         mTaskViewManager.getControlledTaskViews();
                 for (ControlledCarTaskView tv : taskViewList) {
                     if (tv.getConfig().mCaptureGestures && isIn(event, tv)) {
+                        mTouchDownX = event.getX();
+                        mTouchDownY = event.getY();
                         mActionDownInsideTaskView = true;
                         break;
                     }
@@ -191,7 +195,9 @@ public final class TaskViewInputInterceptor {
             }
 
             if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                if (!mConsumingCurrentEventStream && mActionDownInsideTaskView) {
+                if (!mConsumingCurrentEventStream && mActionDownInsideTaskView
+                        && Float.compare(mTouchDownX, event.getX()) != 0
+                        && Float.compare(mTouchDownY, event.getY()) != 0) {
                     // Start consuming on ACTION_MOVE when ACTION_DOWN happened inside TaskView
                     mConsumingCurrentEventStream = true;
                     justToggled = true;

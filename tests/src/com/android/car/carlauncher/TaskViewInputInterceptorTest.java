@@ -104,6 +104,9 @@ public class TaskViewInputInterceptorTest extends AbstractExtendedMockitoTestCas
 
     @After
     public void tearDown() throws InterruptedException {
+        if (mActivity == null) {
+            return;
+        }
         mActivity.finishCompletely();
     }
 
@@ -160,6 +163,14 @@ public class TaskViewInputInterceptorTest extends AbstractExtendedMockitoTestCas
                         /* x= */ 11,
                         /* y= */ 2,
                         /* metaState= */ 0);
+        MotionEvent moveEventOnTheDownEventLocation =
+                MotionEvent.obtain(
+                        /* downTime= */ eventTime,
+                        /* eventTime= */ eventTime,
+                        MotionEvent.ACTION_MOVE,
+                        /* x= */ 11,
+                        /* y= */ 2,
+                        /* metaState= */ 0);
         downEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         MotionEvent upEvent =
                 MotionEvent.obtain(
@@ -173,6 +184,7 @@ public class TaskViewInputInterceptorTest extends AbstractExtendedMockitoTestCas
 
         // Act
         spyWindow.dispatchTouchEvent(downEvent);
+        spyWindow.dispatchTouchEvent(moveEventOnTheDownEventLocation);
         spyWindow.dispatchTouchEvent(upEvent);
 
         // Assert
