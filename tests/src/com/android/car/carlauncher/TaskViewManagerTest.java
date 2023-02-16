@@ -71,6 +71,9 @@ import com.android.wm.shell.ShellTaskOrganizer;
 import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
+import com.android.wm.shell.startingsurface.StartingWindowController;
+import com.android.wm.shell.sysui.ShellController;
+import com.android.wm.shell.sysui.ShellInit;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -111,6 +114,11 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     private CarUserManager mCarUserManager;
     @Mock
     private WindowContainerToken mToken;
+
+    @Mock
+    private ShellController mShellController;
+    @Mock
+    private StartingWindowController mStartingWindowController;
 
     @Captor
     private ArgumentCaptor<TaskStackListener> mTaskStackListenerArgumentCaptor;
@@ -193,7 +201,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
                 .when(mOrganizer).registerOrganizer();
         ExtendedMockito.doReturn(false).when(mSpyActivityTaskManager).removeTask(anyInt());
 
-        new TaskViewManager(mActivity, mShellExecutor, mOrganizer, mSyncQueue);
+        createTaskViewManager();
 
         verify(mSpyActivityTaskManager).removeTask(eq(1));
         verify(mSpyActivityTaskManager).removeTask(eq(2));
@@ -201,8 +209,8 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testCreateControlledTaskView() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
+
         Intent activityIntent = new Intent();
         Set<String> packagesThatCanRestart = ImmutableSet.of("com.random.package");
         ControlledCarTaskViewCallbacks controlledCarTaskViewCallbacks = mock(
@@ -223,8 +231,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testCreateControlledTaskView_callsOnReadyWhenVisible() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor, mOrganizer,
-                mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         Intent activityIntent = new Intent("ACTION_VIEW");
         Set<String> packagesThatCanRestart = ImmutableSet.of("com.random.package");
         ControlledCarTaskViewCallbacks controlledCarTaskViewCallbacks = mock(
@@ -251,8 +258,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     public void testCreateLaunchRootTaskView() throws Exception {
         LaunchRootCarTaskViewCallbacks taskViewCallbacks =
                 mock(LaunchRootCarTaskViewCallbacks.class);
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
 
         taskViewManager.createLaunchRootTaskView(
                 mActivity.getMainExecutor(),
@@ -274,8 +280,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         TaskAppearedInfo fakeLaunchRootTaskInfo  = createMultiWindowTask(1);
         LaunchRootCarTaskViewCallbacks taskViewCallbacks =
                 mock(LaunchRootCarTaskViewCallbacks.class);
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         doAnswer(invocation -> {
             ShellTaskOrganizer.TaskListener listener = invocation.getArgument(2);
             listener.onTaskAppeared(fakeLaunchRootTaskInfo.getTaskInfo(), mLeash);
@@ -313,8 +318,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
             throws Exception {
         SemiControlledCarTaskViewCallbacks taskViewCallbacks =
                 mock(SemiControlledCarTaskViewCallbacks.class);
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
 
         // The exception happens in the current stack because mShellExecutor simply calls .run()
         assertThrows(IllegalStateException.class, () -> {
@@ -333,8 +337,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         SemiControlledCarTaskViewCallbacks taskViewCallbacks =
                 mock(SemiControlledCarTaskViewCallbacks.class);
         when(taskViewCallbacks.shouldStartInTaskView(any())).thenReturn(true);
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         AtomicReference<ShellTaskOrganizer.TaskListener> listener = new AtomicReference<>();
         setUpLaunchRootTaskView(taskViewManager, listener, /* rootTaskId = */ 1);
@@ -361,8 +364,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
                 mock(SemiControlledCarTaskViewCallbacks.class);
         when(taskViewCallbacks.shouldStartInTaskView(any())).thenReturn(true);
 
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         // Set up a LaunchRootTaskView
         AtomicReference<ShellTaskOrganizer.TaskListener> rootTaskListener = new AtomicReference<>();
@@ -396,8 +398,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
                 mock(SemiControlledCarTaskViewCallbacks.class);
         when(taskViewCallbacks.shouldStartInTaskView(any())).thenReturn(true);
 
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         // Set up a LaunchRootTaskView
         AtomicReference<ShellTaskOrganizer.TaskListener> rootTaskListener = new AtomicReference<>();
@@ -452,7 +453,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testInit_registersTaskMonitor() throws Exception {
-        new TaskViewManager(mActivity, mShellExecutor, mOrganizer, mSyncQueue);
+        createTaskViewManager();
         runOnMainAndWait(() -> {});
 
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
@@ -462,8 +463,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testTaskAppeared_launchRootTaskView_updatesCarActivityManager() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
         // Set up a LaunchRootTaskView
@@ -482,8 +482,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     @Test
     public void testTaskInfoChanged_launchRootTaskView_updatesCarActivityManager()
             throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
         // Set up a LaunchRootTaskView
@@ -501,8 +500,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testTaskVanished_launchRootTaskView_updatesCarActivityManager() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
         // Set up a LaunchRootTaskView
@@ -550,8 +548,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testRestartControlledTask_whenHostActivityFocussed() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
 
         // Send onTaskVanished to mimic the task removal behavior.
@@ -580,8 +577,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     @Test
     public void testControlledTaskNotRestarted_ifAlreadyRunning_whenHostActivityFocussed()
             throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
 
         setUpControlledTaskView(taskViewManager, new Intent("ACTION_VIEW"),
@@ -606,8 +602,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testRestartControlledTask_whenHostActivityRestarted() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
 
         // Send onTaskVanished to mimic the task removal behavior.
@@ -637,8 +632,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testRestartControlledTask_whenPackageThatCanRestartChanged() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
 
         // Send onTaskVanished to mimic the task removal behavior.
@@ -666,8 +660,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testControlledTaskNotRestarted_whenARandomPackageChanged() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
 
         // Send onTaskVanished to mimic the task removal behavior.
@@ -697,8 +690,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
     @Test
     public void testRestartControlledTask_onUserUnlocked() throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
 
         // Send onTaskVanished to mimic the task removal behavior.
@@ -735,8 +727,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     }
 
     private void testReleaseAllTaskViews(Runnable actionBlock) throws Exception {
-        TaskViewManager taskViewManager = new TaskViewManager(mActivity, mShellExecutor,
-                mOrganizer, mSyncQueue);
+        TaskViewManager taskViewManager = createTaskViewManager();
         runOnMainAndWait(() -> {});
         mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
         // Create a few TaskViews
@@ -791,6 +782,11 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         assertThat(taskViewManager.getControlledTaskViews()).isEmpty();
 
         verify(mOrganizer).unregisterOrganizer();
+    }
+
+    private TaskViewManager createTaskViewManager() {
+        return new TaskViewManager(mActivity, mShellExecutor, mOrganizer, mSyncQueue,
+                new ShellInit(mShellExecutor), mStartingWindowController);
     }
 
     private void runOnMainAndWait(Runnable r) throws Exception {
