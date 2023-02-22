@@ -48,6 +48,7 @@ import com.android.car.carlauncher.homescreen.ui.CardHeader;
 import com.android.car.carlauncher.homescreen.ui.DescriptiveTextWithControlsView;
 import com.android.car.telephony.common.CallDetail;
 import com.android.car.telephony.common.TelecomUtils;
+import com.android.car.telephony.selfmanaged.SelfManagedCallUtil;
 import com.android.car.ui.utils.CarUxRestrictionsUtil;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.util.ArrayUtils;
@@ -67,7 +68,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
 
     private Context mContext;
     private TelecomManager mTelecomManager;
-    private CarUxRestrictionsUtil mCarUxRestrictionsUtil;
+    private SelfManagedCallUtil mSelfManagedCallUtil;
 
     private PackageManager mPackageManager;
     private final Clock mElapsedTimeClock;
@@ -118,7 +119,8 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     public void onCreate(Context context) {
         mContext = context;
         mTelecomManager = context.getSystemService(TelecomManager.class);
-        mCarUxRestrictionsUtil = CarUxRestrictionsUtil.getInstance(context);
+        CarUxRestrictionsUtil carUxRestrictionsUtil = CarUxRestrictionsUtil.getInstance(context);
+        mSelfManagedCallUtil = new SelfManagedCallUtil(mContext, carUxRestrictionsUtil);
 
         mOngoingCallSubtitle = context.getResources().getString(R.string.ongoing_call_text);
         mDialingCallSubtitle = context.getResources().getString(R.string.dialing_call_text);
@@ -168,7 +170,7 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
     @Override
     public void onClick(View view) {
         Intent intent = null;
-        if (isSelfManagedCall() && !isRequiresDistractionOptimization()) {
+        if (isSelfManagedCall() && mSelfManagedCallUtil.canShowCalInCallView()) {
             Bundle extras = mCurrentCall.getDetails().getExtras();
             ComponentName componentName = extras == null ? null : extras.getParcelable(
                     Intent.EXTRA_COMPONENT_NAME, ComponentName.class);
@@ -411,10 +413,6 @@ public class InCallModel implements HomeCardInterface.Model, InCallServiceImpl.I
                 callDetails == null ? null : callDetails.getAccountHandle();
         return phoneAccountHandle == null ? null
                 : phoneAccountHandle.getComponentName().getPackageName();
-    }
-
-    private boolean isRequiresDistractionOptimization() {
-        return mCarUxRestrictionsUtil.getCurrentRestrictions().isRequiresDistractionOptimization();
     }
 
     private boolean isSelfManagedCall() {
