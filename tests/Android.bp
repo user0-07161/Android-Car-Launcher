@@ -26,11 +26,17 @@ android_test {
   resource_dirs: ["res"],
 
   libs: [
+      "android.car",
       "android.test.base",
       "android.car-system-stubs",
   ],
 
+  optimize: {
+      enabled: false,
+  },
+
   static_libs: [
+      "android.car.testapi",
       "android.car.test.utils",
       "androidx.test.core",
       "androidx.test.runner",
@@ -39,6 +45,7 @@ android_test {
       "androidx.test.ext.junit",
       "hamcrest-library",
       "mockito-target-extended",
+      "truth-prebuilt",
       "testables",
       "CarLauncher-core"
   ],
@@ -46,6 +53,8 @@ android_test {
   platform_apis: true,
 
   certificate: "platform",
+
+  privileged: true,
 
   manifest: "AndroidManifest.xml",
 

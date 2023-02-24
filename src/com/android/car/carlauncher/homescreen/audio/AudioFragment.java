@@ -19,6 +19,7 @@ package com.android.car.carlauncher.homescreen.audio;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Size;
 import android.view.View;
 import android.view.ViewStub;
@@ -137,6 +138,7 @@ public class AudioFragment extends HomeCardFragment {
         getMediaLayoutView().setVisibility(View.VISIBLE);
         mMediaTitle.setText(title);
         mMediaSubtitle.setText(subtitle);
+        mMediaSubtitle.setVisibility(TextUtils.isEmpty(subtitle) ? View.GONE : View.VISIBLE);
     }
 
     private void updateAudioDuration(DescriptiveTextWithControlsView content) {
