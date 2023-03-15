@@ -101,9 +101,11 @@ public class HomeAudioCardPresenter extends CardPresenter {
                 // empty content since that would hide the card.
                 return;
             }
-        } else if (mCurrentModel != null && mCurrentModel.getClass() == InCallModel.class) {
+        } else if (mCurrentModel != null && mCurrentModel.getClass() == InCallModel.class
+                && model.getClass() != InCallModel.class) {
             // If the Model has content, check if currentModel on display is an ongoing phone call.
-            // If there is any ongoing phone call do not update the View.
+            // If there is any ongoing phone call, do not update the View
+            // if the model trying to update View is NOT a phone call.
             return;
         }
         mCurrentModel = model;
