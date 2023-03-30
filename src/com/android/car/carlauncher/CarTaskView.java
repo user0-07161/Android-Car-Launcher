@@ -20,6 +20,7 @@ import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 
 import static com.android.car.carlauncher.TaskViewManager.DBG;
 
+import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -95,6 +96,12 @@ public class CarTaskView extends TaskView {
     // TODO(b/238473897): Consider taking insets one by one instead of taking all insets.
     /**
      * Set & apply the given {@code insets} on the Task.
+     *
+     * <p>
+     * The insets that were specified in an earlier call but not specified later, will remain
+     * applied to the task. Clients should explicitly call {@link #removeInsets(int[])} to remove
+     * the insets from the underlying task.
+     * </p>
      */
     public void setInsets(SparseArray<Rect> insets) {
         mInsets.clear();
@@ -102,6 +109,36 @@ public class CarTaskView extends TaskView {
             mInsets.append(insets.keyAt(i), insets.valueAt(i));
         }
         applyInsets();
+    }
+
+    /**
+     * Removes the given insets from the Task.
+     *
+     * Note: This will only remove the insets that were set using {@link #setInsets(SparseArray)}
+     *
+     * @param insetsTypes the types of insets to be removed
+     */
+    public void removeInsets(@NonNull int[] insetsTypes) {
+        if (mInsets == null || mInsets.size() == 0) {
+            Log.w(TAG, "No insets set.");
+            return;
+        }
+        if (mTaskToken == null) {
+            Log.w(TAG, "Cannot remove insets as the task token is not present.");
+            return;
+        }
+        WindowContainerTransaction wct = new WindowContainerTransaction();
+        for (int i = 0; i < insetsTypes.length; i++) {
+            int insetsType = insetsTypes[i];
+            if (mInsets.indexOfKey(insetsType) != -1) {
+                wct.removeInsetsProvider(mTaskToken, new int[]{insetsType});
+                mInsets.remove(insetsType);
+            } else {
+                Log.w(TAG, "Insets type: " + insetsType + " can't be removed as it was not "
+                        + "applied as part of hte last setInsets()");
+            }
+        }
+        mSyncQueue.queue(wct);
     }
 
     private void applyInsets() {
