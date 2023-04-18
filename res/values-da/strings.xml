@@ -20,7 +20,6 @@
     <string name="app_title" msgid="1995858460392177468">"Car Launcher"</string>
     <string name="app_launcher_title_all_apps" msgid="3215107396036838217">"Alle apps"</string>
     <string name="app_launcher_title_media_only" msgid="4400886555907422816">"Medieapps"</string>
-    <string name="default_media_song_title" msgid="2970305231647817808"></string>
     <string name="driving_toast_text" msgid="149483091947120092">"<xliff:g id="APP_NAME">%1$s</xliff:g> kan ikke bruges under kørsel."</string>
     <string name="tap_for_more_info_text" msgid="2043549383814415585">"Tryk på kortet for at få flere oplysninger"</string>
     <string name="tap_to_launch_text" msgid="6910695705119260847">"Tryk på kortet for at starte"</string>
@@ -29,7 +28,8 @@
     <string name="dialing_call_text" msgid="415326503409745490">"Ringer op…"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Start Android Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Android Auto kunne ikke startes. Der blev ikke fundet nogen aktivitet."</string>
-    <string name="projection_devices" msgid="916314090031116598">"{count,plural, =1{# enhed}one{# enhed}other{# enheder}}"</string>
+    <!-- no translation found for projection_devices (916314090031116598) -->
+    <skip />
     <string name="weather_app_name" msgid="8048146303519139993">"Vejret"</string>
     <string name="fake_weather_main_text" msgid="8117240999340284429">"-- ° Overvejende solskin"</string>
     <string name="fake_weather_footer_text" msgid="4570172025869749926">"Mountain View • H: -- ° L: -- °"</string>

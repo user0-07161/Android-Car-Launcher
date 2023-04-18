@@ -22,7 +22,6 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.os.UserManager;
 import android.util.Log;
@@ -48,28 +47,23 @@ final class ControlledCarTaskView extends CarTaskView {
     private static final String TAG = ControlledCarTaskView.class.getSimpleName();
 
     private final Executor mCallbackExecutor;
-    private final Intent mActivityIntent;
-    private final boolean mAutoRestartOnCrash;
-    // TODO(b/242861717): When mAutoRestartOnCrash is enabled, mPackagesThatCanRestart doesn't make
-    // a lot of sense. Consider removing it when there is more confidence with mAutoRestartOnCrash.
     private final ControlledCarTaskViewCallbacks mCallbacks;
     private final UserManager mUserManager;
     private final TaskViewManager mTaskViewManager;
+    private final ControlledCarTaskViewConfig mConfig;
 
     ControlledCarTaskView(
             Activity context,
             ShellTaskOrganizer organizer,
             SyncTransactionQueue syncQueue,
             Executor callbackExecutor,
-            Intent activityIntent,
-            Boolean autoRestartOnCrash,
+            ControlledCarTaskViewConfig controlledCarTaskViewConfig,
             ControlledCarTaskViewCallbacks callbacks,
             UserManager userManager,
             TaskViewManager taskViewManager) {
         super(context, organizer, syncQueue);
         mCallbackExecutor = callbackExecutor;
-        mActivityIntent = activityIntent;
-        mAutoRestartOnCrash = autoRestartOnCrash;
+        mConfig = controlledCarTaskViewConfig;
         mCallbacks = callbacks;
         mUserManager = userManager;
         mTaskViewManager = taskViewManager;
@@ -111,13 +105,19 @@ final class ControlledCarTaskView extends CarTaskView {
         Rect launchBounds = new Rect();
         getBoundsOnScreen(launchBounds);
         if (DBG) {
-            Log.d(TAG, "Starting (" + mActivityIntent.getComponent() + ") on " + launchBounds);
+            Log.d(TAG, "Starting (" + mConfig.mActivityIntent.getComponent() + ") on "
+                    + launchBounds);
         }
         startActivity(
                 PendingIntent.getActivity(mContext, /* requestCode= */ 0,
-                        mActivityIntent,
+                        mConfig.mActivityIntent,
                         PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
                 /* fillInIntent= */ null, options, launchBounds);
+    }
+
+    /** Gets the config used to build this controlled car task view. */
+    ControlledCarTaskViewConfig getConfig() {
+        return mConfig;
     }
 
     /**
@@ -130,7 +130,7 @@ final class ControlledCarTaskView extends CarTaskView {
     @Override
     public void onTaskVanished(ActivityManager.RunningTaskInfo taskInfo) {
         super.onTaskVanished(taskInfo);
-        if (mAutoRestartOnCrash && mTaskViewManager.isHostVisible()) {
+        if (mConfig.mAutoRestartOnCrash && mTaskViewManager.isHostVisible()) {
             // onTaskVanished can be called when the host is in the background. In this case
             // embedded activity should not be started.
             Log.i(TAG, "Restarting task " + taskInfo.baseActivity
