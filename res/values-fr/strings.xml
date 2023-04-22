@@ -20,6 +20,7 @@
     <string name="app_title" msgid="1995858460392177468">"Car Launcher"</string>
     <string name="app_launcher_title_all_apps" msgid="3215107396036838217">"Toutes les applications"</string>
     <string name="app_launcher_title_media_only" msgid="4400886555907422816">"Applications multimédias"</string>
+    <string name="default_media_song_title" msgid="2970305231647817808"></string>
     <string name="driving_toast_text" msgid="149483091947120092">"Impossible d\'utiliser <xliff:g id="APP_NAME">%1$s</xliff:g> en conduisant."</string>
     <string name="tap_for_more_info_text" msgid="2043549383814415585">"Appuyer sur la carte pour en savoir plus"</string>
     <string name="tap_to_launch_text" msgid="6910695705119260847">"Appuyer sur la carte pour effectuer le lancement"</string>
@@ -28,8 +29,7 @@
     <string name="dialing_call_text" msgid="415326503409745490">"Appel…"</string>
     <string name="projected_launch_text" msgid="5809132353957907500">"Lancer Android Auto"</string>
     <string name="projected_onclick_launch_error_toast_text" msgid="7462478007773137082">"Impossible de lancer Android Auto. Aucune activité trouvée."</string>
-    <!-- no translation found for projection_devices (916314090031116598) -->
-    <skip />
+    <string name="projection_devices" msgid="916314090031116598">"{count,plural, =1{# appareil}one{# appareil}other{# appareils}}"</string>
     <string name="weather_app_name" msgid="8048146303519139993">"Météo"</string>
     <string name="fake_weather_main_text" msgid="8117240999340284429">"-- ° Ensoleillé dans l\'ensemble"</string>
     <string name="fake_weather_footer_text" msgid="4570172025869749926">"Mountain View • Max. : -- ° - Min. : -- °"</string>
