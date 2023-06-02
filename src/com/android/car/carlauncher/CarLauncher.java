@@ -162,8 +162,11 @@ public class CarLauncher extends FragmentActivity {
         mapIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
         mTaskViewManager.createControlledCarTaskView(
                 getMainExecutor(),
-                mapIntent,
-                /* autoRestartOnCrash = */ false,
+                ControlledCarTaskViewConfig.builder()
+                        .setActivityIntent(mapIntent)
+                        // TODO(b/263876526): Enable auto restart after ensuring no CTS failure.
+                        .setAutoRestartOnCrash(false)
+                        .build(),
                 new ControlledCarTaskViewCallbacks() {
                     @Override
                     public void onTaskViewCreated(CarTaskView taskView) {

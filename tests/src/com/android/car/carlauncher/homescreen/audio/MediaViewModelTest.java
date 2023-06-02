@@ -107,7 +107,7 @@ public class MediaViewModelTest {
     public void changeSourceAndMetadata_updatesModel() {
         when(mMediaSource.getDisplayName()).thenReturn(APP_NAME);
         when(mMediaSource.getIcon()).thenReturn(APP_ICON);
-        when(mMetadata.getArtist()).thenReturn(ARTIST_NAME);
+        when(mMetadata.getSubtitle()).thenReturn(ARTIST_NAME);
         when(mMetadata.getTitle()).thenReturn(SONG_TITLE);
 
         mLiveMediaSource.setValue(mMediaSource);
@@ -144,7 +144,7 @@ public class MediaViewModelTest {
 
     @Test
     public void changeMetadataOnly_doesNotCallPresenter() {
-        when(mMetadata.getArtist()).thenReturn(ARTIST_NAME);
+        when(mMetadata.getSubtitle()).thenReturn(ARTIST_NAME);
         when(mMetadata.getTitle()).thenReturn(SONG_TITLE);
 
         mLiveMetadata.setValue(mMetadata);
