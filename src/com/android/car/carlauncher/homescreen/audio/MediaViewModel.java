@@ -208,7 +208,7 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
             clearMetadata();
         } else {
             mSongTitle = metadata.getTitle();
-            mArtistName = metadata.getArtist();
+            mArtistName = metadata.getSubtitle();
             mAlbumArtBinder.setImage(mContext, metadata.getArtworkKey());
         }
     }
@@ -228,7 +228,7 @@ public class MediaViewModel extends AndroidViewModel implements HomeCardInterfac
             return true;
         }
         if (metadata != null && (mSongTitle != metadata.getTitle()
-                || mArtistName != metadata.getArtist())) {
+                || mArtistName != metadata.getSubtitle())) {
             return true;
         }
         return false;

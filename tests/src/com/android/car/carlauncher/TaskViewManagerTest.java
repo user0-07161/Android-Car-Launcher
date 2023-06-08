@@ -19,6 +19,7 @@ package com.android.car.carlauncher;
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.window.WindowContainerTransaction.HierarchyOp.HIERARCHY_OP_TYPE_REMOVE_TASK;
 import static android.window.WindowContainerTransaction.HierarchyOp.HIERARCHY_OP_TYPE_SET_LAUNCH_ROOT;
 
 import static com.android.car.internal.common.CommonConstants.USER_LIFECYCLE_EVENT_TYPE_SWITCHING;
@@ -53,6 +54,9 @@ import android.car.test.mocks.AbstractExtendedMockitoTestCase;
 import android.car.user.CarUserManager;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Binder;
+import android.os.IBinder;
+import android.os.Looper;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.window.TaskAppearedInfo;
@@ -72,12 +76,12 @@ import com.android.wm.shell.TaskView;
 import com.android.wm.shell.common.HandlerExecutor;
 import com.android.wm.shell.common.SyncTransactionQueue;
 import com.android.wm.shell.startingsurface.StartingWindowController;
-import com.android.wm.shell.sysui.ShellController;
 import com.android.wm.shell.sysui.ShellInit;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,6 +96,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
@@ -116,9 +121,9 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
     private WindowContainerToken mToken;
 
     @Mock
-    private ShellController mShellController;
-    @Mock
     private StartingWindowController mStartingWindowController;
+    @Mock
+    private TaskViewInputInterceptor mTaskViewInputInterceptor;
 
     @Captor
     private ArgumentCaptor<TaskStackListener> mTaskStackListenerArgumentCaptor;
@@ -182,6 +187,11 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         scenario.onActivity(activity -> mActivity = activity);
     }
 
+    @After
+    public void tearDown() throws InterruptedException {
+        mActivity.finishCompletely();
+    }
+
     private TaskAppearedInfo createMultiWindowTask(int taskId) {
         ActivityManager.RunningTaskInfo taskInfo =
                 new ActivityManager.RunningTaskInfo();
@@ -189,8 +199,15 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         taskInfo.configuration.windowConfiguration.setWindowingMode(
                 WINDOWING_MODE_MULTI_WINDOW);
         taskInfo.parentTaskId = INVALID_TASK_ID;
-        taskInfo.token = mToken;
+        taskInfo.token = mock(WindowContainerToken.class);
+        taskInfo.isVisible = true;
         return new TaskAppearedInfo(taskInfo, new SurfaceControl());
+    }
+
+    private TaskAppearedInfo createMultiWindowTask(int taskId, IBinder token) {
+        TaskAppearedInfo taskInfo = createMultiWindowTask(taskId);
+        when(taskInfo.getTaskInfo().token.asBinder()).thenReturn(token);
+        return taskInfo;
     }
 
     @Test
@@ -220,13 +237,42 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
 
         taskViewManager.createControlledCarTaskView(
                 mActivity.getMainExecutor(),
-                activityIntent,
-                /* autoRestartOnCrash= */ false,
+                ControlledCarTaskViewConfig.builder()
+                        .setActivityIntent(activityIntent)
+                        .setAutoRestartOnCrash(false)
+                        .build(),
                 controlledCarTaskViewCallbacks
         );
 
         runOnMainAndWait(() -> {});
         verify(controlledCarTaskViewCallbacks).onTaskViewCreated(any());
+        verifyZeroInteractions(mTaskViewInputInterceptor);
+    }
+
+    @Test
+    public void testCreateControlledTaskView_initializesInterceptor_whenCapturingEvents() throws
+            Exception {
+        TaskViewManager taskViewManager = createTaskViewManager();
+
+        Intent activityIntent = new Intent();
+        Set<String> packagesThatCanRestart = ImmutableSet.of("com.random.package");
+        ControlledCarTaskViewCallbacks controlledCarTaskViewCallbacks = mock(
+                ControlledCarTaskViewCallbacks.class);
+        when(controlledCarTaskViewCallbacks.getDependingPackageNames())
+                .thenReturn(packagesThatCanRestart);
+
+        taskViewManager.createControlledCarTaskView(
+                mActivity.getMainExecutor(),
+                ControlledCarTaskViewConfig.builder()
+                        .setActivityIntent(activityIntent)
+                        .setAutoRestartOnCrash(false)
+                        .setCaptureLongPress(true)
+                        .build(),
+                controlledCarTaskViewCallbacks
+        );
+
+        runOnMainAndWait(() -> {});
+        verify(mTaskViewInputInterceptor).init();
     }
 
     @Test
@@ -240,8 +286,10 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
                 .thenReturn(packagesThatCanRestart);
         taskViewManager.createControlledCarTaskView(
                 mActivity.getMainExecutor(),
-                activityIntent,
-                /* autoRestartOnCrash= */ false,
+                ControlledCarTaskViewConfig.builder()
+                        .setActivityIntent(activityIntent)
+                        .setAutoRestartOnCrash(false)
+                        .build(),
                 controlledCarTaskViewCallbacks
         );
         ControlledCarTaskView taskView = spy(taskViewManager.getControlledTaskViews().get(0));
@@ -311,6 +359,59 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
                         .map(WindowContainerTransaction.HierarchyOp::getType)
                         .anyMatch(type -> type == HIERARCHY_OP_TYPE_SET_LAUNCH_ROOT))
                 .isTrue();
+    }
+
+    @Test
+    public void testLaunchRootTaskView_onBackPressed_removesTopTask() throws Exception {
+        IBinder task1Token = new Binder();
+        IBinder task2Token = new Binder();
+        IBinder task3Token = new Binder();
+        ActivityManager.RunningTaskInfo task1 = createMultiWindowTask(1, task1Token).getTaskInfo();
+        ActivityManager.RunningTaskInfo task2 = createMultiWindowTask(2, task2Token).getTaskInfo();
+        ActivityManager.RunningTaskInfo task3 = createMultiWindowTask(3, task3Token).getTaskInfo();
+        TaskViewManager taskViewManager = createTaskViewManager();
+        runOnMainAndWait(() -> {});
+        mCarServiceLifecycleListener.onLifecycleChanged(mCar, true);
+        runOnMainAndWait(() -> {});
+        // Set up a LaunchRootTaskView
+        AtomicReference<ShellTaskOrganizer.TaskListener> rootTaskListener = new AtomicReference<>();
+        ActivityManager.RunningTaskInfo launchRootTask =
+                setUpLaunchRootTaskView(taskViewManager, rootTaskListener, /* rootTaskId = */ 100);
+        runOnMainAndWait(() -> {});
+        // Trigger a taskAppeared on the launch root task to mimic the task appearance.
+        rootTaskListener.get().onTaskAppeared(task1, mLeash);
+        rootTaskListener.get().onTaskAppeared(task2, mLeash);
+        rootTaskListener.get().onTaskAppeared(task3, mLeash);
+        rootTaskListener.get().onTaskInfoChanged(task1);
+        // The resultant stack top to bottom is task1, task3, task2
+        runOnMainAndWait(() -> {});
+
+        // Act
+        // Press back button 3 times, trigger corresponding task vanishing as well. In real
+        // scenario, removeTask() will trigger onTaskVanished.
+        rootTaskListener.get().onBackPressedOnTaskRoot(launchRootTask);
+        rootTaskListener.get().onTaskVanished(task1);
+        rootTaskListener.get().onBackPressedOnTaskRoot(launchRootTask);
+        rootTaskListener.get().onTaskVanished(task3);
+        rootTaskListener.get().onBackPressedOnTaskRoot(launchRootTask);
+
+        // Assert
+        ArgumentCaptor<WindowContainerTransaction> wctCaptor = ArgumentCaptor.forClass(
+                WindowContainerTransaction.class);
+        verify(mSyncQueue, atLeastOnce()).queue(wctCaptor.capture());
+        List<WindowContainerTransaction> wcts = wctCaptor.getAllValues();
+        List<WindowContainerTransaction.HierarchyOp> removeTaskOps =
+                wcts.stream().flatMap(wct -> wct.getHierarchyOps().stream())
+                        .filter(op -> op.getType() == HIERARCHY_OP_TYPE_REMOVE_TASK)
+                        .collect(Collectors.toList());
+        assertWithMessage("There must be a WindowContainerTransaction to remove"
+                + " 2 of the 3 tasks.")
+                .that(removeTaskOps.size())
+                .isEqualTo(2);
+        assertThat(removeTaskOps.get(0).getContainer()).isEqualTo(task1Token);
+        assertThat(removeTaskOps.get(1).getContainer()).isEqualTo(task3Token);
+        assertThat(taskViewManager.getRootTaskCount()).isEqualTo(1);
+        assertThat(taskViewManager.getTopTaskInLaunchRootTask().taskId).isEqualTo(2);
     }
 
     @Test
@@ -431,12 +532,14 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         verify(mockListener).onTaskRemovalStarted(/* taskId = */ eq(2));
     }
 
-    private void setUpLaunchRootTaskView(TaskViewManager taskViewManager,
+    private ActivityManager.RunningTaskInfo setUpLaunchRootTaskView(TaskViewManager taskViewManager,
             AtomicReference<ShellTaskOrganizer.TaskListener> listener,
             int rootTaskId) throws Exception {
+        ActivityManager.RunningTaskInfo launchRootTaskInfo =
+                createMultiWindowTask(rootTaskId).getTaskInfo();
         doAnswer(invocation -> {
             listener.set(invocation.getArgument(2));
-            listener.get().onTaskAppeared(createMultiWindowTask(rootTaskId).getTaskInfo(), mLeash);
+            listener.get().onTaskAppeared(launchRootTaskInfo, mLeash);
             return null;
         }).when(mOrganizer).createRootTask(eq(DEFAULT_DISPLAY),
                 eq(WINDOWING_MODE_MULTI_WINDOW),
@@ -449,6 +552,7 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         LaunchRootCarTaskView launchRootCarTaskView = taskViewManager.getLaunchRootCarTaskView();
         launchRootCarTaskView.surfaceCreated(mock(SurfaceHolder.class));
         runOnMainAndWait(() -> {});
+        return launchRootTaskInfo;
     }
 
     @Test
@@ -532,8 +636,10 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
                 .thenReturn(packagesThatCanRestart);
         taskViewManager.createControlledCarTaskView(
                 mActivity.getMainExecutor(),
-                activityIntent,
-                false,
+                ControlledCarTaskViewConfig.builder()
+                        .setActivityIntent(activityIntent)
+                        .setAutoRestartOnCrash(false)
+                        .build(),
                 controlledCarTaskViewCallbacks
         );
 
@@ -782,11 +888,21 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         assertThat(taskViewManager.getControlledTaskViews()).isEmpty();
 
         verify(mOrganizer).unregisterOrganizer();
+        verify(mTaskViewInputInterceptor).release();
     }
 
     private TaskViewManager createTaskViewManager() {
-        return new TaskViewManager(mActivity, mShellExecutor, mOrganizer, mSyncQueue,
-                new ShellInit(mShellExecutor), mStartingWindowController);
+        // InstrumentationTestRunner prepares a looper, but AndroidJUnitRunner does not.
+        // http://b/25897652.
+        Looper looper = Looper.myLooper();
+        if (looper == null) {
+            Looper.prepare();
+        }
+
+        TaskViewManager taskViewManager =  new TaskViewManager(mActivity, mShellExecutor,
+                mOrganizer, mSyncQueue, new ShellInit(mShellExecutor), mStartingWindowController);
+        taskViewManager.setTaskViewInputInterceptor(mTaskViewInputInterceptor);
+        return taskViewManager;
     }
 
     private void runOnMainAndWait(Runnable r) throws Exception {
@@ -798,5 +914,19 @@ public class TaskViewManagerTest extends AbstractExtendedMockitoTestCase {
         mIdleHandlerLatch.await(5, TimeUnit.SECONDS);
     }
 
-    public static class TestActivity extends Activity {}
+    public static class TestActivity extends Activity {
+        private static final int FINISH_TIMEOUT_MS = 1000;
+        private final CountDownLatch mDestroyed = new CountDownLatch(1);
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            mDestroyed.countDown();
+        }
+
+        void finishCompletely() throws InterruptedException {
+            finish();
+            mDestroyed.await(FINISH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+    }
 }
